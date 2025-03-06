@@ -55,6 +55,11 @@ const SignIn = () => {
               {errors.password && (
                 <p className="text-danger">{errors.password.message}</p>
               )}
+              {errors.password && errors.password?.type === "minLength" && (
+                <p className="text-danger">
+                  Password must be at least 8 characters!
+                </p>
+              )}
             </div>
             <div className="d-grid">
               <button type="submit" className="btn btn-primary">
