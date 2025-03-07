@@ -6,7 +6,7 @@ const SignIn = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors},
   } = useForm();
 
   const onSubmit = (data) => {
@@ -62,7 +62,10 @@ const SignIn = () => {
               )}
             </div>
             <div className="d-grid">
-              <button type="submit" className="btn btn-primary">
+              <button
+                type="submit"
+                className="btn btn-primary"
+              >
                 Login
               </button>
               <a href="">Sign Up</a>

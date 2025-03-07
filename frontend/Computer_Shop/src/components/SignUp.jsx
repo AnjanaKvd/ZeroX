@@ -4,30 +4,38 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Creating a schema using zod
-const Schema = z.object({
-  firstName: z.string().nonempty({ message: "Enter the firstname" }),
-  lastName: z.string().nonempty({ message: "Enter the lastname" }),
-  email: z.string().email({ message: "Enter a valid email address" }),
-  createPassword: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
-  confirmPassword: z
-    .string()
-    .min(8, { message: "Confirm password must be at least 8 characters" }),
-});
+// Creating a schema using zod and Adding schema-based validation using zod
+const Schema = z
+  .object({
+    firstName: z.string().nonempty({ message: "First name is required!" }),
+    lastName: z.string().nonempty({ message: "Last name is required!" }),
+    email: z
+      .string()
+      .nonempty({ message: "Email is required!" })
+      .email({ message: "Invalid email address!" }),
+    createPassword: z
+      .string()
+      .nonempty({ message: "Password is required!" })
+      .min(8, { message: "Password must be at least 8 characters" }),
+    confirmPassword: z
+      .string()
+      .nonempty({ message: "Confirmation password is required!" })
+      .min(8, { message: "Confirm password must be at least 8 characters" }),
+  })
+  .refine((data) => data.createPassword === data.confirmPassword, {
+    message: "Passwords do not match!",
+    path: ["confirmPassword"],
+  });
 
 const SignUp = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    watch,
+    formState: { errors }, //formState: { errors, isValid },
   } = useForm({
     resolver: zodResolver(Schema),
   });
 
-  // Adding schema-based validation using zod
   const onSubmit = (data) => {
     console.log(data);
   };
@@ -61,9 +69,7 @@ const SignUp = () => {
             <div className="col">
               <label className="form-label">Last Name</label>
               <input
-                {...register("lastName", {
-                  required: "Last Name is required!",
-                })}
+                {...register("lastName")}
                 name="lastName"
                 type="text"
                 className="form-control"
@@ -76,13 +82,7 @@ const SignUp = () => {
           <div className="mb-3">
             <label className="form-label">E-mail Address</label>
             <input
-              {...register("email", {
-                required: "Email is required!",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address!",
-                },
-              })}
+              {...register("email")}
               name="email"
               type="email"
               className="form-control"
@@ -94,13 +94,7 @@ const SignUp = () => {
           <div className="mb-3">
             <label className="form-label">Create Password</label>
             <input
-              {...register("createPassword", {
-                required: "Password is required!",
-                minLength: {
-                  value: 8,
-                  message: "Password must be at least 8 characters!",
-                },
-              })}
+              {...register("createPassword")}
               name="createPassword"
               type="password"
               className="form-control"
@@ -112,12 +106,7 @@ const SignUp = () => {
           <div className="mb-3">
             <label className="form-label">Confirm Password</label>
             <input
-              {...register("confirmPassword", {
-                required: "Confirm Password is required!",
-                validate: (value) =>
-                  value === watch("createPassword") ||
-                  "Passwords do not match!",
-              })}
+              {...register("confirmPassword")}
               name="confirmPassword"
               type="password"
               className="form-control"
@@ -126,10 +115,15 @@ const SignUp = () => {
               <p className="text-danger">{errors.confirmPassword.message}</p>
             )}
           </div>
-          <button type="submit" className="btn btn-primary w-100">
+          <button
+            // disabled={!isValid}
+            type="submit"
+            className="btn btn-primary w-100"
+          >
             Sign Up
           </button>
-          <a href="">Sign In</a>
+          Click here to
+          <a href=""> Sign In</a>
         </form>
       </div>
     </div>
@@ -137,4 +131,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
