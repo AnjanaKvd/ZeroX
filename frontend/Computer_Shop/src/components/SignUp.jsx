@@ -1,6 +1,21 @@
 import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Creating a schema using zod
+const Schema = z.object({
+  firstName: z.string().nonempty({ message: "Enter the firstname" }),
+  lastName: z.string().nonempty({ message: "Enter the lastname" }),
+  email: z.string().email({ message: "Enter a valid email address" }),
+  createPassword: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters" }),
+  confirmPassword: z
+    .string()
+    .min(8, { message: "Confirm password must be at least 8 characters" }),
+});
 
 const SignUp = () => {
   const {
@@ -8,8 +23,11 @@ const SignUp = () => {
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm();
+  } = useForm({
+    resolver: zodResolver(Schema),
+  });
 
+  // Adding schema-based validation using zod
   const onSubmit = (data) => {
     console.log(data);
   };
@@ -119,3 +137,4 @@ const SignUp = () => {
 };
 
 export default SignUp;
+
