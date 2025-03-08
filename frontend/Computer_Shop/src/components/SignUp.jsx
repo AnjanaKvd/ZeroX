@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 // Creating a schema using zod and Adding schema-based validation using zod
-const Schema = z
+const SignUpSchema = z
   .object({
     firstName: z.string().nonempty({ message: "First name is required!" }),
     lastName: z.string().nonempty({ message: "Last name is required!" }),
@@ -33,7 +33,7 @@ const SignUp = () => {
     handleSubmit,
     formState: { errors }, //formState: { errors, isValid },
   } = useForm({
-    resolver: zodResolver(Schema),
+    resolver: zodResolver(SignUpSchema),
   });
 
   const onSubmit = (data) => {
@@ -122,8 +122,10 @@ const SignUp = () => {
           >
             Sign Up
           </button>
-          Click here to
-          <a href=""> Sign In</a>
+
+          <p>
+            Click here to <a href=""> Sign In</a>
+          </p>
         </form>
       </div>
     </div>
