@@ -66,7 +66,7 @@ const SignIn = () => {
               Login
             </button>
             <p>
-              <a href="">Sign Up</a>
+              <a href="/signup">Sign Up</a>
             </p>
           </div>
         </form>

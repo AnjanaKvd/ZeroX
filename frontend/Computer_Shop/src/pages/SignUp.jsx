@@ -119,12 +119,13 @@ const SignUp = () => {
             // disabled={!isValid}
             type="submit"
             className="btn btn-primary w-100"
+          
           >
             Sign Up
           </button>
 
           <p>
-            Click here to <a href=""> Sign In</a>
+            Click here to <a href="./signin"> Sign In</a>
           </p>
         </form>
       </div>
