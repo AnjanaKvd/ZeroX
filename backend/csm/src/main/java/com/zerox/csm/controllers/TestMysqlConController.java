@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestMysqlConController {
     @GetMapping("/testMysqlCon")
     public ResponseEntity<String> testMysqlCon() {
-
         return ResponseEntity.ok("Database Connected");
-
     }
 
 }
