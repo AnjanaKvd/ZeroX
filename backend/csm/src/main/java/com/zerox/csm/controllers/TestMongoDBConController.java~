@@ -1,0 +1,27 @@
+package com.zerox.csm.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/testMongoDBCon")
+public class TestMongoDBConController {
+
+    @GetMapping("/testMongoCon")
+    public ResponseEntity<String> testMongoCon() {
+        try {
+            // Checking MongoDB connection by getting database name
+            String dbName = mongoTemplate.getDb().getName();
+            System.out.println("Connected to MongoDB: " + dbName);
+            return ResponseEntity.ok("MongoDB Connected: " + dbName);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("MongoDB Connection Failed: " + e.getMessage());
+        }
+    }
+
+
+}
