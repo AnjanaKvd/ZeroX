@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import EditProfile from "../components/my_profile/EditProfile";
 import "../index.css";
+import ChangePassword from "../components/my_profile/ChangePassword";
 
 const MyProfile = () => {
   const [selectedTab, setSelectedTab] = useState("edit");
@@ -58,6 +59,8 @@ const MyProfile = () => {
           {selectedTab === "rewards" && <p>Rewards Section</p>}
           {selectedTab === "reviews" && <p>Reviews Section</p>}
         </div>
+
+        <ChangePassword />
       </div>
     </>
   );

@@ -1,64 +1,67 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState } from "react";
 
-// Define Validation Schema
-const EditProfileSchema = z.object({
-  firstName: z.string().nonempty({ message: "First name is required!" }),
-  lastName: z.string().nonempty({ message: "Last name is required!" }),
-  email: z
-    .string()
-    .nonempty({ message: "Email is required!" })
-    .email({ message: "Invalid email!" }),
-  address: z.string().nonempty({ message: "Address is required!" }),
-  province: z.string().nonempty({ message: "Province is required!" }),
-  district: z.string().nonempty({ message: "District is required!" }),
-  contactNumber: z.string().min(10, { message: "Enter a valid phone number!" }),
-});
+// Sri Lanka Provinces & Districts
+const provinces = {
+  Western: ["Colombo", "Gampaha", "Kalutara"],
+  Central: ["Kandy", "Matale", "Nuwara Eliya"],
+  Southern: ["Galle", "Matara", "Hambantota"],
+  Northern: ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
+  Eastern: ["Trincomalee", "Batticaloa", "Ampara"],
+  "North Western": ["Kurunegala", "Puttalam"],
+  "North Central": ["Anuradhapura", "Polonnaruwa"],
+  Uva: ["Badulla", "Monaragala"],
+  Sabaragamuwa: ["Ratnapura", "Kegalle"],
+};
 
 const EditProfile = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(EditProfileSchema),
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    address: "",
+    province: "",
+    district: "",
+    contactNumber: "",
   });
 
-  const onSubmit = (data) => {
-    console.log("Updated Profile:", data);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    console.log("Updated Profile:", formData);
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        {/* 🔹 First & Last Name */}
+    <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto mt-10">
+      <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
+        Edit Profile
+      </h2>
+      <form onSubmit={onSubmit}>
+        {/* First & Last Name */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium">First Name</label>
             <input
-              {...register("firstName")}
+              name="firstName"
               type="text"
-              className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+              value={formData.firstName}
+              onChange={handleChange}
+              className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
             />
-            {errors.firstName && (
-              <p className="text-red-500 text-sm">{errors.firstName.message}</p>
-            )}
           </div>
           <div>
             <label className="block text-sm font-medium">Last Name</label>
             <input
-              {...register("lastName")}
+              name="lastName"
               type="text"
-              className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+              value={formData.lastName}
+              onChange={handleChange}
+              className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
             />
-            {errors.lastName && (
-              <p className="text-red-500 text-sm">{errors.lastName.message}</p>
-            )}
           </div>
         </div>
 
@@ -66,70 +69,88 @@ const EditProfile = () => {
         <div className="mt-3">
           <label className="block text-sm font-medium">E-mail</label>
           <input
-            {...register("email")}
+            name="email"
             type="email"
-            className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+            value={formData.email}
+            onChange={handleChange}
+            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email.message}</p>
-          )}
         </div>
 
         {/* Address */}
         <div className="mt-3">
           <label className="block text-sm font-medium">Address</label>
           <input
-            {...register("address")}
+            name="address"
             type="text"
-            className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+            value={formData.address}
+            onChange={handleChange}
+            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
           />
-          {errors.address && (
-            <p className="text-red-500 text-sm">{errors.address.message}</p>
-          )}
         </div>
 
         {/* Province & District */}
         <div className="grid grid-cols-2 gap-4 mt-3">
           <div>
             <label className="block text-sm font-medium">Province</label>
-            <input
-              {...register("province")}
-              type="text"
-              className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
-            />
-            {errors.province && (
-              <p className="text-red-500 text-sm">{errors.province.message}</p>
-            )}
+            <select
+              name="province"
+              value={formData.province}
+              onChange={(e) => {
+                setSelectedProvince(e.target.value);
+                setFormData({
+                  ...formData,
+                  province: e.target.value,
+                  district: "",
+                });
+              }}
+              className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
+            >
+              <option value="" disabled>
+                -- Select Province --
+              </option>
+              {Object.keys(provinces).map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium">District</label>
-            <input
-              {...register("district")}
-              type="text"
-              className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
-            />
-            {errors.district && (
-              <p className="text-red-500 text-sm">{errors.district.message}</p>
-            )}
+            <select
+              name="district"
+              value={formData.district}
+              onChange={handleChange}
+              className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
+              disabled={!selectedProvince}
+            >
+              <option value="" disabled>
+                -- Select District --
+              </option>
+              {selectedProvince &&
+                provinces[selectedProvince].map((district) => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
+            </select>
           </div>
         </div>
 
-        {/*Contact Number */}
+        {/* Contact Number */}
         <div className="mt-3">
           <label className="block text-sm font-medium">Contact Number</label>
           <input
-            {...register("contactNumber")}
+            name="contactNumber"
             type="text"
-            className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+            value={formData.contactNumber}
+            onChange={handleChange}
+            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
           />
-          {errors.contactNumber && (
-            <p className="text-red-500 text-sm">
-              {errors.contactNumber.message}
-            </p>
-          )}
         </div>
 
-        {/*Save Button */}
+        {/* Save Button */}
         <button
           type="submit"
           className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-md"
