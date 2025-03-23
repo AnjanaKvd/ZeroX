@@ -7,8 +7,7 @@ import "../index.css";
 // Creating a schema using zod and Adding schema-based validation using zod
 const SignUpSchema = z
   .object({
-    firstName: z.string().nonempty({ message: "First name is required!" }),
-    lastName: z.string().nonempty({ message: "Last name is required!" }),
+    fullname: z.string().nonempty({ message: "Name is required!" }),
     email: z
       .string()
       .nonempty({ message: "Email is required!" })
@@ -45,37 +44,19 @@ const SignUp = () => {
       <div className="bg-white shadow-lg p-6 w-full max-w-md">
         <h3 className="text-center text-2xl font-semibold mb-4">SIGN UP</h3>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col">
-              <label className="block text-sm font-medium">First Name</label>
-              <input
-                {...register("firstName", {
-                  required: "First Name is required!",
-                })}
-                name="firstName"
-                type="text"
-                className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
-              />
-              {errors.firstName && (
-                <p className="text-red-400 text-sm">
-                  {errors.firstName.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Last Name</label>
-              <input
-                {...register("lastName")}
-                name="lastName"
-                type="text"
-                className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
-              />
-              {errors.lastName && (
-                <p className="text-red-400 text-sm ">
-                  {errors.lastName.message}
-                </p>
-              )}
-            </div>
+          <div className="mt-3">
+            <label className="block text-sm font-medium">Full Name</label>
+            <input
+              {...register("fullname", {
+                required: "Name is required!",
+              })}
+              name="fullname"
+              type="text"
+              className="mt-1 p-2 w-full border rounded-md focus:ring focus:ring-blue-300"
+            />
+            {errors.fullname && (
+              <p className="text-red-400 text-sm">{errors.fullname.message}</p>
+            )}
           </div>
           <div className="mt-3">
             <label className="block text-sm font-medium">E-mail Address</label>

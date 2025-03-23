@@ -54,13 +54,18 @@ const MyProfile = () => {
 
         {/* Main Content Area */}
         <div className="flex-1 p-6">
-          {selectedTab === "edit" && <EditProfile />}
+          {selectedTab === "edit" && (
+            <div>
+              <EditProfile />
+              <div className="mt-6">
+                <ChangePassword />
+              </div>
+            </div>
+          )}
           {selectedTab === "orders" && <p>Orders Section</p>}
-          {selectedTab === "rewards" && <p>Rewards Section</p>}
+          {selectedTab === "rewards" && <p> Reward Points Section</p>}
           {selectedTab === "reviews" && <p>Reviews Section</p>}
         </div>
-
-        <ChangePassword />
       </div>
     </>
   );
