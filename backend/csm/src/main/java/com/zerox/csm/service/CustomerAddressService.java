@@ -1,6 +1,5 @@
 package com.zerox.csm.service;
 
-import com.zerox.csm.dto.CustomerAddressDto;
 import com.zerox.csm.dto.CustomerAddressDto.AddressCreateRequest;
 import com.zerox.csm.dto.CustomerAddressDto.AddressResponse;
 import com.zerox.csm.dto.CustomerAddressDto.AddressUpdateRequest;

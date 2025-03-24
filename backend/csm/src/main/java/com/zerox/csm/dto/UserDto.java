@@ -1,7 +1,6 @@
 package com.zerox.csm.dto;
 
 import com.zerox.csm.model.UserRole;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
