@@ -17,14 +17,10 @@
 	<description>Computer Shop Management System</description>
 
 	<properties>
-<<<<<<< HEAD
-		<java.version>17</java.version>
-=======
 		<java.version>21</java.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<jjwt.version>0.12.5</jjwt.version>
 		<lombok.version>1.18.32</lombok.version>
->>>>>>> 7483e797c4628f203269e53034ded7a59fd438f2
 	</properties>
 
 	<dependencies>
@@ -52,31 +48,6 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-<<<<<<< HEAD
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.security</groupId>-->
-<!--			<artifactId>spring-security-test</artifactId>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
-
-
-<!--		dependencies added for mysql-->
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.33</version>
-		</dependency>
-
-<!--		dependencies for mongodb-->
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-			<version>3.12.14</version>
-		</dependency>
-
-
-
-=======
 		<dependency>
 			<groupId>com.vladmihalcea</groupId>
 			<artifactId>hibernate-types-60</artifactId>
@@ -153,7 +124,6 @@
 			<artifactId>spring-dotenv</artifactId>
 			<version>3.0.0</version>
 		</dependency>
->>>>>>> 7483e797c4628f203269e53034ded7a59fd438f2
 	</dependencies>
 
 	<build>
