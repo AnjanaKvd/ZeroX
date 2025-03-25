@@ -100,6 +100,7 @@ const Home = () => {
       {/* <TrendingProducts products={products} loading={loading} /> */}
       {/* <Testimonials /> */}
       {/* <Newsletter /> */}
+
     </MainLayout>
   );
 };
