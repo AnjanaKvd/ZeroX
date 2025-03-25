@@ -57,7 +57,7 @@ const Register = () => {
     try {
       const result = await registerUser(data);
       if (result.success) {
-        navigate("/");
+        navigate("/login");
       } else {
         setError(result.message);
       }
