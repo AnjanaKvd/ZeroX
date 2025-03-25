@@ -93,13 +93,14 @@ const Home = () => {
   
   return (
     <MainLayout>
-      <HeroBanner />
-      <CategorySection categories={categories} />
-      <FeaturedProducts products={products} loading={loading} />
-      <PromoBanner />
-      <TrendingProducts products={products} loading={loading} />
-      <Testimonials />
-      <Newsletter />
+      {/* <HeroBanner /> */}
+      {/* <CategorySection categories={categories} /> */}
+      {/* <FeaturedProducts products={products} loading={loading} /> */}
+      {/* <PromoBanner /> */}
+      {/* <TrendingProducts products={products} loading={loading} /> */}
+      {/* <Testimonials /> */}
+      {/* <Newsletter /> */}
+
     </MainLayout>
   );
 };
