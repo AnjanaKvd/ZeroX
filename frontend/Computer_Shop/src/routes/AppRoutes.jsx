@@ -1,28 +1,33 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 // Pages
-import Home from '../pages/Home';
-import ProductDetails from '../pages/ProductDetails';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import Cart from '../pages/Cart';
-import Checkout from '../pages/Checkout';
-import OrderConfirmation from '../pages/OrderConfirmation';
-import Profile from '../pages/Profile';
-import OrderHistory from '../pages/OrderHistory';
-import OrderDetails from '../pages/OrderDetails';
-import NotFound from '../pages/NotFound';
+import Home from "../pages/Home";
+import ProductDetails from "../pages/ProductDetails";
+import Login from "../pages/Login";
+import Register from "../pages/Register";
+import Cart from "../pages/Cart";
+import Checkout from "../pages/Checkout";
+import OrderConfirmation from "../pages/OrderConfirmation";
+import Profile from "../pages/Profile";
+import OrderHistory from "../pages/OrderHistory";
+import OrderDetails from "../pages/OrderDetails";
+import NotFound from "../pages/NotFound";
+import MyProfile from "../pages/MyProfile";
 
 // Private route component
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
-  
+
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
   }
-  
+
   return user ? children : <Navigate to="/login" />;
 };
 
@@ -34,38 +39,54 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/cart" element={<Cart />} />
-      
+      <Route path="/myprofile" element={<MyProfile />} />
+
       {/* Protected routes */}
-      <Route path="/checkout" element={
-        <PrivateRoute>
-          <Checkout />
-        </PrivateRoute>
-      } />
-      <Route path="/order-confirmation/:orderId" element={
-        <PrivateRoute>
-          <OrderConfirmation />
-        </PrivateRoute>
-      } />
-      <Route path="/profile" element={
-        <PrivateRoute>
-          <Profile />
-        </PrivateRoute>
-      } />
-      <Route path="/orders" element={
-        <PrivateRoute>
-          <OrderHistory />
-        </PrivateRoute>
-      } />
-      <Route path="/orders/:orderId" element={
-        <PrivateRoute>
-          <OrderDetails />
-        </PrivateRoute>
-      } />
-      
+      <Route
+        path="/checkout"
+        element={
+          <PrivateRoute>
+            <Checkout />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/order-confirmation/:orderId"
+        element={
+          <PrivateRoute>
+            <OrderConfirmation />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/myprofile"
+        element={
+          <PrivateRoute>
+            <MyProfile />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/orders"
+        element={
+          <PrivateRoute>
+            <OrderHistory />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/orders/:orderId"
+        element={
+          <PrivateRoute>
+            <OrderDetails />
+          </PrivateRoute>
+        }
+      />
+
       {/* 404 catch-all route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;
