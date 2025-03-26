@@ -22,7 +22,7 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto mt-10">
+    <div className="bg-white shadow-lg rounded-lg p-6 max-w-4xl mx-auto mt-6">
       <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
         Edit Profile
       </h2>
