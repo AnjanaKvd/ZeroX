@@ -112,6 +112,8 @@
 			<scope>runtime</scope>
 		</dependency>
 
+
+
 		<!-- Add this dependency for HTML template support -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
