@@ -38,6 +38,6 @@ public class UserDto {
     
     public record PasswordChangeRequest(
             @NotBlank String currentPassword,
-            @NotBlank @Size(min = 6, max = 100) String newPassword
+            @NotBlank @Size(min = 8, max = 100) String newPassword
     ) {}
 } 

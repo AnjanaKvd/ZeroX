@@ -11,29 +11,32 @@ const signUpSchema = z
   .object({
     fullName: z
       .string()
-      .nonempty({ message: "Name is required!" })
-      .min(3, "Full name must be at least 3 characters"),
+      .nonempty({ message: "Name is required !" })
+      .min(3, "Full name must be at least 3 characters !"),
     email: z
       .string()
-      .nonempty({ message: "Password is required!" })
-      .email("Invalid email format"),
+      .nonempty({ message: "Email is required !" })
+      .email("Invalid email format !"),
     phone: z
       .string()
-      .nonempty({ message: "Phone number is required!" })
-      .regex(/^[0-9]+$/, "Phone number must contain only digits")
-      .min(10, "Phone number must be at least 10 digits")
-      .max(15, "Phone number must be at most 15 digits"),
+      .nonempty({ message: "Phone number is required !" })
+      .regex(
+        /^(?:\+94|0)\d{9}$/,
+        "Invalid format ! Use +94XXXXXXXXX or 0XXXXXXXXX"
+      )
+      .min(10, "Phone number must be at least 10 digits !")
+      .max(12, "Phone number must be at most 15 digits !"),
     password: z
       .string()
-      .nonempty({ message: "Password is required!" })
-      .min(8, { message: "Password must be at least 8 characters" }),
+      .nonempty({ message: "Password is required !" })
+      .min(8, { message: "Password must be at least 8 characters !" }),
     confirmPassword: z
       .string()
-      .nonempty({ message: "Confirmation password is required!" })
-      .min(8, { message: "Confirm password must be at least 8 characters" }),
+      .nonempty({ message: "Confirmation password is required !" })
+      .min(8, { message: "Confirm password must be at least 8 characters !" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "Passwords do not match !",
     path: ["confirmPassword"],
   });
 

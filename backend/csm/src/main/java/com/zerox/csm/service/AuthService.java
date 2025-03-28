@@ -3,6 +3,7 @@ package com.zerox.csm.service;
 import com.zerox.csm.dto.AuthDto.LoginRequest;
 import com.zerox.csm.dto.AuthDto.RegisterRequest;
 import com.zerox.csm.dto.AuthDto.AuthResponse;
+import com.zerox.csm.dto.UserDto;
 import com.zerox.csm.dto.UserDto.UserProfileResponse;
 import com.zerox.csm.exception.ResourceNotFoundException;
 import com.zerox.csm.model.User;
@@ -100,4 +101,40 @@ public class AuthService {
                 user.getLastLogin()
         );
     }
-} 
+
+    public UserProfileResponse updateProfile(String email, UserDto.UserUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setFullName(request.fullName());
+        user.setPhone(request.phone());
+
+        userRepository.save(user); // This line persists the changes to the database
+
+        return new UserProfileResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getPhone(),
+                user.getRole(),
+                user.getLoyaltyPoints(),
+                user.getCreatedAt(),
+                user.getLastLogin()
+        );
+    }
+
+
+    public void changePassword(String email, UserDto.PasswordChangeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // Update to new password
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+}

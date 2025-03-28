@@ -2,12 +2,8 @@ import React, { useState } from "react";
 
 const EditProfile = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
     fullName: "",
     email: "",
-    address: "",
-    province: "",
-    district: "",
     contactNumber: "",
   });
 
@@ -47,18 +43,6 @@ const EditProfile = () => {
             name="email"
             type="email"
             value={formData.email}
-            onChange={handleChange}
-            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
-          />
-        </div>
-
-        {/* Address */}
-        <div className="mt-3">
-          <label className="block text-sm font-medium">Address</label>
-          <input
-            name="address"
-            type="text"
-            value={formData.address}
             onChange={handleChange}
             className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
           />

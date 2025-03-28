@@ -34,14 +34,14 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
     
-    @GetMapping("/myprofile")
+    @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getProfile(
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
     }
 
-    @PutMapping("/myprofile")
+    @PutMapping("/profile")
     public ResponseEntity<UserProfileResponse> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UserDto.UserUpdateRequest request
@@ -49,7 +49,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.updateProfile(userDetails.getUsername(), request));
     }
 
-    @PostMapping("/changepassword")
+    @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UserDto.PasswordChangeRequest request
