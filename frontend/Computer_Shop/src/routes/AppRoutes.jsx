@@ -15,6 +15,8 @@ import OrderHistory from "../pages/OrderHistory";
 import OrderDetails from "../pages/OrderDetails";
 import NotFound from "../pages/NotFound";
 import MyProfile from "../pages/MyProfile";
+import UserReviewForm from "../pages/UserReviewForm";
+import DisplayRatingAndReviews from "../pages/DisplayRatingAndReviews";
 
 // Private route component
 const PrivateRoute = ({ children }) => {
@@ -40,6 +42,8 @@ const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/myprofile" element={<MyProfile />} />
+      <Route path="/userreviewform" element={<UserReviewForm />} />
+      <Route path="/displayreviews" element={<DisplayRatingAndReviews />} />
 
       {/* Protected routes */}
       <Route

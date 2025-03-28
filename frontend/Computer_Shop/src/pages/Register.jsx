@@ -85,7 +85,6 @@ const Register = () => {
               <input
                 {...register("fullName")}
                 className="w-full p-2 border rounded-md"
-                placeholder="John Doe"
               />
               {errors.fullName && (
                 <p className="text-red-500 text-sm">
@@ -99,7 +98,6 @@ const Register = () => {
               <input
                 {...register("email")}
                 className="w-full p-2 border rounded-md"
-                placeholder="your.email@example.com"
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>
@@ -111,7 +109,6 @@ const Register = () => {
               <input
                 {...register("phone")}
                 className="w-full p-2 border rounded-md"
-                placeholder="1234567890"
               />
               {errors.phone && (
                 <p className="text-red-500 text-sm">{errors.phone.message}</p>
@@ -124,7 +121,6 @@ const Register = () => {
                 type="password"
                 {...register("password")}
                 className="w-full p-2 border rounded-md"
-                placeholder="••••••••"
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">
@@ -141,7 +137,6 @@ const Register = () => {
                 type="password"
                 {...register("confirmPassword")}
                 className="w-full p-2 border rounded-md"
-                placeholder="••••••••"
               />
               {errors.confirmPassword && (
                 <p className="text-red-500 text-sm">

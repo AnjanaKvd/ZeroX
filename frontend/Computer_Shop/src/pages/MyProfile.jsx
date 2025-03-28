@@ -1,70 +1,79 @@
-import { useState } from "react";
-import starGrey from "../assets/images/star_grey.png";
-import starGold from "../assets/images/star_gold.png";
+import React, { useState } from "react";
+import EditProfile from "../components/my_profile/EditProfile";
+import ChangePassword from "../components/my_profile/ChangePassword";
+import Header from "../components/common/Header/Header";
+import Footer from "../components/common/Footer/Footer";
 
-const ReviewForm = ({ productId }) => {
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-
-  const handleStarClick = (selectedRating) => {
-    setRating(selectedRating);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (rating === 0) {
-      alert("Please select a rating before submitting.");
-      return;
-    }
-
-    const reviewData = { product_id: productId, rating, comment };
-
-    const response = await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(reviewData),
-    });
-
-    if (response.ok) {
-      alert("Review submitted successfully!");
-      setComment(""); // Clear comment after submission
-      setRating(0); // Reset rating
-    } else {
-      alert("Failed to submit review");
-    }
-  };
+const MyProfile = () => {
+  const [selectedTab, setSelectedTab] = useState("edit");
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-white shadow-lg rounded-lg">
-      <label className="block font-semibold">Rating:</label>
-      <div className="flex gap-2 my-2">
-        {[1, 2, 3, 4, 5].map((num) => (
-          <img
-            key={num}
-            src={num <= rating ? starGold : starGrey}
-            alt={`Star ${num}`}
-            className="w-8 h-8 cursor-pointer"
-            onClick={() => handleStarClick(num)}
-          />
-        ))}
+    <>
+      <Header />
+      <div className="flex min-h-screen bg-gray-100">
+        {/* Sidebar Navigation */}
+        <div className="w-1/4 bg-white shadow-lg p-4">
+          <h2 className="text-xl font-bold mb-4">My Profile</h2>
+          <button
+            onClick={() => setSelectedTab("edit")}
+            className={`w-full text-left p-2 rounded ${
+              selectedTab === "edit" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            Edit Profile
+          </button>
+          <button
+            onClick={() => setSelectedTab("orders")}
+            className={`w-full text-left p-2 rounded ${
+              selectedTab === "orders"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            My Orders
+          </button>
+          <button
+            onClick={() => setSelectedTab("rewards")}
+            className={`w-full text-left p-2 rounded ${
+              selectedTab === "rewards"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Reward Points
+          </button>
+          <button
+            onClick={() => setSelectedTab("reviews")}
+            className={`w-full text-left p-2 rounded ${
+              selectedTab === "reviews"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            My Reviews
+          </button>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 p-6">
+          {selectedTab === "edit" && (
+            <div>
+              <EditProfile />
+              <br />
+              <hr />
+              <div className="mt-6">
+                <ChangePassword />
+              </div>
+            </div>
+          )}
+          {selectedTab === "orders" && <p>Orders Section</p>}
+          {selectedTab === "rewards" && <p>Reward Points Section</p>}
+          {selectedTab === "reviews" && <p>Reviews Section</p>}
+        </div>
       </div>
-
-      <label className="block font-semibold mt-2">Comment:</label>
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        className="w-full p-2 border rounded"
-        placeholder="Write your review..."
-      ></textarea>
-
-      <button
-        type="submit"
-        className="bg-blue-500 text-white px-4 py-2 mt-3 rounded"
-      >
-        Submit Review
-      </button>
-    </form>
+      <Footer />
+    </>
   );
 };
 
-export default ReviewForm;
+export default MyProfile;

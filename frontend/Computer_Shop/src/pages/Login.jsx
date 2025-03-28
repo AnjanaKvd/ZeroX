@@ -78,7 +78,6 @@ const Login = () => {
               <input
                 {...register("email")}
                 className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-                placeholder="your.email@example.com"
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>
@@ -91,7 +90,6 @@ const Login = () => {
                 type="password"
                 {...register("password")}
                 className="w-full p-2 border rounded-md focus:ring focus:ring-blue-300"
-                placeholder="••••••••"
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">
