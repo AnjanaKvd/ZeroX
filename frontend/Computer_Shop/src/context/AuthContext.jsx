@@ -1,98 +1,169 @@
-import { createContext, useState, useEffect } from 'react';
-import { getUserProfile, login as apiLogin, register as apiRegister, logout as apiLogout } from '../services/authService';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  getUserProfile, 
+  login as apiLogin, 
+  register as apiRegister, 
+  logout as apiLogout 
+} from '../services/authService';
 
 export const AuthContext = createContext();
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    // Check for token on app startup
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchUserProfile();
-    } else {
-      setLoading(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleAuthError = useCallback((error) => {
+    console.error('Authentication Error:', error);
+    localStorage.removeItem('token');
+    setUser(null);
+    setError(error.message || 'Authentication failed');
+    
+    if (!location.pathname.includes('login')) {
+      navigate('/login', {
+        state: { from: location.pathname },
+        replace: true
+      });
     }
-  }, []);
-  
-  const fetchUserProfile = async () => {
+  }, [navigate, location]);
+
+  const loadUserProfile = useCallback(async () => {
     try {
-      const userData = await getUserProfile();
-      setUser(userData);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching user profile:', err);
-      // Clear token if profile fetch fails (likely invalid token)
-      localStorage.removeItem('token');
-      setUser(null);
-      setError('Session expired. Please login again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const login = async (credentials) => {
-    try {
-      const data = await apiLogin(credentials);
-      setUser(data);
-      setError(null);
-      return { success: true };
-    } catch (err) {
-      let errorMessage = 'Login failed';
-      
-      if (err.response) {
-        errorMessage = err.response.data?.message || errorMessage;
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+
+      const decoded = jwtDecode(token);
+      if (decoded.exp * 1000 < Date.now()) {
+        throw new Error('Session expired');
       }
+
+      const userData = await getUserProfile();
+      return {
+        ...userData,
+        roles: userData.roles || []
+      };
+    } catch (error) {
+      handleAuthError(error);
+      return null;
+    }
+  }, [handleAuthError]);
+
+  const initializeAuth = useCallback(async () => {
+    try {
+      const userData = await loadUserProfile();
+      if (userData) {
+        setUser(userData);
+        handleRoleRedirection(userData.roles);
+      }
+    } catch (error) {
+      handleAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadUserProfile, handleAuthError]);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  const handleRoleRedirection = useCallback((roles) => {
+    const redirectPath = location.state?.from || '/';
+    
+    if (roles.includes('ADMIN')) {
+      navigate('/admin/dashboard', { replace: true });
+    } else if (!redirectPath.startsWith('/admin')) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [navigate, location]);
+
+  const login = useCallback(async (credentials) => {
+    try {
+      setIsLoading(true);
+      const { token, ...userData } = await apiLogin(credentials);
+      localStorage.setItem('token', token);
       
-      setError(errorMessage);
-      return { 
-        success: false, 
-        message: errorMessage 
+      const authenticatedUser = {
+        ...userData,
+        roles: userData.roles || []
       };
-    }
-  };
-  
-  const register = async (userData) => {
-    try {
-      const data = await apiRegister(userData);
-      setUser(data);
-      setError(null);
+      
+      setUser(authenticatedUser);
+      handleRoleRedirection(authenticatedUser.roles);
       return { success: true };
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-      return { 
-        success: false, 
-        message: err.response?.data?.message || 'Registration failed',
-        validationErrors: err.response?.data?.validationErrors 
-      };
+    } catch (error) {
+      handleAuthError(error);
+      return { success: false, message: error.message };
+    } finally {
+      setIsLoading(false);
     }
-  };
-  
-  const logout = async () => {
+  }, [handleAuthError, handleRoleRedirection]);
+
+  const register = useCallback(async (userData) => {
     try {
+      setIsLoading(true);
+      const { token, ...newUser } = await apiRegister(userData);
+      localStorage.setItem('token', token);
+      
+      const registeredUser = {
+        ...newUser,
+        roles: newUser.roles || []
+      };
+      
+      setUser(registeredUser);
+      handleRoleRedirection(registeredUser.roles);
+      return { success: true };
+    } catch (error) {
+      handleAuthError(error);
+      return { success: false, message: error.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleAuthError, handleRoleRedirection]);
+
+  const logout = useCallback(async () => {
+    try {
+      setIsLoading(true);
       await apiLogout();
-    } catch (err) {
-      console.error('Logout error:', err);
+    } catch (error) {
+      console.error('Logout Error:', error);
     } finally {
       localStorage.removeItem('token');
       setUser(null);
+      navigate('/login', { replace: true });
+      setIsLoading(false);
     }
-  };
-  
+  }, [navigate]);
+
+  const hasRole = useCallback(
+    (requiredRole) => user?.roles?.includes(requiredRole) || false,
+    [user?.roles]
+  );
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      error, 
-      login, 
-      register, 
-      logout, 
-      refreshUser: fetchUserProfile 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        error,
+        login,
+        register,
+        logout,
+        hasRole
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

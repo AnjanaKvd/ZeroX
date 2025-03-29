@@ -8,11 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -52,21 +54,22 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductBySku(sku));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDto.ProductResponse> createProduct(@Valid @RequestBody ProductDto.ProductRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(request));
+    public ResponseEntity<ProductDto.ProductResponse> createProduct(
+            @Valid @ModelAttribute ProductDto.ProductRequest request
+    ) {
+        return ResponseEntity.ok(productService.createProduct(request));
     }
     
-    @PutMapping("/{productId}")
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto.ProductResponse> updateProduct(
             @PathVariable UUID productId,
-            @Valid @RequestBody ProductDto.ProductRequest request,
+            @Valid @ModelAttribute ProductDto.ProductRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // Here you would get the userId from userDetails
-        UUID userId = getUserId(userDetails);
+        UUID userId = extractUserId(userDetails);
         return ResponseEntity.ok(productService.updateProduct(productId, request, userId));
     }
     
@@ -100,7 +103,7 @@ public class ProductController {
     }
     
     // Helper method to extract userId from UserDetails
-    private UUID getUserId(UserDetails userDetails) {
+    private UUID extractUserId(UserDetails userDetails) {
         // This is a placeholder - you would implement this based on how your UserDetails
         // has been extended to include the userId
         return UUID.fromString("00000000-0000-0000-0000-000000000000"); 

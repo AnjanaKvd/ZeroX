@@ -7,11 +7,7 @@ export const login = async (credentials) => {
       password: credentials.password
     };
     
-    const response = await api.post('/api/auth/login', loginData);
-    
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
+    const response = await api.post('/auth/login', loginData);
     return response.data;
   } catch (error) {
     throw error;
@@ -20,10 +16,7 @@ export const login = async (credentials) => {
 
 export const register = async (userData) => {
   try {
-    const response = await api.post('/api/auth/register', userData);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
+    const response = await api.post('/auth/register', userData);
     return response.data;
   } catch (error) {
     throw error;
@@ -32,7 +25,7 @@ export const register = async (userData) => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/api/auth/profile');
+    const response = await api.get('/users/profile');
     return response.data;
   } catch (error) {
     throw error;
@@ -41,10 +34,10 @@ export const getUserProfile = async () => {
 
 export const logout = async () => {
   try {
-    await api.post('/api/auth/logout');
+    await api.post('/auth/logout');
+    return { success: true };
   } catch (error) {
     console.error('Logout error:', error);
-  } finally {
-    localStorage.removeItem('token');
+    return { success: false, error };
   }
 }; 

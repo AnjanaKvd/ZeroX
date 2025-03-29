@@ -68,7 +68,7 @@ public class AuthService {
                 .fullName(request.fullName())
                 .loyaltyPoints(0)
                 .createdAt(LocalDateTime.now())
-                .role(UserRole.CUSTOMER) // Changed from USER to CUSTOMER
+                .role(UserRole.CUSTOMER)
                 .build();
         
         userRepository.save(user);

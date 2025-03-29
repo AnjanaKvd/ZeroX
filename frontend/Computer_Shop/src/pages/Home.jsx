@@ -1,107 +1,132 @@
-import { useState, useEffect } from 'react';
-import { getProducts, getCategories } from '../services/productService';
-import MainLayout from '../components/layouts/MainLayout';
-// import HeroBanner from '../components/home/HeroBanner';
-// import CategorySection from '../components/home/CategorySection';
-// import FeaturedProducts from '../components/home/FeaturedProducts';
-// import TrendingProducts from '../components/home/TrendingProducts';
-// import PromoBanner from '../components/home/PromoBanner';
-// import Testimonials from '../components/home/Testimonials';
-// import Newsletter from '../components/home/Newsletter';
-import ProductCard from '../components/common/ProductCard/ProductCard';
-import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
-import Header from '../components/common/Header/Header';
-import Footer from '../components/common/Footer/Footer';
+import { useState, useEffect, useCallback } from 'react';
+import { debounce } from '../../utils/helpers';
+import { getProducts, getCategories } from '../../services/productService';
+import MainLayout from '../layouts/MainLayout';
+import HeroBanner from "../home/HeroBanner"
+import CategorySection from '../home/CategorySection';
+import ProductGrid from '../components/product/ProductGrid';
+import FilterPanel from '../common/FilterPanel';
+import Pagination from '../common/Pagination';
+import LoadingOverlay from '../common/LoadingOverlay';
+import ErrorDisplay from '../common/ErrorDisplay';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../data/mocks';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState(false);
+  const [error, setError] = useState(null);
+  const [totalItems, setTotalItems] = useState(0);
+  
   const [filters, setFilters] = useState({
     categoryId: '',
+    searchQuery: '',
     minPrice: '',
     maxPrice: '',
-    brand: '',
     sortBy: 'name',
-    sortDirection: 'asc',
-    page: 0,
-    size: 12
+    sortOrder: 'asc',
+    page: 1,
+    pageSize: 12
   });
-  const [totalPages, setTotalPages] = useState(0);
-  
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        console.log("Fetching categories...");
-        const data = await getCategories();
-        setCategories(data);
-        setApiError(false);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        // Use mock data if API fails
-        console.log("Using mock categories due to API error");
-        setCategories(MOCK_CATEGORIES);
-        setApiError(true);
-      }
-    };
-    
-    fetchCategories();
-  }, []);
-  
-  useEffect(() => {
-    const fetchProducts = async () => {
+
+  const fetchData = useCallback(async (useMocks = false) => {
+    try {
       setLoading(true);
-      try {
-        console.log("Fetching products with filters:", filters);
-        const data = await getProducts(filters);
-        setProducts(data.content);
-        setTotalPages(data.totalPages);
-        setApiError(false);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        // Use mock data if API fails
-        console.log("Using mock products due to API error");
+      setError(null);
+
+      if (useMocks) {
+        setCategories(MOCK_CATEGORIES);
         setProducts(MOCK_PRODUCTS);
-        setTotalPages(1);
-        setApiError(true);
-      } finally {
-        setLoading(false);
+        setTotalItems(MOCK_PRODUCTS.length);
+        return;
       }
-    };
-    
-    fetchProducts();
+
+      const [categoriesData, productsData] = await Promise.all([
+        getCategories(),
+        getProducts(filters)
+      ]);
+
+      setCategories(categoriesData);
+      setProducts(productsData.items);
+      setTotalItems(productsData.totalCount);
+    } catch (err) {
+      setError(err);
+      if (!useMocks) fetchData(true); // Fallback to mock data
+    } finally {
+      setLoading(false);
+    }
   }, [filters]);
-  
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+
+  const debouncedFetch = useCallback(debounce(fetchData, 500), [fetchData]);
+
+  useEffect(() => {
+    debouncedFetch();
+    return () => debouncedFetch.cancel();
+  }, [debouncedFetch]);
+
+  const handleFilterChange = (name, value) => {
     setFilters(prev => ({
       ...prev,
       [name]: value,
-      page: 0 // Reset to first page when filters change
+      page: 1 // Reset to first page on filter change
     }));
   };
-  
+
   const handlePageChange = (newPage) => {
-    if (newPage >= 0 && newPage < totalPages) {
-      setFilters(prev => ({
-        ...prev,
-        page: newPage
-      }));
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setFilters(prev => ({ ...prev, page: newPage }));
   };
-  
+
   return (
     <MainLayout>
-      {/* <HeroBanner /> */}
-      {/* <CategorySection categories={categories} /> */}
-      {/* <FeaturedProducts products={products} loading={loading} /> */}
-      {/* <PromoBanner /> */}
-      {/* <TrendingProducts products={products} loading={loading} /> */}
-      {/* <Testimonials /> */}
-      {/* <Newsletter /> */}
+      <HeroBanner 
+        title="Custom Gaming PCs & Components"
+        subtitle="Build Your Ultimate Gaming Rig"
+        ctaText="Shop Now"
+        ctaLink="/products"
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FilterPanel
+          categories={categories}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          className="my-8"
+        />
+
+        {error && (
+          <ErrorDisplay 
+            error={error}
+            onRetry={() => fetchData()}
+            className="my-8"
+          />
+        )}
+
+        <LoadingOverlay isLoading={loading}>
+          <CategorySection 
+            categories={categories}
+            onSelectCategory={(id) => handleFilterChange('categoryId', id)}
+            selectedCategory={filters.categoryId}
+            className="my-8"
+          />
+
+          <ProductGrid 
+            products={products}
+            loading={loading}
+            className="my-8"
+          />
+        </LoadingOverlay>
+
+        <Pagination
+          currentPage={filters.page}
+          totalItems={totalItems}
+          itemsPerPage={filters.pageSize}
+          onPageChange={handlePageChange}
+          className="my-8"
+        />
+      </div>
     </MainLayout>
   );
 };
 
-export default Home; 
+export default Home;

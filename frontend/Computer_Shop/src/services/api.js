@@ -1,45 +1,35 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../config/constants';
+import { handleApiError } from '../utils/errorHandler';
 
-// Create axios instance with proper base URL
+// Create axios instance with correct base URL
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
   },
-  timeout: 10000 // 10 second timeout
+  timeout: 10000, // 10-second timeout
 });
 
-// Add request interceptor to include auth token
+// Add request interceptor to include Authorization header
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken'); // Retrieve token from localStorage
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`; // Set Authorization header
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Add response interceptor to handle common errors
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Handle common errors here
-    if (error.response && error.response.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      // You may want to redirect to login page here
-    }
-    
-    return Promise.reject(error);
+    const formattedError = handleApiError(error);
+    return Promise.reject(formattedError);
   }
 );
 
-export default api; 
+export default api;

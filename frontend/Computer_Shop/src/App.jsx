@@ -1,47 +1,38 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import AppRoutes from './routes/AppRoutes';
-import { checkApiConnection } from './services/apiHealthCheck';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import LoadingOverlay from './components/common/LoadingOverlay';
+import useApiHealthCheck from './hooks/useApiHealthCheck';
 import './assets/styles/index.css';
 
 const App = () => {
-  const [apiConnected, setApiConnected] = useState(true);
-  const [apiCheckComplete, setApiCheckComplete] = useState(false);
-
-  useEffect(() => {
-    // Check API connection when app loads
-    const checkConnection = async () => {
-      try {
-        const isConnected = await checkApiConnection();
-        setApiConnected(isConnected);
-      } catch (error) {
-        console.error("Error during API check:", error);
-        setApiConnected(false);
-      } finally {
-        setApiCheckComplete(true);
-      }
-    };
-    
-    checkConnection();
-  }, []);
+  const { apiConnected, apiCheckComplete } = useApiHealthCheck();
 
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
       <AuthProvider>
         <CartProvider>
           <div className="flex flex-col min-h-screen">
+            {/* API Connection Warning */}
             {!apiConnected && apiCheckComplete && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 text-center">
-                Warning: Unable to connect to the API. Some features may be limited.
+              <div 
+                role="alert"
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 text-center"
+              >
+                ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
               </div>
             )}
-            <AppRoutes />
+
+            {/* Main Application Routes */}
+            <Suspense fallback={<LoadingOverlay />}>
+              <AppRoutes />
+            </Suspense>
           </div>
         </CartProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 
