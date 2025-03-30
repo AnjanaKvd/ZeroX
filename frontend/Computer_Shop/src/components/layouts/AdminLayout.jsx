@@ -1,46 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import LoadingSpinner from '../common/LoadingSpinner/LoadingSpinner';
-import ApiErrorDisplay from '../common/ApiErrorDisplay';
 import { ChevronLeftIcon, Bars3Icon } from '@heroicons/react/24/outline';
 
 const AdminLayout = () => {
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const verifyAccess = useCallback(async () => {
-    try {
-      if (!user) {
-        navigate('/login', { state: { from: location }, replace: true });
-        return;
-      }
-      
-      if (!hasRole('ADMIN')) {
-        navigate('/', { replace: true });
-        return;
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to verify admin access');
-    } finally {
-      setLoading(false);
-    }
-  }, [user, hasRole, navigate, location]);
-
-  useEffect(() => {
-    verifyAccess();
-  }, [verifyAccess]);
 
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/login', { replace: true });
     } catch (err) {
-      setError('Failed to logout. Please try again.');
+      console.error('Logout failed:', err);
     }
   };
 
@@ -53,18 +26,6 @@ const AdminLayout = () => {
     { path: '/admin/settings', label: 'System Settings' }
   ];
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <ApiErrorDisplay message={error} onRetry={verifyAccess} />;
-  }
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Mobile Menu Button */}
@@ -72,7 +33,7 @@ const AdminLayout = () => {
         className="md:hidden fixed bottom-4 right-4 p-3 bg-gray-800 text-white rounded-full shadow-lg z-50"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
-        <Bars2Icon className="h-6 w-6" />
+        <Bars3Icon className="h-6 w-6" />
       </button>
 
       {/* Admin Sidebar */}

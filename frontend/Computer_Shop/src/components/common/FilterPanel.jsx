@@ -60,3 +60,5 @@ const FilterPanel = ({ categories, filters, onFilterChange }) => {
       </div>
     );
   };
+
+export default FilterPanel;

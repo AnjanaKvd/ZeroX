@@ -29,80 +29,82 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
   
-  // Update localStorage and total price when cart changes
+  // Calculate total price whenever cart changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-    
-    // Calculate total price
     const total = cartItems.reduce(
-      (sum, item) => sum + (item.price * item.quantity),
+      (sum, item) => sum + (Number(item.price) * item.quantity),
       0
     );
     setTotalPrice(total);
+    
+    // Save to localStorage
+    localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
-  
-  // Add item to cart
-  const addToCart = (product, quantity = 1) => {
+
+  // Add item to cart with proper duplicate handling
+  const addToCart = (product) => {
     setCartItems(prevItems => {
+      // Use productId or id for consistency
+      const productId = product.productId || product.id;
+      
+      // Check if product already exists in cart
       const existingItemIndex = prevItems.findIndex(
-        item => item.id === product.id
+        item => (item.productId || item.id) === productId
       );
       
       if (existingItemIndex >= 0) {
-        // Item exists, update quantity
+        // Product exists, update quantity
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + quantity
+          quantity: updatedItems[existingItemIndex].quantity + (product.quantity || 1)
         };
         return updatedItems;
       } else {
-        // Item doesn't exist, add new item
+        // Product doesn't exist, add new item
+        // Ensure quantity is at least 1
+        const quantity = product.quantity || 1;
         return [...prevItems, { ...product, quantity }];
       }
     });
   };
   
-  // Update item quantity
+  // Update quantity with validation
   const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1) return; // Don't allow quantities less than 1
     
     setCartItems(prevItems => 
       prevItems.map(item => 
-        item.id === productId 
-          ? { ...item, quantity: newQuantity } 
+        (item.productId || item.id) === productId 
+          ? { ...item, quantity: newQuantity }
           : item
       )
     );
   };
   
-  // Remove item from cart
+  // Remove item with proper refresh
   const removeFromCart = (productId) => {
     setCartItems(prevItems => 
-      prevItems.filter(item => item.id !== productId)
+      prevItems.filter(item => (item.productId || item.id) !== productId)
     );
   };
   
-  // Clear entire cart
+  // Clear cart
   const clearCart = () => {
     setCartItems([]);
-    setDiscountCode(null);
+    localStorage.removeItem('cart');
   };
-  
-  const applyDiscount = (discount) => {
-    setDiscountCode(discount);
-  };
-  
+
   return (
     <CartContext.Provider value={{
       cartItems,
       totalPrice,
-      discountCode,
       addToCart,
       updateQuantity,
       removeFromCart,
       clearCart,
-      applyDiscount
+      discountCode,
+      setDiscountCode
     }}>
       {children}
     </CartContext.Provider>

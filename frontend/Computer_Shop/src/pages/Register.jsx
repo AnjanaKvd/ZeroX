@@ -1,13 +1,13 @@
 // pages/Register.jsx
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { AuthLayout } from '../components/auth/AuthLayout';
+import { useAuth } from '../context/AuthContext';
+import { AuthLayout } from '../components/layouts/AuthLayout';
 import { FormInput, ErrorMessage, AuthButton } from '../components/auth/FormElements';
 
 const Register = () => {
-  const { register: registerUser } = useContext(AuthContext);
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +28,7 @@ const Register = () => {
         throw new Error(result?.message || 'Registration failed');
       }
 
-      navigate('/login', { state: { registrationSuccess: true } });
+      navigate('/');
     } catch (err) {
       setError(err.message || 'An error occurred during registration');
       console.error('Registration error:', err);
@@ -38,7 +38,7 @@ const Register = () => {
   }, [registerUser, navigate]);
 
   return (
-    <AuthLayout title="Create an Account">
+    <>
       {error && <ErrorMessage message={error} />}
 
       <form onSubmit={handleSubmit(handleRegistration)} noValidate>
@@ -115,19 +115,19 @@ const Register = () => {
         />
 
         <AuthButton isLoading={isLoading}>
-          {isLoading ? 'Creating account...' : 'Create Account'}
+          Create Account
         </AuthButton>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:underline font-medium">
-              Login here
-            </Link>
-          </p>
-        </div>
       </form>
-    </AuthLayout>
+
+      <div className="mt-4 text-center">
+        <p className="text-gray-600">
+          Already have an account?{' '}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </>
   );
 };
 

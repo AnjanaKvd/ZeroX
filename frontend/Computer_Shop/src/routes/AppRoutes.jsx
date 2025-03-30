@@ -1,10 +1,11 @@
-import { lazy, Suspense, useContext } from 'react';
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
 import MainLayout from '../components/layouts/MainLayout';
 import AdminLayout from '../components/layouts/AdminLayout';
+import AuthLayout from '../components/layouts/AuthLayout'; 
 import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import { useAuth } from '../context/AuthContext';
 
 // Lazy-loaded pages
 const Home = lazy(() => import('../pages/Home'));
@@ -26,19 +27,20 @@ const Settings = lazy(() => import('../pages/Settings'));
 const Logout = lazy(() => import('../pages/Logout'));
 const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
 const Unauthorized = lazy(() => import('../pages/Unauthorized'));
+const ProductsListing = lazy(() => import('../pages/ProductsListing'));
 
 const ProtectedRoute = ({ roles = [], children }) => {
-  const { user, hasRole, isLoading } = useContext(AuthContext);
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return <LoadingOverlay />;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  if (roles.length > 0 && !roles.some(role => hasRole(role))) {
+  if (roles.length > 0 && !roles.some(role => user.roles?.includes(role))) {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -50,13 +52,19 @@ const AppRoutes = () => {
     <ErrorBoundary>
       <Suspense fallback={<LoadingOverlay />}>
         <Routes>
-          {/* Public routes */}
+          {/* Main store routes */}
           <Route element={<MainLayout />}>
             <Route index element={<Home />} />
+            <Route path="products" element={<ProductsListing />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+
+          {/* Auth routes with proper layout */}
+          <Route element={<AuthLayout />}>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
-            <Route path="cart" element={<Cart />} />
             <Route path="logout" element={<Logout />} />
             <Route path="unauthorized" element={<Unauthorized />} />
           </Route>
@@ -84,9 +92,6 @@ const AppRoutes = () => {
               <Route path="settings" element={<Settings />} />
             </Route>
           </Route>
-
-          {/* 404 route - should be last */}
-          <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
       </Suspense>
     </ErrorBoundary>

@@ -41,38 +41,84 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserProfile = useCallback(async () => {
     try {
+      if (user) {
+        return user;
+      }
+      
       const token = localStorage.getItem('token');
-      if (!token) return null;
+      
+      if (!token) {
+        return null;
+      }
 
-      const decoded = jwtDecode(token);
-      if (decoded.exp * 1000 < Date.now()) {
-        throw new Error('Session expired');
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        
+        if (decoded.exp && decoded.exp < currentTime) {
+          localStorage.removeItem('token');
+          return null;
+        }
+      } catch (error) {
+        localStorage.removeItem('token');
+        return null;
       }
 
       const userData = await getUserProfile();
+      
       return {
         ...userData,
         roles: userData.roles || []
       };
     } catch (error) {
+      console.error('Error in loadUserProfile:', error);
       handleAuthError(error);
       return null;
     }
-  }, [handleAuthError]);
+  }, [user, handleAuthError]);
 
   const initializeAuth = useCallback(async () => {
+    // Skip if we're already initialized
+    if (!isLoading && user) {
+      return;
+    }
+    
     try {
+      // Avoid API calls on pages where auth isn't critical
+      const isPublicPage = location.pathname === '/' || 
+                            location.pathname === '/products' ||
+                            location.pathname.startsWith('/product/');
+                            
+      // Skip profile check on public pages if we've already done it once
+      const skipProfileFetch = sessionStorage.getItem('skipProfileFetch') === 'true';
+      
+      if (skipProfileFetch && isPublicPage) {
+        setIsLoading(false);
+        return;
+      }
+      
       const userData = await loadUserProfile();
       if (userData) {
         setUser(userData);
-        handleRoleRedirection(userData.roles);
+        
+        // Only redirect if user just logged in
+        const justLoggedIn = sessionStorage.getItem('justLoggedIn') === 'true';
+        if (justLoggedIn) {
+          sessionStorage.removeItem('justLoggedIn');
+          handleRoleRedirection(userData.roles);
+        }
+      }
+      
+      // Mark that we've checked the profile
+      if (isPublicPage) {
+        sessionStorage.setItem('skipProfileFetch', 'true');
       }
     } catch (error) {
       handleAuthError(error);
     } finally {
       setIsLoading(false);
     }
-  }, [loadUserProfile, handleAuthError]);
+  }, [loadUserProfile, handleAuthError, location.pathname, isLoading, user]);
 
   useEffect(() => {
     initializeAuth();
@@ -80,10 +126,17 @@ export const AuthProvider = ({ children }) => {
 
   const handleRoleRedirection = useCallback((roles) => {
     const redirectPath = location.state?.from || '/';
+    const currentPath = location.pathname;
     
-    if (roles.includes('ADMIN')) {
+    if (currentPath === redirectPath ||
+        (roles.includes('ADMIN') && currentPath === '/admin/dashboard')) {
+      return;
+    }
+    
+    if (roles.includes('ADMIN') && !currentPath.startsWith('/admin')) {
       navigate('/admin/dashboard', { replace: true });
-    } else if (!redirectPath.startsWith('/admin')) {
+    } 
+    else if (redirectPath !== '/' && currentPath !== redirectPath) {
       navigate(redirectPath, { replace: true });
     }
   }, [navigate, location]);
@@ -91,24 +144,30 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (credentials) => {
     try {
       setIsLoading(true);
-      const { token, ...userData } = await apiLogin(credentials);
+      
+      const loginResponse = await apiLogin(credentials);
+      const { token, ...userData } = loginResponse;
+      
       localStorage.setItem('token', token);
+      sessionStorage.setItem('justLoggedIn', 'true');
+      sessionStorage.removeItem('skipProfileFetch');
       
       const authenticatedUser = {
         ...userData,
-        roles: userData.roles || []
+        roles: userData.role ? [userData.role] : []
       };
       
       setUser(authenticatedUser);
-      handleRoleRedirection(authenticatedUser.roles);
+      
       return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
       handleAuthError(error);
       return { success: false, message: error.message };
     } finally {
       setIsLoading(false);
     }
-  }, [handleAuthError, handleRoleRedirection]);
+  }, [handleAuthError]);
 
   const register = useCallback(async (userData) => {
     try {

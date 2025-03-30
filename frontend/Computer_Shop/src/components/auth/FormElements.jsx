@@ -1,4 +1,6 @@
 // FormElements.jsx
+import { Spinner } from '../common/LoadingSpinner/Spinner';
+
 export const FormInput = ({ id, label, error, register, ...props }) => (
     <div className="mb-4">
       <label htmlFor={id} className="block text-gray-700 font-medium mb-2">

@@ -1,13 +1,12 @@
 // pages/Login.jsx
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { AuthLayout } from '../components/auth/AuthLayout';
+import { useAuth } from '../context/AuthContext';
 import { FormInput, ErrorMessage, AuthButton } from '../components/auth/FormElements';
 
 const Login = () => {
-  const { login, hasRole } = useContext(AuthContext);
+  const { login, hasRole } = useAuth();
   const navigate = useNavigate();
   const { state } = useLocation();
   const [error, setError] = useState('');
@@ -27,7 +26,9 @@ const Login = () => {
         throw new Error(result?.message || 'Login failed');
       }
 
-      navigate(hasRole('ADMIN') ? '/admin/dashboard' : state?.from || '/dashboard');
+      // Handle navigation here, after successful login
+      const redirectTo = state?.from || (hasRole('ADMIN') ? '/admin/dashboard' : '/');
+      navigate(redirectTo);
     } catch (err) {
       setError(err.message || 'An error occurred during login');
       console.error('Login error:', err);
@@ -37,7 +38,7 @@ const Login = () => {
   }, [login, navigate, hasRole, state]);
 
   return (
-    <AuthLayout title="Login to Your Account">
+    <>
       {error && <ErrorMessage message={error} />}
 
       <form onSubmit={handleSubmit(handleLogin)} noValidate>
@@ -64,23 +65,27 @@ const Login = () => {
           error={errors.password}
           register={register('password', {
             required: 'Password is required',
+            minLength: {
+              value: 6,
+              message: 'Password must be at least 6 characters',
+            },
           })}
         />
 
         <AuthButton isLoading={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign In'}
+          Sign In
         </AuthButton>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 hover:underline font-medium">
-              Register here
-            </Link>
-          </p>
-        </div>
       </form>
-    </AuthLayout>
+
+      <div className="mt-4 text-center">
+        <p className="text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Create one
+          </Link>
+        </p>
+      </div>
+    </>
   );
 };
 

@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { debounce } from '../../utils/helpers';
-import { getProducts, getCategories } from '../../services/productService';
-import MainLayout from '../layouts/MainLayout';
-import HeroBanner from "../home/HeroBanner"
-import CategorySection from '../home/CategorySection';
+import { debounce } from '../utils/helpers';
+import { getProducts, getCategories } from '../services/productService';
+import HeroBanner from "../components/home/HeroBanner"
+import CategorySection from '../components/home/CategorySection';
 import ProductGrid from '../components/product/ProductGrid';
-import FilterPanel from '../common/FilterPanel';
-import Pagination from '../common/Pagination';
-import LoadingOverlay from '../common/LoadingOverlay';
-import ErrorDisplay from '../common/ErrorDisplay';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../data/mocks';
+import FilterPanel from '../components/common/FilterPanel';
+import Pagination from '../components/common/Pagination';
+import LoadingOverlay from '../components/common/LoadingOverlay';
+import ErrorDisplay from '../components/common/ErrorDisplay';
+import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../data/mock';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -60,9 +59,12 @@ const Home = () => {
   const debouncedFetch = useCallback(debounce(fetchData, 500), [fetchData]);
 
   useEffect(() => {
-    debouncedFetch();
-    return () => debouncedFetch.cancel();
-  }, [debouncedFetch]);
+    const timeoutId = setTimeout(() => {
+      fetchData();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [filters]);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
@@ -78,7 +80,7 @@ const Home = () => {
   };
 
   return (
-    <MainLayout>
+    <>
       <HeroBanner 
         title="Custom Gaming PCs & Components"
         subtitle="Build Your Ultimate Gaming Rig"
@@ -110,11 +112,10 @@ const Home = () => {
             className="my-8"
           />
 
-          <ProductGrid 
-            products={products}
-            loading={loading}
-            className="my-8"
-          />
+          <div className="my-8">
+            <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
+            <ProductGrid products={products} loading={loading} />
+          </div>
         </LoadingOverlay>
 
         <Pagination
@@ -122,10 +123,10 @@ const Home = () => {
           totalItems={totalItems}
           itemsPerPage={filters.pageSize}
           onPageChange={handlePageChange}
-          className="my-8"
+          className="mt-8"
         />
       </div>
-    </MainLayout>
+    </>
   );
 };
 

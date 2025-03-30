@@ -11,22 +11,32 @@ const api = axios.create({
   timeout: 10000, // 10-second timeout
 });
 
-// Add request interceptor to include Authorization header
+// Add request interceptor to include token in all requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken'); // Retrieve token from localStorage
+    const token = localStorage.getItem('token');
+    
+    // Debug token in request
+    console.log(`API Request to ${config.url}: Authorization token present: ${!!token}`);
+    
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Set Authorization header
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Add response interceptor to handle common errors
+// Add response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
+    console.error('API request failed:', error.config?.url, error);
     const formattedError = handleApiError(error);
     return Promise.reject(formattedError);
   }

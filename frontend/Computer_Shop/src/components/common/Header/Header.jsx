@@ -32,7 +32,7 @@ const Header = () => {
           {/* Navigation */}
           <nav className="hidden md:flex space-x-8 items-center">
             <Link 
-              to="/api/products" 
+              to="/products" 
               className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             >
               Products
