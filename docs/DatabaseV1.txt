@@ -1,0 +1,145 @@
+CREATE TABLE users (
+    user_id CHAR(36) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    loyalty_points INT DEFAULT 0,
+    role ENUM('CUSTOMER', 'ADMIN', 'TECHNICIAN') NOT NULL
+);
+
+CREATE TABLE categories (
+    category_id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    parent_category_id CHAR(36),
+    FOREIGN KEY (parent_category_id) REFERENCES categories(category_id)
+);
+CREATE TABLE products (
+    product_id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    category_id CHAR(36),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id),
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    brand VARCHAR(100),
+    stock_quantity INT NOT NULL CHECK (stock_quantity >= 0),
+    low_stock_threshold INT DEFAULT 5,
+    barcode VARCHAR(100) UNIQUE,
+    warranty_period_months INT DEFAULT 12,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE orders (
+    order_id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    total_amount DECIMAL(10,2) NOT NULL,
+    status ENUM('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED') NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    payment_id VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    order_item_id CHAR(36) PRIMARY KEY,
+    order_id CHAR(36),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    product_id CHAR(36),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    quantity INT NOT NULL CHECK (quantity > 0),
+    price_at_purchase DECIMAL(10,2) NOT NULL
+);
+CREATE TABLE inventory_logs (
+    log_id CHAR(36) PRIMARY KEY,
+    product_id CHAR(36),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    old_quantity INT NOT NULL,
+    new_quantity INT NOT NULL,
+    change_type ENUM('RESTOCK', 'SALE', 'ADJUSTMENT') NOT NULL,
+    changed_by CHAR(36),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE customer_addresses (
+    address_id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    street VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100),
+    zip_code VARCHAR(20) NOT NULL,
+    is_primary BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE reviews (
+    review_id CHAR(36) PRIMARY KEY,
+    product_id CHAR(36),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    user_id CHAR(36),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE repair_requests (
+    repair_id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    device_type ENUM('DESKTOP', 'LAPTOP', 'OTHER') NOT NULL,
+    device_brand VARCHAR(100),
+    device_model VARCHAR(100),
+    issue_details TEXT NOT NULL,
+    status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') NOT NULL,
+    technician_notes TEXT,
+    estimated_cost DECIMAL(10,2),
+    service_fee DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE shipping (
+    shipping_id CHAR(36) PRIMARY KEY,
+    order_id CHAR(36),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    tracking_number VARCHAR(255) UNIQUE,
+    carrier VARCHAR(100) NOT NULL,
+    status ENUM('PROCESSING', 'IN_TRANSIT', 'DELIVERED', 'DELAYED') NOT NULL,
+    estimated_delivery DATE
+);
+
+CREATE TABLE returns (
+    return_id CHAR(36) PRIMARY KEY,
+    order_id CHAR(36),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    reason TEXT NOT NULL,
+    status ENUM('REQUESTED', 'APPROVED', 'REFUNDED') NOT NULL,
+    refund_amount DECIMAL(10,2),
+    processed_at TIMESTAMP
+);
+CREATE TABLE discounts (
+    discount_id CHAR(36) PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    discount_type ENUM('PERCENTAGE', 'FIXED') NOT NULL,
+    value DECIMAL(10,2) NOT NULL,
+    max_uses INT,
+    valid_from TIMESTAMP,
+    valid_until TIMESTAMP
+);
+CREATE TABLE stock_alerts (
+    alert_id CHAR(36) PRIMARY KEY,
+    product_id CHAR(36),
+    current_stock INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER //
+CREATE TRIGGER inventory_update_trigger
+AFTER UPDATE ON products
+FOR EACH ROW
+BEGIN
+    IF NEW.stock_quantity < NEW.low_stock_threshold THEN
+        INSERT INTO stock_alerts (alert_id, product_id, current_stock)
+        VALUES (UUID(), NEW.product_id, NEW.stock_quantity);
+    END IF;
+END;
+//
+DELIMITER ;
