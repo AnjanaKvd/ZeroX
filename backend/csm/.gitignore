@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.env
+backend\csm\src\main\resources\.env
