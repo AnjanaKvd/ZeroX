@@ -55,6 +55,7 @@ const Register = () => {
   });
 
   const onSubmit = async (data) => {
+    console.log("Form data:", data);
     setLoading(true);
     setError("");
     try {

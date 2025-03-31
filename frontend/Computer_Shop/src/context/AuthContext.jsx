@@ -70,6 +70,36 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+
+  const updateProfile = async (profileData) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        "http://localhost:8080/api/auth/myprofile",
+        profileData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setUser(response.data);
+      setError(null);
+      return { success: true };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || "Profile update failed";
+      setError(errorMessage);
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const logout = async () => {
     try {
@@ -90,6 +120,7 @@ export const AuthProvider = ({ children }) => {
       login, 
       register, 
       logout, 
+      updateProfile,
       refreshUser: fetchUserProfile 
     }}>
       {children}
