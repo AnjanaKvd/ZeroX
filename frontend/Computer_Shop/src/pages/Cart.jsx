@@ -1,13 +1,12 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CartContext } from '../context/CartContext';
-import { AuthContext } from '../context/AuthContext';
-import Header from '../components/common/Header/Header';
-import Footer from '../components/common/Footer/Footer';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { Plus, Minus, Trash2 } from 'lucide-react'; // or your icon library
 
 const Cart = () => {
-  const { cartItems, totalPrice, updateQuantity, removeFromCart, clearCart } = useContext(CartContext);
-  const { user } = useContext(AuthContext);
+  const { cartItems, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState('');
   const [discountMessage, setDiscountMessage] = useState(null);
@@ -15,6 +14,16 @@ const Cart = () => {
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
+    }
+  };
+  
+  const incrementQuantity = (productId, currentQty) => {
+    updateQuantity(productId, currentQty + 1);
+  };
+  
+  const decrementQuantity = (productId, currentQty) => {
+    if (currentQty > 1) {
+      updateQuantity(productId, currentQty - 1);
     }
   };
   
@@ -48,175 +57,193 @@ const Cart = () => {
       navigate('/checkout');
     }
   };
-  
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-8">Your Cart</h1>
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <p className="text-lg text-gray-600 mb-6">Your cart is empty</p>
+          <Link 
+            to="/products" 
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-md transition-colors"
+          >
+            Browse Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-8">Your Cart</h1>
       
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Your Shopping Cart</h1>
-        
-        {cartItems.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <p className="text-gray-600 mb-6">Your cart is empty</p>
-            <Link to="/" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-md">
-              Continue Shopping
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              {/* Cart items */}
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="text-left p-4">Product</th>
-                      <th className="text-center p-4">Price</th>
-                      <th className="text-center p-4">Quantity</th>
-                      <th className="text-center p-4">Total</th>
-                      <th className="text-center p-4">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cartItems.map((item) => (
-                      <tr key={item.productId} className="border-t border-gray-200">
-                        <td className="p-4">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded flex items-center justify-center mr-4">
-                              <span className="text-gray-500 text-xs">Image</span>
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-gray-800">{item.name}</h3>
-                              <p className="text-gray-600 text-sm">{item.brand}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="text-center p-4">${item.price.toFixed(2)}</td>
-                        <td className="text-center p-4">
-                          <div className="flex items-center justify-center">
-                            <button
-                              onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                              className="px-2 py-1 bg-gray-200 rounded-l-md"
-                            >
-                              -
-                            </button>
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleQuantityChange(item.productId, parseInt(e.target.value) || 1)}
-                              className="w-12 text-center border-t border-b border-gray-200 py-1"
-                            />
-                            <button
-                              onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
-                              className="px-2 py-1 bg-gray-200 rounded-r-md"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </td>
-                        <td className="text-center p-4 font-medium">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </td>
-                        <td className="text-center p-4">
-                          <button
-                            onClick={() => handleRemoveItem(item.productId)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="mt-4 flex justify-between">
-                <Link to="/" className="text-blue-600 hover:underline">
-                  ← Continue Shopping
-                </Link>
-                <button
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to clear your cart?')) {
-                      clearCart();
-                    }
-                  }}
-                  className="text-red-600 hover:underline"
-                >
-                  Clear Cart
-                </button>
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Cart Items */}
+        <div className="lg:w-2/3">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="border-b p-4 bg-gray-50">
+              <div className="grid grid-cols-6 gap-4 font-medium">
+                <div className="col-span-3">Product</div>
+                <div className="text-center">Price</div>
+                <div className="text-center">Quantity</div>
+                <div className="text-right">Total</div>
               </div>
             </div>
             
-            <div className="lg:col-span-1">
-              {/* Cart summary */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-                
-                <div className="border-t border-gray-200 pt-4 mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${totalPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">Calculated at checkout</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Tax</span>
-                    <span className="font-medium">Calculated at checkout</span>
+            {cartItems.map(item => {
+              const itemId = item.productId || item.id;
+              const itemPrice = Number(item.price);
+              const itemTotal = itemPrice * item.quantity;
+              
+              return (
+                <div key={itemId} className="border-b p-4">
+                  <div className="grid grid-cols-6 gap-4 items-center">
+                    <div className="col-span-3 flex items-center space-x-4">
+                      <div className="w-16 h-16 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
+                        {item.image ? (
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Link 
+                          to={`/products/${itemId}`}
+                          className="font-medium hover:text-blue-600 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">${itemPrice.toFixed(2)}</div>
+                    
+                    <div className="flex items-center justify-center">
+                      <div className="flex items-center border rounded">
+                        <button 
+                          onClick={() => decrementQuantity(itemId, item.quantity)}
+                          disabled={item.quantity <= 1}
+                          className="px-2 py-1 hover:bg-gray-100 disabled:opacity-50"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        
+                        <input 
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => handleQuantityChange(itemId, parseInt(e.target.value))}
+                          className="w-12 text-center py-1 focus:outline-none"
+                        />
+                        
+                        <button 
+                          onClick={() => incrementQuantity(itemId, item.quantity)}
+                          className="px-2 py-1 hover:bg-gray-100"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-end space-x-2">
+                      <span className="font-medium">${itemTotal.toFixed(2)}</span>
+                      <button 
+                        onClick={() => handleRemoveItem(itemId)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <div className="flex justify-between">
-                    <span className="text-lg font-semibold">Total</span>
-                    <span className="text-lg font-bold">${totalPrice.toFixed(2)}</span>
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <label htmlFor="discountCode" className="block text-gray-700 font-medium mb-2">
-                    Discount Code
-                  </label>
-                  <div className="flex">
-                    <input
-                      type="text"
-                      id="discountCode"
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
-                      className="flex-grow border border-gray-300 rounded-l-md p-3"
-                      placeholder="Enter code"
-                    />
-                    <button
-                      onClick={handleApplyDiscount}
-                      className="bg-gray-200 hover:bg-gray-300 px-4 rounded-r-md"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  {discountMessage && (
-                    <p className={`text-sm mt-1 ${discountMessage.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                      {discountMessage.text}
-                    </p>
-                  )}
-                </div>
-                
-                <button
-                  onClick={handleCheckout}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-md transition duration-300"
-                >
-                  Proceed to Checkout
-                </button>
-              </div>
+              );
+            })}
+            
+            <div className="p-4 flex justify-between items-center">
+              <button 
+                onClick={() => clearCart()}
+                className="text-red-600 hover:text-red-800 font-medium"
+              >
+                Clear Cart
+              </button>
+              <Link 
+                to="/products" 
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Continue Shopping
+              </Link>
             </div>
           </div>
-        )}
-      </main>
-      
-      <Footer />
+        </div>
+        
+        {/* Order Summary */}
+        <div className="lg:w-1/3">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-medium">${totalPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span className="font-medium">Calculated at checkout</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax</span>
+                <span className="font-medium">Calculated at checkout</span>
+              </div>
+              <div className="border-t pt-4 flex justify-between font-bold">
+                <span>Total</span>
+                <span>${totalPrice.toFixed(2)}</span>
+              </div>
+            </div>
+            
+            {/* Discount Code */}
+            <div className="mb-6">
+              <div className="flex space-x-2">
+                <input 
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Discount code"
+                  className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button 
+                  onClick={handleApplyDiscount}
+                  className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded"
+                >
+                  Apply
+                </button>
+              </div>
+              {discountMessage && (
+                <p className={`mt-2 text-sm ${discountMessage.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+                  {discountMessage.text}
+                </p>
+              )}
+            </div>
+            
+            <button 
+              onClick={handleCheckout}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-md transition-colors"
+            >
+              Proceed to Checkout
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

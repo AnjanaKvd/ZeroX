@@ -25,7 +25,7 @@ const Profile = () => {
     
     try {
       // Call the actual API endpoint
-      const response = await api.put('/api/users/profile', data);
+      const response = await api.put('/api/auth/profile', data);
       setUpdateSuccess(true);
       setIsEditing(false);
     } catch (error) {

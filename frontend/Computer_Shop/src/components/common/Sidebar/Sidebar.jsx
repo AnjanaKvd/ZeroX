@@ -1,9 +1,6 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const Sidebar = ({ isOpen, onToggle }) => {
   const categories = [
     { id: 1, name: 'Laptops', icon: '💻' },
     { id: 2, name: 'Desktop PCs', icon: '🖥️' },
@@ -17,7 +14,7 @@ const Sidebar = () => {
       isOpen ? 'w-64' : 'w-20'
     }`}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className="p-4 w-full flex items-center justify-center hover:bg-gray-100"
       >
         {isOpen ? '←' : '→'}

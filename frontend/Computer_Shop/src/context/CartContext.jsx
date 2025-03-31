@@ -1,98 +1,169 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useContext, useRef } from 'react';
+import { useToast } from './ToastContext';
 
 export const CartContext = createContext();
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [discountCode, setDiscountCode] = useState(null);
+  const { cartAdded, cartRemoved, success, error } = useToast();
   
+  // Refs to track cart operations
+  const pendingToastRef = useRef(null);
+  
+  // Load cart from localStorage on initial render
   useEffect(() => {
-    // Load cart from local storage
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
         setCartItems(parsedCart);
       } catch (error) {
-        console.error('Error parsing cart from local storage', error);
+        console.error('Failed to parse cart from localStorage:', error);
+        setCartItems([]);
       }
     }
   }, []);
   
+  // Calculate total price whenever cart changes
   useEffect(() => {
-    // Calculate total price
     const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity, 
+      (sum, item) => sum + (Number(item.price) * item.quantity),
       0
     );
     setTotalPrice(total);
     
-    // Save cart to local storage
+    // Save to localStorage
     localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
-  
-  const addToCart = (product, quantity = 1) => {
+    
+    // Show toast if we have a pending operation
+    if (pendingToastRef.current) {
+      const { type, message } = pendingToastRef.current;
+      if (type === 'added') {
+        cartAdded(message);
+      } else if (type === 'removed') {
+        cartRemoved(message);
+      } else if (type === 'updated') {
+        success(message);
+      }
+      pendingToastRef.current = null;
+    }
+  }, [cartItems, cartAdded, cartRemoved, success]);
+
+  // Add item to cart with proper duplicate handling
+  const addToCart = (product) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.productId === product.productId);
+      // Use productId or id for consistency
+      const productId = product.productId || product.id;
       
-      if (existingItem) {
-        // Update quantity of existing item
-        return prevItems.map(item => 
-          item.productId === product.productId
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+      // Check if product already exists in cart
+      const existingItemIndex = prevItems.findIndex(
+        item => (item.productId || item.id) === productId
+      );
+      
+      if (existingItemIndex >= 0) {
+        // Product exists, update quantity
+        const updatedItems = [...prevItems];
+        const newQuantity = updatedItems[existingItemIndex].quantity + (product.quantity || 1);
+        updatedItems[existingItemIndex] = {
+          ...updatedItems[existingItemIndex],
+          quantity: newQuantity
+        };
+        
+        // Queue toast notification for updated quantity
+        pendingToastRef.current = { 
+          type: 'updated', 
+          message: `${product.name}: qty ${newQuantity}` 
+        };
+        
+        return updatedItems;
       } else {
-        // Add new item
-        return [...prevItems, { 
-          ...product, 
-          quantity 
-        }];
+        // Product doesn't exist, add new item
+        // Ensure quantity is at least 1
+        const quantity = product.quantity || 1;
+        
+        // Queue toast notification for added item
+        pendingToastRef.current = { 
+          type: 'added', 
+          message: `${product.name} added to cart` 
+        };
+        
+        return [...prevItems, { ...product, quantity }];
       }
     });
   };
   
-  const removeFromCart = (productId) => {
-    setCartItems(prevItems => 
-      prevItems.filter(item => item.productId !== productId)
-    );
-  };
-  
-  const updateQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
+  // Update quantity with validation
+  const updateQuantity = (productId, newQuantity) => {
+    if (newQuantity < 1) return; // Don't allow quantities less than 1
     
-    setCartItems(prevItems => 
-      prevItems.map(item => 
-        item.productId === productId
-          ? { ...item, quantity }
-          : item
-      )
+    setCartItems(prevItems => {
+      const itemToUpdate = prevItems.find(item => (item.productId || item.id) === productId);
+      if (itemToUpdate) {
+        pendingToastRef.current = { 
+          type: 'updated', 
+          message: `${itemToUpdate.name}: qty ${newQuantity}` 
+        };
+      }
+      
+      return prevItems.map(item => {
+        const itemId = item.productId || item.id;
+        if (itemId === productId) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+    });
+  };
+  
+  // Remove item with proper refresh
+  const removeFromCart = (productId) => {
+    // Find the item being removed to get its name for the toast
+    const itemToRemove = cartItems.find(item => 
+      (item.productId || item.id) === productId
     );
+    
+    if (itemToRemove) {
+      pendingToastRef.current = { 
+        type: 'removed', 
+        message: `Removed: ${itemToRemove.name}` 
+      };
+      
+      setCartItems(prevItems => 
+        prevItems.filter(item => (item.productId || item.id) !== productId)
+      );
+    }
   };
   
+  // Clear cart
   const clearCart = () => {
+    pendingToastRef.current = { 
+      type: 'updated', 
+      message: 'Cart cleared' 
+    };
     setCartItems([]);
-    setDiscountCode(null);
+    localStorage.removeItem('cart');
   };
-  
-  const applyDiscount = (discount) => {
-    setDiscountCode(discount);
-  };
-  
+
   return (
-    <CartContext.Provider value={{ 
-      cartItems, 
-      totalPrice, 
-      discountCode,
-      addToCart, 
-      removeFromCart, 
-      updateQuantity, 
+    <CartContext.Provider value={{
+      cartItems,
+      totalPrice,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
       clearCart,
-      applyDiscount
+      discountCode,
+      setDiscountCode
     }}>
       {children}
     </CartContext.Provider>
