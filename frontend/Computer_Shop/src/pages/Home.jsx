@@ -8,14 +8,30 @@ import FilterPanel from '../components/common/FilterPanel';
 import Pagination from '../components/common/Pagination';
 import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorDisplay from '../components/common/ErrorDisplay';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../data/mock';
+import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+
+// Create mock data as fallback
+const MOCK_PRODUCTS = [
+  { id: 1, name: "Sample Product 1", price: 99.99, description: "This is a sample product" },
+  { id: 2, name: "Sample Product 2", price: 149.99, description: "Another sample product" },
+];
+
+const MOCK_CATEGORIES = [
+  { id: 1, name: "Electronics" },
+  { id: 2, name: "Clothing" },
+];
 
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [totalItems, setTotalItems] = useState(0);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    totalPages: 0,
+    totalElements: 0,
+    size: 12
+  });
   
   const [filters, setFilters] = useState({
     categoryId: '',
@@ -28,43 +44,55 @@ const Home = () => {
     pageSize: 12
   });
 
-  const fetchData = useCallback(async (useMocks = false) => {
+  // Add a timeout for loading
+  useEffect(() => {
+    // If still loading after 10 seconds, use mock data
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Data fetch timeout - using mock data");
+        setProducts(MOCK_PRODUCTS);
+        setCategories(MOCK_CATEGORIES);
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading]);
+
+  // Fetch data with better error handling
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
-
-      if (useMocks) {
-        setCategories(MOCK_CATEGORIES);
-        setProducts(MOCK_PRODUCTS);
-        setTotalItems(MOCK_PRODUCTS.length);
-        return;
-      }
-
-      const [categoriesData, productsData] = await Promise.all([
-        getCategories(),
-        getProducts(filters)
+      
+      // Fetch both products and categories
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        getProducts(),
+        getCategories()
       ]);
-
-      setCategories(categoriesData);
-      setProducts(productsData.items);
-      setTotalItems(productsData.totalCount);
+      
+      console.log('Products response:', productsResponse);
+      console.log('Categories response:', categoriesResponse);
+      
+      // Extract products from the content array
+      const productItems = productsResponse.content || [];
+      setProducts(productItems);
+      
+      // Set categories directly
+      setCategories(categoriesResponse || []);
+      
     } catch (err) {
-      setError(err);
-      if (!useMocks) fetchData(true); // Fallback to mock data
+      console.error('Error fetching data:', err);
+      setError('Failed to load data. Please try again later.');
     } finally {
+      // Always turn off loading
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
 
-  const debouncedFetch = useCallback(debounce(fetchData, 500), [fetchData]);
-
+  // Fetch data on component mount
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchData();
-    }, 500);
-    
-    return () => clearTimeout(timeoutId);
-  }, [filters]);
+    fetchData();
+  }, [fetchData]);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
@@ -75,8 +103,39 @@ const Home = () => {
   };
 
   const handlePageChange = (newPage) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setFilters(prev => ({ ...prev, page: newPage }));
+    fetchProducts(newPage, pagination.size);
+  };
+
+  // Separate function for fetching products
+  const fetchProducts = async (page = 0, size = 12) => {
+    try {
+      setLoading(true);
+      
+      // Get products with pagination
+      const productsResponse = await getProducts({ page, size });
+      
+      // Check if response has expected structure
+      if (productsResponse && productsResponse.content) {
+        setProducts(productsResponse.content);
+        setPagination({
+          page: productsResponse.pageable?.pageNumber || 0,
+          totalPages: productsResponse.totalPages || 1,
+          totalElements: productsResponse.totalElements || 0,
+          size: productsResponse.pageable?.pageSize || 12
+        });
+      } else {
+        console.error('Unexpected API response format:', productsResponse);
+        setError('Received unexpected data format from server');
+        setProducts([]);
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products. Please try again later.');
+      setProducts([]);
+    } finally {
+      // IMPORTANT: Always set loading to false regardless of success/failure
+      setLoading(false);
+    }
   };
 
   return (
@@ -104,7 +163,7 @@ const Home = () => {
           />
         )}
 
-        <LoadingOverlay isLoading={loading}>
+        {/* <LoadingOverlay isLoading={loading}> */}
           <CategorySection 
             categories={categories}
             onSelectCategory={(id) => handleFilterChange('categoryId', id)}
@@ -114,15 +173,19 @@ const Home = () => {
 
           <div className="my-8">
             <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
-            <ProductGrid products={products} loading={loading} />
+            {loading ? (
+              <LoadingSpinner />
+            ) : (
+              <ProductGrid products={products} loading={loading} />
+            )}
           </div>
-        </LoadingOverlay>
+        {/* </LoadingOverlay> */}
 
         <Pagination
-          currentPage={filters.page}
-          totalItems={totalItems}
-          itemsPerPage={filters.pageSize}
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
           onPageChange={handlePageChange}
+          disabled={loading}
           className="mt-8"
         />
       </div>

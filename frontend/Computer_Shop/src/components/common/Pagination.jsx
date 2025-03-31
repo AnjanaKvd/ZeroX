@@ -1,113 +1,101 @@
 // src/components/common/Pagination.jsx
-import { useEffect, useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const Pagination = ({
   currentPage,
-  totalItems,
-  itemsPerPage,
+  totalPages,
   onPageChange,
-  className,
+  disabled = false,
   showPageNumbers = true,
+  maxPageButtons = 5,
+  className,
   showItemCount = true,
 }) => {
-  const [totalPages, setTotalPages] = useState(1);
-  
-  useEffect(() => {
-    setTotalPages(Math.ceil(totalItems / itemsPerPage));
-  }, [totalItems, itemsPerPage]);
+  // Don't render pagination if there's only one page
+  if (totalPages <= 1) {
+    return null;
+  }
 
-  const handlePageChange = (newPage) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    onPageChange(newPage);
-  };
-
+  // Generate page numbers to display
   const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
+    const pageNumbers = [];
     
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
-
-    if (totalPages <= maxVisiblePages) {
-      startPage = 1;
-      endPage = totalPages;
-    } else if (currentPage <= 3) {
-      startPage = 1;
-      endPage = maxVisiblePages;
-    } else if (currentPage >= totalPages - 2) {
-      startPage = totalPages - 4;
-      endPage = totalPages;
+    // Calculate range of page numbers to show
+    let startPage = Math.max(0, currentPage - Math.floor(maxPageButtons / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxPageButtons - 1);
+    
+    // Adjust if we're at the end
+    if (endPage - startPage + 1 < maxPageButtons) {
+      startPage = Math.max(0, endPage - maxPageButtons + 1);
     }
-
+    
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
+      pageNumbers.push(i);
     }
-
-    return pages;
+    
+    return pageNumbers;
   };
-
-  if (totalPages <= 1) return null;
 
   return (
     <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
       {showItemCount && (
         <div className="text-sm text-gray-600">
-          Showing {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
+          Showing {((currentPage - 1) * 12) + 1} - {Math.min(currentPage * 12, totalPages * 12)} of {totalPages * 12} items
         </div>
       )}
       
       <nav className="flex gap-1">
         <button
-          onClick={() => handlePageChange(1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-          aria-label="First page"
-        >
-          «
-        </button>
-        
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 0 || disabled}
+          className={`px-3 py-1 rounded ${
+            currentPage === 0 || disabled 
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
           aria-label="Previous page"
         >
           <ChevronLeftIcon className="w-5 h-5" />
         </button>
-
-        {showPageNumbers && getPageNumbers().map((page) => (
-          <button
-            key={page}
-            onClick={() => handlePageChange(page)}
-            className={`w-10 h-10 rounded-md ${
-              currentPage === page 
-                ? 'bg-blue-600 text-white' 
-                : 'hover:bg-gray-100'
-            }`}
-            aria-current={currentPage === page ? 'page' : undefined}
-          >
-            {page}
-          </button>
-        ))}
-
+        
+        {showPageNumbers && (
+          <div className="flex space-x-1">
+            {getPageNumbers().map(pageNum => (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                disabled={disabled}
+                className={`w-10 h-10 rounded flex items-center justify-center ${
+                  pageNum === currentPage
+                    ? 'bg-blue-600 text-white font-bold'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                {pageNum + 1}
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {!showPageNumbers && (
+          <span className="text-gray-700">
+            Page {currentPage + 1} of {totalPages}
+          </span>
+        )}
+        
         <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1 || disabled}
+          className={`px-3 py-1 rounded ${
+            currentPage >= totalPages - 1 || disabled
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
           aria-label="Next page"
         >
           <ChevronRightIcon className="w-5 h-5" />
-        </button>
-        
-        <button
-          onClick={() => handlePageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-          aria-label="Last page"
-        >
-          »
         </button>
       </nav>
     </div>
@@ -116,11 +104,12 @@ const Pagination = ({
 
 Pagination.propTypes = {
   currentPage: PropTypes.number.isRequired,
-  totalItems: PropTypes.number.isRequired,
-  itemsPerPage: PropTypes.number.isRequired,
+  totalPages: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,
-  className: PropTypes.string,
+  disabled: PropTypes.bool,
   showPageNumbers: PropTypes.bool,
+  maxPageButtons: PropTypes.number,
+  className: PropTypes.string,
   showItemCount: PropTypes.bool,
 };
 

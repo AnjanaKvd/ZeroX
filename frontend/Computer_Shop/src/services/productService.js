@@ -1,12 +1,39 @@
 import api from './api';
 
-export const getProducts = async (filters = {}) => {
+export const getProducts = async (params = {}) => {
   try {
-    const response = await api.get('/products', { params: filters });
-    return response.data;
+    // Build query string from params
+    const queryParams = new URLSearchParams();
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.size !== undefined) queryParams.append('size', params.size);
+    if (params.sort) queryParams.append('sort', params.sort);
+    
+    // Add any filters if needed
+    if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+    if (params.query) queryParams.append('query', params.query);
+    
+    const queryString = queryParams.toString();
+    const url = `/api/products${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
+    console.error('Product service error:', error);
+    // Return an object that matches expected structure
+    return { 
+      content: [], 
+      totalElements: 0,
+      totalPages: 0,
+      pageable: {
+        pageNumber: 0,
+        pageSize: 12
+      }
+    };
   }
 };
 
@@ -22,17 +49,16 @@ export const getProductById = async (productId) => {
 
 export const getCategories = async () => {
   try {
-    console.log('Fetching categories');
-    const response = await api.get('/categories');
-    console.log('Categories response:', response.data);
-    return response.data;
+    const response = await fetch('/api/categories');
+    
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    throw {
-      message: error.message || 'Failed to fetch categories',
-      type: error.type || 'unknown',
-      status: error.response?.status
-    };
+    console.error('Category service error:', error);
+    return [];
   }
 };
 

@@ -4,6 +4,7 @@ import { Star, ShoppingCart, Plus, Minus } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
 import { getProducts } from '../../services/productService';
 import ProductCard from './ProductCard';
+import LoadingSpinner from '../common/LoadingSpinner/LoadingSpinner';
 
 // Barcode Component
 const UPCBarcode = ({ upc }) => {
@@ -57,21 +58,33 @@ const StockStatus = ({ inStock }) => {
 };
 
 // Updated Product List Component (Grid View)
-const ProductGrid = ({ products, loading }) => {
-  if (loading) return <div className="animate-pulse">Loading products...</div>;
+const ProductGrid = ({ products = [], loading = false }) => {
+  // Ensure products is always an array
+  const productArray = Array.isArray(products) ? products : [];
   
-  if (!products || products.length === 0) {
+  if (!loading && productArray.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        No products found
+      <div className="text-center py-10 text-gray-500">
+        No products found.
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {products.map(product => (
-        <ProductCard key={product.productId} product={product} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {productArray.map((product) => (
+        <ProductCard 
+          key={product.productId || product.id} 
+          product={product} 
+        />
+      ))}
+      
+      {/* Show empty placeholder cards during loading */}
+      {loading && productArray.length === 0 && Array(4).fill(0).map((_, index) => (
+        <div 
+          key={`skeleton-${index}`} 
+          className="bg-gray-100 rounded-lg animate-pulse h-64"
+        />
       ))}
     </div>
   );

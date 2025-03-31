@@ -4,31 +4,40 @@ import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
+  
+  // Debug log to see individual product structure
+  console.log('ProductCard received product:', product);
 
   const handleAddToCart = (e) => {
-    e.preventDefault(); // Prevent navigation
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
     
     // Create a cart item with correct ID structure
     const cartItem = {
-      id: product.productId || product.id, // Handle both ID formats
-      productId: product.productId || product.id,
+      id: product.productId,
+      productId: product.productId,
       name: product.name,
       price: product.price,
-      image: product.imagePath || product.image,
+      image: product.imagePath,
       quantity: 1
     };
     
     addToCart(cartItem);
   };
 
+  // Guard clause to prevent rendering with invalid data
+  if (!product || !product.productId) {
+    console.error('Invalid product data:', product);
+    return null;
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link to={`/products/${product.productId || product.id}`}>
+      <Link to={`/products/${product.productId}`}>
         <div className="h-48 bg-gray-200 flex items-center justify-center">
-          {product.imagePath || product.image ? (
+          {product.imagePath ? (
             <img 
-              src={product.imagePath || product.image} 
+              src={product.imagePath} 
               alt={product.name} 
               className="h-full w-full object-cover"
             />

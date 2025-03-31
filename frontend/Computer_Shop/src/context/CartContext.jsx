@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useRef } from 'react';
+import { useToast } from './ToastContext';
 
 export const CartContext = createContext();
 
@@ -14,6 +15,10 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [discountCode, setDiscountCode] = useState(null);
+  const { cartAdded, cartRemoved, success, error } = useToast();
+  
+  // Refs to track cart operations
+  const pendingToastRef = useRef(null);
   
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -39,7 +44,20 @@ export const CartProvider = ({ children }) => {
     
     // Save to localStorage
     localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    
+    // Show toast if we have a pending operation
+    if (pendingToastRef.current) {
+      const { type, message } = pendingToastRef.current;
+      if (type === 'added') {
+        cartAdded(message);
+      } else if (type === 'removed') {
+        cartRemoved(message);
+      } else if (type === 'updated') {
+        success(message);
+      }
+      pendingToastRef.current = null;
+    }
+  }, [cartItems, cartAdded, cartRemoved, success]);
 
   // Add item to cart with proper duplicate handling
   const addToCart = (product) => {
@@ -55,15 +73,30 @@ export const CartProvider = ({ children }) => {
       if (existingItemIndex >= 0) {
         // Product exists, update quantity
         const updatedItems = [...prevItems];
+        const newQuantity = updatedItems[existingItemIndex].quantity + (product.quantity || 1);
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + (product.quantity || 1)
+          quantity: newQuantity
         };
+        
+        // Queue toast notification for updated quantity
+        pendingToastRef.current = { 
+          type: 'updated', 
+          message: `${product.name}: qty ${newQuantity}` 
+        };
+        
         return updatedItems;
       } else {
         // Product doesn't exist, add new item
         // Ensure quantity is at least 1
         const quantity = product.quantity || 1;
+        
+        // Queue toast notification for added item
+        pendingToastRef.current = { 
+          type: 'added', 
+          message: `${product.name} added to cart` 
+        };
+        
         return [...prevItems, { ...product, quantity }];
       }
     });
@@ -73,24 +106,50 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity < 1) return; // Don't allow quantities less than 1
     
-    setCartItems(prevItems => 
-      prevItems.map(item => 
-        (item.productId || item.id) === productId 
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
-    );
+    setCartItems(prevItems => {
+      const itemToUpdate = prevItems.find(item => (item.productId || item.id) === productId);
+      if (itemToUpdate) {
+        pendingToastRef.current = { 
+          type: 'updated', 
+          message: `${itemToUpdate.name}: qty ${newQuantity}` 
+        };
+      }
+      
+      return prevItems.map(item => {
+        const itemId = item.productId || item.id;
+        if (itemId === productId) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+    });
   };
   
   // Remove item with proper refresh
   const removeFromCart = (productId) => {
-    setCartItems(prevItems => 
-      prevItems.filter(item => (item.productId || item.id) !== productId)
+    // Find the item being removed to get its name for the toast
+    const itemToRemove = cartItems.find(item => 
+      (item.productId || item.id) === productId
     );
+    
+    if (itemToRemove) {
+      pendingToastRef.current = { 
+        type: 'removed', 
+        message: `Removed: ${itemToRemove.name}` 
+      };
+      
+      setCartItems(prevItems => 
+        prevItems.filter(item => (item.productId || item.id) !== productId)
+      );
+    }
   };
   
   // Clear cart
   const clearCart = () => {
+    pendingToastRef.current = { 
+      type: 'updated', 
+      message: 'Cart cleared' 
+    };
     setCartItems([]);
     localStorage.removeItem('cart');
   };

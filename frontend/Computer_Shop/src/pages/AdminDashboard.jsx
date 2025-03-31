@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Edit, Search, ChevronUpDown } from 'lucide-react';
+import { Plus, Trash2, Edit, Search, ChevronsUpDown } from 'lucide-react';
 import { 
   getProducts, 
   deleteProduct,
   createProduct,
   updateProduct
 } from '../services/productService';
-import ProductModal from '../components/ProductModal';
-import ConfirmModal from '../components/ConfirmModal';
-import Pagination from '../components/Pagination';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ErrorMessage from '../components/ErrorMessage';
+import ProductModal from '../components/admin/ProductModal';
+import ConfirmModal from '../components/admin/ConfirmModal';
+import Pagination from '../components/common/Pagination';
+import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import { ErrorMessage} from '../components/auth/FormElements';
 import { debounce } from '../utils/helpers';
 
 const AdminDashboard = () => {
@@ -40,21 +40,25 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const data = await getProducts(filters);
-      setProducts(data.items);
-      setTotalItems(data.totalCount);
+      setProducts(data.items || []);
+      setTotalItems(data.totalCount || 0);
     } catch (err) {
-      setError(err.message);
+      console.error("Error fetching products:", err);
+      setError(err.message || "Failed to load products");
+      setProducts([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
   }, [filters]);
 
-  const debouncedFetch = useCallback(debounce(fetchProducts, 500), [fetchProducts]);
-
   useEffect(() => {
-    debouncedFetch();
-    return () => debouncedFetch.cancel();
-  }, [debouncedFetch]);
+    const timeoutId = setTimeout(() => {
+      fetchProducts();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [fetchProducts]);
 
   const handleSearchChange = (e) => {
     setFilters(prev => ({ ...prev, query: e.target.value, page: 1 }));
@@ -167,7 +171,7 @@ const AdminDashboard = () => {
                         onClick={() => handleSort(header.toLowerCase())}
                         className="hover:text-gray-700"
                       >
-                        <ChevronUpDown size={16} />
+                        <ChevronsUpDown size={16} />
                       </button>
                     )}
                   </div>
