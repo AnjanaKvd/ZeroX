@@ -8,6 +8,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 // src/main/java/com/zerox/csm/dto/ProductDto.java
 public class ProductDto {
@@ -21,7 +22,8 @@ public class ProductDto {
             @PositiveOrZero int stockQuantity,
             @PositiveOrZero int lowStockThreshold,
             String barcode,
-            Integer warrantyPeriodMonths
+            Integer warrantyPeriodMonths,
+            MultipartFile image
     ) {}
 
     public record ProductResponse(
@@ -36,7 +38,8 @@ public class ProductDto {
             int lowStockThreshold,
             String barcode,
             Integer warrantyPeriodMonths,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            String imagePath
     ) {}
     
     public record ProductSearchRequest(

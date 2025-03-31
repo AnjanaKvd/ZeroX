@@ -2,49 +2,117 @@ import api from './api';
 
 export const getProducts = async (params = {}) => {
   try {
-    console.log('Fetching products with params:', params);
-    const response = await api.get('/api/products', { params });
-    console.log('Products response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    if (error.code === 'ECONNABORTED') {
-      console.error('Request timed out. API server may be down or slow.');
+    // Build query string from params
+    const queryParams = new URLSearchParams();
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.size !== undefined) queryParams.append('size', params.size);
+    if (params.sort) queryParams.append('sort', params.sort);
+    
+    // Add any filters if needed
+    if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+    if (params.query) queryParams.append('query', params.query);
+    
+    const queryString = queryParams.toString();
+    const url = `/api/products${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
-    throw error;
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Product service error:', error);
+    // Return an object that matches expected structure
+    return { 
+      content: [], 
+      totalElements: 0,
+      totalPages: 0,
+      pageable: {
+        pageNumber: 0,
+        pageSize: 12
+      }
+    };
   }
 };
 
 export const getProductById = async (productId) => {
   try {
-    console.log(`Fetching product with ID: ${productId}`);
-    const response = await api.get(`/api/products/${productId}`);
-    console.log('Product details response:', response.data);
+    const response = await api.get(`/products/${productId}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching product details:', error);
+    console.error(`Error fetching product ${productId}:`, error);
     throw error;
   }
 };
 
 export const getCategories = async () => {
   try {
-    console.log('Fetching categories');
-    const response = await api.get('/api/categories');
-    console.log('Categories response:', response.data);
-    return response.data;
+    const response = await fetch('/api/categories');
+    
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    throw error;
+    console.error('Category service error:', error);
+    return [];
   }
 };
 
 export const getProductReviews = async (productId, params = {}) => {
   try {
-    const response = await api.get(`/api/reviews/product/${productId}`, { params });
+    const response = await api.get(`/reviews/product/${productId}`, { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching product reviews:', error);
+    throw error;
+  }
+};
+
+export const deleteProduct = async (productId) => {
+  try {
+    await api.delete(`/products/${productId}`);
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+export const createProduct = async (productData) => {
+  try {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(productData)) {
+      formData.append(key, value);
+    }
+    const response = await api.post('/products', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
+};
+
+export const updateProduct = async (productId, productData) => {
+  try {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(productData)) {
+      formData.append(key, value);
+    }
+    const response = await api.put(`/products/${productId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating product:', error);
     throw error;
   }
 }; 
