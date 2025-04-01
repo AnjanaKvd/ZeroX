@@ -6,8 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import { AuthLayout } from "../components/layouts/AuthLayout";
 import { FormInput, ErrorMessage, AuthButton } from "../components/auth/FormElements";
 import { z } from "zod";
-import Header from "../components/common/Header/Header";
-import Footer from "../components/common/Footer/Footer";
 
 const signUpSchema = z
   .object({
@@ -56,7 +54,6 @@ const Register = () => {
 
   return (
     <>
-      <Header />
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
           <h3 className="mb-4 text-2xl font-semibold text-center">Sign Up</h3>
@@ -76,7 +73,6 @@ const Register = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 };

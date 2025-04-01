@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { z } from "zod";
-import Header from "../components/common/Header/Header";
-import Footer from "../components/common/Footer/Footer";
 import { FormInput, ErrorMessage, AuthButton } from "../components/auth/FormElements";
 
 const loginSchema = z.object({
@@ -55,7 +53,6 @@ const Login = () => {
 
   return (
     <>
-      <Header />
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
           <h3 className="mb-4 text-2xl font-semibold text-center">Sign In</h3>
@@ -94,7 +91,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 };
