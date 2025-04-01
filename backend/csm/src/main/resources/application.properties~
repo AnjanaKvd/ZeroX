@@ -1,0 +1,33 @@
+spring.application.name=csm
+
+# Database Configuration
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Hibernate/JPA Configuration
+spring.jpa.hibernate.ddl-auto=update
+#spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# JWT Configuration
+application.security.jwt.secret-key=${JWT_SECRET_KEY}
+application.security.jwt.expiration=${JWT_EXPIRATION}
+
+# Server Configuration
+#server.port=${SERVER_PORT}
+server.port=8080
+server.servlet.context-path=/
+server.error.include-message=always
+
+# Logging Configuration
+logging.level.root=INFO
+logging.level.com.zerox.csm=DEBUG
+
+spring.main.allow-bean-definition-overriding=true
+
+# Add this line to activate the dev profile
+spring.profiles.active=dev

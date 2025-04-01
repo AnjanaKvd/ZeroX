@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import EditProfile from "../components/my_profile/EditProfile";
-import "../index.css";
 import ChangePassword from "../components/my_profile/ChangePassword";
+import Header from "../components/common/Header/Header";
+import Footer from "../components/common/Footer/Footer";
 
 const MyProfile = () => {
   const [selectedTab, setSelectedTab] = useState("edit");
 
   return (
     <>
+      <Header />
       <div className="flex min-h-screen bg-gray-100">
         {/* Sidebar Navigation */}
         <div className="w-1/4 bg-white shadow-lg p-4">
@@ -57,16 +59,19 @@ const MyProfile = () => {
           {selectedTab === "edit" && (
             <div>
               <EditProfile />
+              <br />
+              <hr />
               <div className="mt-6">
                 <ChangePassword />
               </div>
             </div>
           )}
           {selectedTab === "orders" && <p>Orders Section</p>}
-          {selectedTab === "rewards" && <p> Reward Points Section</p>}
+          {selectedTab === "rewards" && <p>Reward Points Section</p>}
           {selectedTab === "reviews" && <p>Reviews Section</p>}
         </div>
       </div>
+      <Footer />
     </>
   );
 };

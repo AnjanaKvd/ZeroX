@@ -106,4 +106,21 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+
+
+    @ExceptionHandler(PasswordChangeException.class)
+    public ResponseEntity<?> handlePasswordChangeException(
+            PasswordChangeException ex,
+            HttpServletRequest request) {
+
+        if (wantsJson(request)) {
+            ErrorResponse response = new ErrorResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    ex.getMessage(),
+                    LocalDateTime.now()
+            );
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
 }

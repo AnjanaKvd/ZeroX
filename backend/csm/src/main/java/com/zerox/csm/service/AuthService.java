@@ -3,7 +3,8 @@ package com.zerox.csm.service;
 import com.zerox.csm.dto.AuthDto.LoginRequest;
 import com.zerox.csm.dto.AuthDto.RegisterRequest;
 import com.zerox.csm.dto.AuthDto.AuthResponse;
-import com.zerox.csm.dto.UserDto.UserProfileResponse;
+import com.zerox.csm.dto.UserDto;
+import com.zerox.csm.exception.PasswordChangeException;
 import com.zerox.csm.exception.ResourceNotFoundException;
 import com.zerox.csm.model.User;
 import com.zerox.csm.model.UserRole;
@@ -17,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +68,7 @@ public class AuthService {
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .fullName(request.fullName())
+                .phone(request.phone())
                 .loyaltyPoints(0)
                 .createdAt(LocalDateTime.now())
                 .role(UserRole.CUSTOMER)
@@ -85,11 +88,64 @@ public class AuthService {
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
     }
 
-    public UserProfileResponse getUserProfile(String email) {
-        User user = userRepository.findByEmail(email)
+//    public UserProfileResponse getUserProfile(UUID userId) {
+//        // The username should be the email from JWT
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//
+//        return new UserProfileResponse(
+//                user.getUserId(),
+//                user.getEmail(),
+//                user.getFullName(),
+//                user.getPhone(),
+//                user.getRole(),
+//                user.getLoyaltyPoints(),
+//                user.getCreatedAt(),
+//                user.getLastLogin()
+//        );
+//    }
+//
+//    public UserProfileResponse updateProfile(UUID userId, UserDto.UserUpdateRequest request) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//
+//        // Check if email is being changed to one that already exists
+//        if (!user.getEmail().equals(request.email()) &&
+//                userRepository.findByEmail(request.email()).isPresent()) {
+//            throw new IllegalArgumentException("Email already in use");
+//        }
+//
+//        user.setFullName(request.fullName());
+//        user.setEmail(request.email());
+//        user.setPhone(request.phone());
+//
+//        userRepository.save(user);
+//
+//        return this.getUserProfile(user.getUserId());
+//    }
+//
+//
+//    public void changePassword(String email, UserDto.PasswordChangeRequest request) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//
+//        // Verify current password
+//        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+//            throw new IllegalArgumentException("Current password is incorrect");
+//        }
+//
+//        // Update to new password
+//        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+//        userRepository.save(user);
+//    }
+
+
+    //this is working but mail change a once is not working
+    public UserDto.UserProfileResponse getUserProfile(String email) {
+        User user = userRepository.findByEmail(String.valueOf(email))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        return new UserProfileResponse(
+
+        return new UserDto.UserProfileResponse(
                 user.getUserId(),
                 user.getEmail(),
                 user.getFullName(),
@@ -100,4 +156,111 @@ public class AuthService {
                 user.getLastLogin()
         );
     }
-} 
+
+
+    /*//    //This is working  but mail change a once is not working
+    public UserDto.UserProfileResponse updateUserProfile(String email, UserDto.UserUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Update fields
+        user.setFullName(request.fullName());
+        user.setEmail(request.email());
+        user.setPhone(request.phone());
+
+        User updatedUser = userRepository.save(user);
+
+        return new UserDto.UserProfileResponse(
+                updatedUser.getUserId(),
+                updatedUser.getEmail(),
+                updatedUser.getFullName(),
+                updatedUser.getPhone(),
+                updatedUser.getRole(),
+                updatedUser.getLoyaltyPoints(),
+                updatedUser.getCreatedAt(),
+                updatedUser.getLastLogin()
+        );
+    }*/
+    public UserDto.UserProfileResponse updateUserProfile(UUID userId, UserDto.UserUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Update fields
+        user.setFullName(request.fullName());
+        user.setEmail(request.email());
+        user.setPhone(request.phone());
+
+        User updatedUser = userRepository.save(user);
+
+        return new UserDto.UserProfileResponse(
+                updatedUser.getUserId(),
+                updatedUser.getEmail(),
+                updatedUser.getFullName(),
+                updatedUser.getPhone(),
+                updatedUser.getRole(),
+                updatedUser.getLoyaltyPoints(),
+                updatedUser.getCreatedAt(),
+                updatedUser.getLastLogin()
+        );
+    }
+
+   /* public void changePassword(String username, UserDto.PasswordChangeRequest request) {
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // Update to new password
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+    }*/
+
+    public void changePassword(String email, UserDto.PasswordChangeRequest request) {
+        // 1. Find user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // 2. Validate current password
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new PasswordChangeException("Current password is incorrect");
+        }
+
+        // 3. Validate new password isn't same as current
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new PasswordChangeException("New password must be different from current password");
+        }
+
+        // 4. Validate password confirmation
+        if (!request.passwordsMatch()) {
+            throw new PasswordChangeException("New password and confirmation don't match");
+        }
+
+        // 5. Additional password strength validation
+        validatePasswordStrength(request.newPassword());
+
+        // 6. Update password
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (password.length() < 8) {
+            throw new PasswordChangeException("Password must be at least 8 characters");
+        }
+        // Add more complexity rules as needed
+    }
+
+    public boolean userExistsByEmail(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
+
+    // In AuthService
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+}
