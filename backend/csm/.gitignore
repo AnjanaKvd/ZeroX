@@ -36,4 +36,4 @@ build/
 .mvn
 
 # Environment variables
-.env 
+src/main/resources/.env

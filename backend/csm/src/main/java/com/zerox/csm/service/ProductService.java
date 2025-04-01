@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,19 +31,12 @@ public class ProductService {
     private final InventoryLogRepository inventoryLogRepository;
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
-    private final FileStorageService fileStorageService;
 
     // Create a new product
     @Transactional
     public ProductDto.ProductResponse createProduct(ProductDto.ProductRequest request) {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-
-        // Handle image upload
-        String imagePath = null;
-        if (request.image() != null && !request.image().isEmpty()) {
-            imagePath = fileStorageService.storeFile(request.image());
-        }
 
         Product product = Product.builder()
                 .name(request.name())
@@ -58,7 +50,6 @@ public class ProductService {
                 .barcode(request.barcode())
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
                 .createdAt(LocalDateTime.now())
-                .imagePath(imagePath)
                 .build();
         
         Product savedProduct = productRepository.save(product);
@@ -102,17 +93,6 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
-        // Handle image update
-        if (request.image() != null && !request.image().isEmpty()) {
-            // Delete old image if exists
-            if (product.getImagePath() != null) {
-                fileStorageService.deleteFile(product.getImagePath());
-            }
-            // Store new image
-            String imagePath = fileStorageService.storeFile(request.image());
-            product.setImagePath(imagePath);
-        }
-
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
@@ -153,12 +133,8 @@ public class ProductService {
     // Delete product
     @Transactional
     public void deleteProduct(UUID productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        
-        // Delete associated image if exists
-        if (product.getImagePath() != null) {
-            fileStorageService.deleteFile(product.getImagePath());
+        if (!productRepository.existsById(productId)) {
+            throw new ResourceNotFoundException("Product not found");
         }
         
         productRepository.deleteById(productId);
@@ -323,8 +299,7 @@ public class ProductService {
                 product.getLowStockThreshold(),
                 product.getBarcode(),
                 product.getWarrantyPeriodMonths(),
-                product.getCreatedAt(),
-                product.getImagePath()
+                product.getCreatedAt()
         );
     }
 }

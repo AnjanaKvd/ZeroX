@@ -58,7 +58,4 @@ public class Product {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "image_path")
-    private String imagePath;
 }
