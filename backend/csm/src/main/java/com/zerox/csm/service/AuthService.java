@@ -54,7 +54,9 @@ public class AuthService {
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
         
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+        return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone());
     }
     
     public AuthResponse register(RegisterRequest request) {
@@ -85,7 +87,9 @@ public class AuthService {
                         .build()
         );
         
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+        return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone());
     }
 
 //    public UserProfileResponse getUserProfile(UUID userId) {
@@ -142,7 +146,7 @@ public class AuthService {
 
     //this is working but mail change a once is not working
     public UserDto.UserProfileResponse getUserProfile(String email) {
-        User user = userRepository.findByEmail(String.valueOf(email))
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return new UserDto.UserProfileResponse(

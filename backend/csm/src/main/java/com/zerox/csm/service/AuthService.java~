@@ -4,6 +4,7 @@ import com.zerox.csm.dto.AuthDto.LoginRequest;
 import com.zerox.csm.dto.AuthDto.RegisterRequest;
 import com.zerox.csm.dto.AuthDto.AuthResponse;
 import com.zerox.csm.dto.UserDto;
+import com.zerox.csm.exception.PasswordChangeException;
 import com.zerox.csm.exception.ResourceNotFoundException;
 import com.zerox.csm.model.User;
 import com.zerox.csm.model.UserRole;
@@ -53,7 +54,8 @@ public class AuthService {
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
         
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+    
     }
     
     public AuthResponse register(RegisterRequest request) {
@@ -84,7 +86,9 @@ public class AuthService {
                         .build()
         );
         
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+        return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone());
     }
 
 //    public UserProfileResponse getUserProfile(UUID userId) {
@@ -141,7 +145,7 @@ public class AuthService {
 
     //this is working but mail change a once is not working
     public UserDto.UserProfileResponse getUserProfile(String email) {
-        User user = userRepository.findByEmail(String.valueOf(email))
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return new UserDto.UserProfileResponse(
@@ -203,7 +207,7 @@ public class AuthService {
         );
     }
 
-    public void changePassword(String username, UserDto.PasswordChangeRequest request) {
+   /* public void changePassword(String username, UserDto.PasswordChangeRequest request) {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -216,6 +220,41 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
 
+    }*/
+
+    public void changePassword(String email, UserDto.PasswordChangeRequest request) {
+        // 1. Find user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // 2. Validate current password
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new PasswordChangeException("Current password is incorrect");
+        }
+
+        // 3. Validate new password isn't same as current
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new PasswordChangeException("New password must be different from current password");
+        }
+
+        // 4. Validate password confirmation
+        if (!request.passwordsMatch()) {
+            throw new PasswordChangeException("New password and confirmation don't match");
+        }
+
+        // 5. Additional password strength validation
+        validatePasswordStrength(request.newPassword());
+
+        // 6. Update password
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (password.length() < 8) {
+            throw new PasswordChangeException("Password must be at least 8 characters");
+        }
+        // Add more complexity rules as needed
     }
 
     public boolean userExistsByEmail(String email) {

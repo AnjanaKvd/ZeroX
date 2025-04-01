@@ -29,6 +29,8 @@ public class AuthDto {
     public record AuthResponse(
             String token,
             String email,
-            String role
+            String role,
+            String fullName,
+            String phone
     ) {}
 } 

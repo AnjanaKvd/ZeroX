@@ -45,19 +45,22 @@ public class AuthController {
 
 
     //This is the endpoint to get the user profile details read from the database
-    //localhost:8080/api/auth/myprofile
-    /*@GetMapping("/profile")
+    //localhost:8080/api/auth/profile
+//    @GetMapping("/profile")
+//    public ResponseEntity<UserProfileResponse> getUserProfile(
+//            @AuthenticationPrincipal UserDetails userDetails) {
+//        return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
+//    }
+
+    @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getUserProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
-    }*/
-
-    @GetMapping("profile")
-    public ResponseEntity<UserProfileResponse> getMyProfile(@RequestHeader("Authorization") String token) {
-        JwtService JwtService = null;
-        String email = JwtService.extractUsername(token.replace("Bearer ", ""));
-        return ResponseEntity.ok(authService.getUserProfile(email));
+        System.out.println("Fetching profile for: " + userDetails.getUsername());
+        UserProfileResponse response = authService.getUserProfile(userDetails.getUsername());
+        System.out.println("Returning: " + response);
+        return ResponseEntity.ok(response);
     }
+
 
 
     //This is the endpoint to update the user profile details to the database
