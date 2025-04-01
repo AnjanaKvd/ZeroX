@@ -8,6 +8,7 @@ import com.zerox.csm.dto.UserDto.UserProfileResponse;
 import com.zerox.csm.exception.PasswordChangeException;
 import com.zerox.csm.model.User;
 import com.zerox.csm.repository.UserRepository;
+import com.zerox.csm.security.JwtService;
 import com.zerox.csm.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,8 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
     }
+
+
 
 
     //This is the endpoint to update the user profile details to the database

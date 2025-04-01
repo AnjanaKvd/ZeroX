@@ -5,8 +5,10 @@ import com.zerox.csm.dto.AuthDto.LoginRequest;
 import com.zerox.csm.dto.AuthDto.RegisterRequest;
 import com.zerox.csm.dto.UserDto;
 import com.zerox.csm.dto.UserDto.UserProfileResponse;
+import com.zerox.csm.exception.PasswordChangeException;
 import com.zerox.csm.model.User;
 import com.zerox.csm.repository.UserRepository;
+import com.zerox.csm.security.JwtService;
 import com.zerox.csm.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,10 +46,17 @@ public class AuthController {
 
     //This is the endpoint to get the user profile details read from the database
     //localhost:8080/api/auth/myprofile
-    @GetMapping("/profile")
+    /*@GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getUserProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
+    }*/
+
+    @GetMapping("profile")
+    public ResponseEntity<UserProfileResponse> getMyProfile(@RequestHeader("Authorization") String token) {
+        JwtService JwtService = null;
+        String email = JwtService.extractUsername(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(authService.getUserProfile(email));
     }
 
 
@@ -124,15 +133,29 @@ public class AuthController {
 
 
 
-    @PostMapping("/changepassword")
+/*    @PostMapping("/changepassword")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UserDto.PasswordChangeRequest request
     ) {
         authService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.noContent().build();
-    }
+    }*/
 
+    @PostMapping("/changepassword")
+    public ResponseEntity<?> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UserDto.PasswordChangeRequest request) {
+
+        try {
+            authService.changePassword(userDetails.getUsername(), request);
+            return ResponseEntity.noContent().build();
+        } catch (PasswordChangeException e) {
+            throw e; // Will be handled by GlobalExceptionHandler
+        } catch (Exception e) {
+            throw new PasswordChangeException("Password change failed. Please try again.");
+        }
+    }
 
 
 

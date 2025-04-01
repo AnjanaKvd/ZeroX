@@ -75,6 +75,7 @@ const Register = () => {
   return (
     <>
       <Header />
+
       <div className="flex justify-center items-center min-h-screen bg-gray-100">
         <div className="bg-white shadow-lg p-6 w-full max-w-md rounded-lg">
           <h3 className="text-center text-2xl font-semibold mb-4">Sign Up</h3>
@@ -168,6 +169,7 @@ const Register = () => {
           </div>
         </div>
       </div>
+
       <Footer />
     </>
   );

@@ -1,22 +1,40 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Validation schema
+const profileSchema = z.object({
+  fullName: z.string().min(3, "Full name must be at least 3 characters"),
+  email: z.string().email("Invalid email format"),
+  phone: z
+    .string()
+    .regex(
+      /^(?:\+94|0)\d{9}$/,
+      "Invalid format! Use +94XXXXXXXXX or 0XXXXXXXXX"
+    ),
+});
 
 const EditProfile = () => {
   const token = localStorage.getItem("token");
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    contactNumber: "",
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Fetch user data when component mounts
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: zodResolver(profileSchema),
+  });
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/api/auth/myprofile",
+          "http://localhost:8080/api/auth/profile",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -24,13 +42,14 @@ const EditProfile = () => {
           }
         );
 
-        setFormData({
+        // Set form values with fetched data
+        reset({
           fullName: response.data.fullName,
           email: response.data.email,
-          contactNumber: response.data.phone || "",
+          phone: response.data.phone,
         });
       } catch (err) {
-        setError("Failed to fetch profile data");
+        setError(err.response?.data?.message || "Failed to fetch profile data");
         console.error("Profile fetch error:", err);
       } finally {
         setLoading(false);
@@ -38,34 +57,22 @@ const EditProfile = () => {
     };
 
     fetchUserProfile();
-  }, [token]);
+  }, [token, reset]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     try {
-      await axios.put(
-        "http://localhost:8080/api/auth/myprofile",
-        {
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.contactNumber,
+      setLoading(true);
+      await axios.put("http://localhost:8080/api/auth/profile", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      alert("Profile updated successfully!");
-      // Optionally refresh the profile data
+      });
+      setSuccess("Profile updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update profile");
-      console.error("Update error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,49 +92,56 @@ const EditProfile = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+          {success}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)}>
         {/* Full Name */}
-        <div>
+        <div className="mb-4">
           <label className="block text-sm font-medium">Full Name</label>
           <input
-            name="fullName"
-            type="text"
-            value={formData.fullName}
-            onChange={handleChange}
-            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
+            {...register("fullName")}
+            className="w-full p-2 border rounded-md"
           />
+          {errors.fullName && (
+            <p className="text-red-500 text-sm">{errors.fullName.message}</p>
+          )}
         </div>
 
         {/* Email */}
-        <div className="mt-3">
-          <label className="block text-sm font-medium">E-mail</label>
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Email</label>
           <input
-            name="email"
+            {...register("email")}
             type="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
+            className="w-full p-2 border rounded-md"
           />
+          {errors.email && (
+            <p className="text-red-500 text-sm">{errors.email.message}</p>
+          )}
         </div>
 
-        {/* Contact Number */}
-        <div className="mt-3">
-          <label className="block text-sm font-medium">Contact Number</label>
+        {/* Phone Number */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium">Phone Number</label>
           <input
-            name="contactNumber"
-            type="text"
-            value={formData.contactNumber}
-            onChange={handleChange}
-            className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
+            {...register("phone")}
+            className="w-full p-2 border rounded-md"
           />
+          {errors.phone && (
+            <p className="text-red-500 text-sm">{errors.phone.message}</p>
+          )}
         </div>
 
-        {/* Save Button */}
         <button
           type="submit"
-          className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-md"
+          disabled={loading}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-md disabled:opacity-70"
         >
-          Save Changes
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>
@@ -135,87 +149,3 @@ const EditProfile = () => {
 };
 
 export default EditProfile;
-
-// 1
-// 1
-// 1
-// 1
-// 1
-// 1
-// 1
-
-// import React, { useState } from "react";
-
-// const EditProfile = () => {
-//   const [formData, setFormData] = useState({
-//     fullName: "",
-//     email: "",
-//     contactNumber: "",
-//   });
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData({ ...formData, [name]: value });
-//   };
-
-//   const onSubmit = (e) => {
-//     e.preventDefault();
-//     console.log("Updated Profile:", formData);
-//   };
-
-//   return (
-//     <div className="bg-white shadow-lg rounded-lg p-6 max-w-4xl mx-auto mt-6">
-//       <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
-//         Edit Profile
-//       </h2>
-//       <form onSubmit={onSubmit}>
-//         {/* Full Name */}
-
-//         <div>
-//           <label className="block text-sm font-medium">Full Name</label>
-//           <input
-//             name="fullName"
-//             type="text"
-//             value={formData.fullName}
-//             onChange={handleChange}
-//             className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
-//           />
-//         </div>
-
-//         {/* Email */}
-//         <div className="mt-3">
-//           <label className="block text-sm font-medium">E-mail</label>
-//           <input
-//             name="email"
-//             type="email"
-//             value={formData.email}
-//             onChange={handleChange}
-//             className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
-//           />
-//         </div>
-
-//         {/* Contact Number */}
-//         <div className="mt-3">
-//           <label className="block text-sm font-medium">Contact Number</label>
-//           <input
-//             name="contactNumber"
-//             type="text"
-//             value={formData.contactNumber}
-//             onChange={handleChange}
-//             className="mt-1 w-full border-b-2 border-gray-400 focus:border-blue-500 focus:outline-none p-2"
-//           />
-//         </div>
-
-//         {/* Save Button */}
-//         <button
-//           type="submit"
-//           className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 rounded-md"
-//         >
-//           Save Changes
-//         </button>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default EditProfile;
