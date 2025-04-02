@@ -92,6 +92,18 @@ public class UserDto {
         public UUID getUserId() {
             return userId;
         }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
     }
 
     public record UserProfileResponse(

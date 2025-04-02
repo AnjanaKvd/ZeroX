@@ -12,12 +12,15 @@ import com.zerox.csm.security.JwtService;
 import com.zerox.csm.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -46,112 +49,34 @@ public class AuthController {
 
     //This is the endpoint to get the user profile details read from the database
     //localhost:8080/api/auth/profile
-//    @GetMapping("/profile")
-//    public ResponseEntity<UserProfileResponse> getUserProfile(
-//            @AuthenticationPrincipal UserDetails userDetails) {
-//        return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
-//    }
 
-    /*@GetMapping("/profile")
-    public ResponseEntity<UserProfileResponse> getUserProfile(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        System.out.println("Fetching profile for: " + userDetails.getUsername());
-        UserProfileResponse response = authService.getUserProfile(userDetails.getUsername());
-        System.out.println("Returning: " + response);
-        return ResponseEntity.ok(response);
-    }*/
+
 
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getUserProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
-        System.out.println("Fetching profile for: " + userDetails.getUsername());
-        UserProfileResponse response = authService.getUserProfile(userDetails.getUsername());
-        System.out.println("Returning createdAt: " + response.createdAt());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.getUserProfile(userDetails.getUsername()));
     }
 
-
     //This is the endpoint to update the user profile details to the database
-    //localhost:8080/api/auth/myprofile
-//    @PutMapping("/myprofile")
-//    public ResponseEntity<UserDto.UserProfileResponse> updateProfile(
-//            @AuthenticationPrincipal UserDetails userDetails,
-//            @Valid @RequestBody UserDto.UserUpdateRequest request) {
-//        return ResponseEntity.ok(authService.updateUserProfile(userDetails.getUsername(), request));
-//    }
-//    @PutMapping("/profile")
-//    public ResponseEntity<UserProfileResponse> updateProfile(
-//            @AuthenticationPrincipal UserDetails userDetails,
-//            @Valid @RequestBody UserDto.UserUpdateRequest request) {
-//
-//        // Validate email change if needed
-//        UserRepository userRepository = null;
-//        if (!userDetails.getUsername().equals(request.email()) &&
-//                userRepository.findByEmail(request.email()).isPresent()) {
-//            throw new IllegalArgumentException("Email already in use");
-//        }
-//
-//        UserProfileResponse updatedProfile = authService.updateUserProfile(
-//                userDetails.getUsername(),
-//                request
-//        );
-//
-//        return ResponseEntity.ok(updatedProfile);
-//    }
-
-  /*  // This is working but once change email it doesn't work(Not update again)
-    @PutMapping("/profile")
-    public ResponseEntity<UserProfileResponse> updateProfile(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody UserDto.UserUpdateRequest request) {
-
-        // Remove this line: UserRepository userRepository = null;
-
-        // Use the repository through authService instead
-        if (!userDetails.getUsername().equals(request.email()) &&
-                authService.userExistsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already in use");
-        }
-
-        UserProfileResponse updatedProfile = authService.updateUserProfile(
-                userDetails.getUsername(),
-                request
-        );
-
-        return ResponseEntity.ok(updatedProfile);
-    }*/
-  @PutMapping("/profile")
-  public ResponseEntity<UserProfileResponse> updateProfile(
-          @AuthenticationPrincipal UserDetails userDetails,
-          @Valid @RequestBody UserDto.UserUpdateRequest request) {
-
-      // Get current user from database
-      User currentUser = authService.getUserByEmail(userDetails.getUsername());
-
-      // Verify user is updating their own profile
-      if (!currentUser.getUserId().equals(request.userId())) {
-          throw new IllegalArgumentException("Can only update your own profile");
-      }
-
-      // Check if email is being changed to an existing one
-      if (!currentUser.getEmail().equals(request.email()) &&
-              authService.userExistsByEmail(request.email())) {
-          throw new IllegalArgumentException("Email already in use");
-      }
-
-      return ResponseEntity.ok(authService.updateUserProfile(request.userId(), request));
-  }
+    //localhost:8080/api/auth/profile
 
 
 
-/*    @PostMapping("/changepassword")
-    public ResponseEntity<Void> changePassword(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody UserDto.PasswordChangeRequest request
-    ) {
-        authService.changePassword(userDetails.getUsername(), request);
-        return ResponseEntity.noContent().build();
-    }*/
+@PutMapping("/profile")
+public ResponseEntity<UserProfileResponse> updateProfile(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody UserDto.UserUpdateRequest request) {
+
+    // Only allow updating the current user's profile
+    UserProfileResponse response = authService.updateUserProfile(
+            userDetails.getUsername(), // email from token
+            request
+    );
+    return ResponseEntity.ok(response);
+}
+
+
 
     @PostMapping("/changepassword")
     public ResponseEntity<?> changePassword(
@@ -160,14 +85,17 @@ public class AuthController {
 
         try {
             authService.changePassword(userDetails.getUsername(), request);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Password changed successfully"
+            ));
         } catch (PasswordChangeException e) {
-            throw e; // Will be handled by GlobalExceptionHandler
-        } catch (Exception e) {
-            throw new PasswordChangeException("Password change failed. Please try again.");
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
         }
     }
-
 
 
     @PostMapping("/logout")
