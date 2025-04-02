@@ -18,7 +18,8 @@ application.security.jwt.secret-key=${JWT_SECRET_KEY}
 application.security.jwt.expiration=${JWT_EXPIRATION}
 
 # Server Configuration
-server.port=${SERVER_PORT}
+#server.port=${SERVER_PORT}
+server.port=8080
 server.servlet.context-path=/
 server.error.include-message=always
 
@@ -30,8 +31,3 @@ spring.main.allow-bean-definition-overriding=true
 
 # Add this line to activate the dev profile
 spring.profiles.active=dev
-
-# File Upload Configuration
-spring.servlet.multipart.max-file-size=10MB
-spring.servlet.multipart.max-request-size=10MB
-file.upload-dir=uploads/products

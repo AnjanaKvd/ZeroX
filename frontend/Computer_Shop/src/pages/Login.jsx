@@ -1,95 +1,89 @@
-import { useCallback, useState, useContext } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useLocation, Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { z } from "zod";
-import { FormInput, ErrorMessage, AuthButton } from "../components/auth/FormElements";
-
-const loginSchema = z.object({
-  email: z
-    .string()
-    .nonempty({ message: "Email is required!" })
-    .email({ message: "Invalid email address!" }),
-  password: z
-    .string()
-    .nonempty({ message: "Password is required!" })
-    .min(8, { message: "Password must be at least 8 characters!" }),
-});
+// pages/Login.jsx
+import { useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { FormInput, ErrorMessage, AuthButton } from '../components/auth/FormElements';
 
 const Login = () => {
-  const { login, hasRole } = useContext(AuthContext);
+  const { login, hasRole } = useAuth();
   const navigate = useNavigate();
   const { state } = useLocation();
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    mode: 'onBlur',
   });
 
   const handleLogin = useCallback(async (data) => {
-    setLoading(true);
-    setError("");
+    setIsLoading(true);
+    setError('');
+
     try {
       const result = await login(data);
       if (!result?.success) {
-        throw new Error(result?.message || "Login failed");
+        throw new Error(result?.message || 'Login failed');
       }
 
-      const redirectTo = state?.from || (hasRole("ADMIN") ? "/admin/dashboard" : "/");
+      // Handle navigation here, after successful login
+      const redirectTo = state?.from || (hasRole('ADMIN') ? '/admin/dashboard' : '/');
       navigate(redirectTo);
     } catch (err) {
-      setError(err.message || "An error occurred during login");
-      console.error("Login error:", err);
+      setError(err.message || 'An error occurred during login');
+      console.error('Login error:', err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [login, navigate, hasRole, state]);
 
   return (
     <>
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-          <h3 className="mb-4 text-2xl font-semibold text-center">Sign In</h3>
+      {error && <ErrorMessage message={error} />}
 
-          {error && <ErrorMessage message={error} />}
+      <form onSubmit={handleSubmit(handleLogin)} noValidate>
+        <FormInput
+          id="email"
+          label="Email Address"
+          type="email"
+          placeholder="your.email@example.com"
+          error={errors.email}
+          register={register('email', {
+            required: 'Email is required',
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: 'Invalid email address',
+            },
+          })}
+        />
 
-          <form onSubmit={handleSubmit(handleLogin)} noValidate>
-            <FormInput
-              id="email"
-              label="Email Address"
-              type="email"
-              placeholder="your.email@example.com"
-              error={errors.email}
-              register={register("email")}
-            />
+        <FormInput
+          id="password"
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          error={errors.password}
+          register={register('password', {
+            required: 'Password is required',
+            minLength: {
+              value: 6,
+              message: 'Password must be at least 6 characters',
+            },
+          })}
+        />
 
-            <FormInput
-              id="password"
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              error={errors.password}
-              register={register("password")}
-            />
+        <AuthButton isLoading={isLoading}>
+          Sign In
+        </AuthButton>
+      </form>
 
-            <AuthButton isLoading={loading}>Sign In</AuthButton>
-          </form>
-
-          <div className="mt-4 text-center">
-            <p className="text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline">
-                Create one
-              </Link>
-            </p>
-          </div>
-        </div>
+      <div className="mt-4 text-center">
+        <p className="text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Create one
+          </Link>
+        </p>
       </div>
     </>
   );

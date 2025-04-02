@@ -147,7 +147,7 @@ const Home = () => {
         ctaLink="/products"
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <FilterPanel
           categories={categories}
           filters={filters}
@@ -172,7 +172,7 @@ const Home = () => {
           />
 
           <div className="my-8">
-            <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
+            <h2 className="mb-6 text-2xl font-bold">Featured Products</h2>
             {loading ? (
               <LoadingSpinner />
             ) : (

@@ -19,21 +19,21 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
+            <h1 className="text-2xl font-bold text-blue-600 transition-colors hover:text-blue-700">
               TechZone
             </h1>
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex space-x-8 items-center">
+          <nav className="items-center hidden space-x-8 md:flex">
             <Link 
               to="/products" 
-              className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+              className="font-medium text-gray-700 transition-colors hover:text-blue-600"
             >
               Products
             </Link>
@@ -41,7 +41,7 @@ const Header = () => {
             {hasRole('ADMIN') && (
               <Link
                 to="/admin"
-                className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                className="font-medium text-gray-700 transition-colors hover:text-blue-600"
               >
                 Admin
               </Link>
@@ -54,22 +54,22 @@ const Header = () => {
               <>
                 <Link
                   to="/cart"
-                  className="relative text-gray-700 hover:text-blue-600 transition-colors"
+                  className="relative text-gray-700 transition-colors hover:text-blue-600"
                   aria-label="Shopping Cart"
                 >
-                  <ShoppingCartIcon className="h-6 w-6" />
+                  <ShoppingCartIcon className="w-6 h-6" />
                   {cartItemCount > 0 && (
-                    <span className="absolute -top-2 -right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <span className="absolute px-2 py-1 text-xs font-bold text-white bg-blue-600 rounded-full -top-2 -right-3">
                       {cartItemCount}
                     </span>
                   )}
                 </Link>
 
                 <div className="relative group">
-                  <button className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+                  <button className="font-medium text-gray-700 transition-colors hover:text-blue-600">
                     {user.email}
                   </button>
-                  <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                  <div className="absolute right-0 hidden w-48 py-1 mt-2 bg-white rounded-md shadow-lg group-hover:block">
                     <Link
                       to="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -78,7 +78,7 @@ const Header = () => {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
                     >
                       Logout
                     </button>
@@ -89,13 +89,13 @@ const Header = () => {
               <div className="flex space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  className="font-medium text-gray-700 transition-colors hover:text-blue-600"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  className="font-medium text-gray-700 transition-colors hover:text-blue-600"
                 >
                   Register
                 </Link>
