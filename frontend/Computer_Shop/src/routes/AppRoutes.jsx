@@ -1,71 +1,101 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import MainLayout from '../components/layouts/MainLayout';
+import AdminLayout from '../components/layouts/AdminLayout';
+import AuthLayout from '../components/layouts/AuthLayout'; 
+import LoadingOverlay from '../components/common/LoadingOverlay';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+import { useAuth } from '../context/AuthContext';
 
-// Pages
-import Home from '../pages/Home';
-import ProductDetails from '../pages/ProductDetails';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import Cart from '../pages/Cart';
-import Checkout from '../pages/Checkout';
-import OrderConfirmation from '../pages/OrderConfirmation';
-import Profile from '../pages/Profile';
-import OrderHistory from '../pages/OrderHistory';
-import OrderDetails from '../pages/OrderDetails';
-import NotFound from '../pages/NotFound';
+// Lazy-loaded pages
+const Home = lazy(() => import('../pages/Home'));
+const ProductDetailPage = lazy(() => import('../pages/ProductDetails'));
+const Login = lazy(() => import('../pages/Login'));
+const Register = lazy(() => import('../pages/Register'));
+const Cart = lazy(() => import('../pages/Cart'));
+const Checkout = lazy(() => import('../pages/Checkout'));
+const OrderConfirmation = lazy(() => import('../pages/OrderConfirmation'));
+const Profile = lazy(() => import('../pages/Profile'));
+const OrderHistory = lazy(() => import('../pages/OrderHistory'));
+const OrderDetails = lazy(() => import('../pages/OrderDetails'));
+const NotFound = lazy(() => import('../pages/NotFound'));
+const ProductManagement = lazy(() => import('../pages/ProductManagement'));
+const CategoryManagement = lazy(() => import('../pages/CategoryManagement'));
+const OrderManagement = lazy(() => import('../pages/OrderManagement'));
+const UserManagement = lazy(() => import('../pages/UserManagement'));
+const Settings = lazy(() => import('../pages/Settings'));
+const Logout = lazy(() => import('../pages/Logout'));
+const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
+const Unauthorized = lazy(() => import('../pages/Unauthorized'));
+const ProductsListing = lazy(() => import('../pages/ProductsListing'));
 
-// Private route component
-const PrivateRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthContext);
-  
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+const ProtectedRoute = ({ roles = [], children }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingOverlay />;
   }
-  
-  return user ? children : <Navigate to="/login" />;
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  if (roles.length > 0 && !roles.some(role => user.roles?.includes(role))) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children || <Outlet />;
 };
 
 const AppRoutes = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/products/:productId" element={<ProductDetails />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/cart" element={<Cart />} />
-      
-      {/* Protected routes */}
-      <Route path="/checkout" element={
-        <PrivateRoute>
-          <Checkout />
-        </PrivateRoute>
-      } />
-      <Route path="/order-confirmation/:orderId" element={
-        <PrivateRoute>
-          <OrderConfirmation />
-        </PrivateRoute>
-      } />
-      <Route path="/profile" element={
-        <PrivateRoute>
-          <Profile />
-        </PrivateRoute>
-      } />
-      <Route path="/orders" element={
-        <PrivateRoute>
-          <OrderHistory />
-        </PrivateRoute>
-      } />
-      <Route path="/orders/:orderId" element={
-        <PrivateRoute>
-          <OrderDetails />
-        </PrivateRoute>
-      } />
-      
-      {/* 404 catch-all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingOverlay />}>
+        <Routes>
+          {/* Main store routes */}
+          <Route element={<MainLayout />}>
+            <Route index element={<Home />} />
+            <Route path="products" element={<ProductsListing />} />
+            <Route path="products/:id" element={<ProductDetailPage />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+
+          {/* Auth routes with proper layout */}
+          <Route element={<AuthLayout />}>
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="logout" element={<Logout />} />
+            <Route path="unauthorized" element={<Unauthorized />} />
+          </Route>
+
+          {/* Authenticated user routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="checkout" element={<Checkout />} />
+              <Route path="order-confirmation" element={<OrderConfirmation />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="order-history" element={<OrderHistory />} />
+              <Route path="order/:id" element={<OrderDetails />} />
+            </Route>
+          </Route>
+
+          {/* Admin routes */}
+          <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="products" element={<ProductManagement />} />
+              <Route path="categories" element={<CategoryManagement />} />
+              <Route path="orders" element={<OrderManagement />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;

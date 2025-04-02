@@ -38,6 +38,12 @@ public class ProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
+        // Handle image upload
+        String imageUrl = null;
+        if (request.image() != null && !request.image().isEmpty()) {
+            imageUrl = imageStorageService.storeImage(request.image());
+        }
+
         Product product = Product.builder()
                 .name(request.name())
                 .description(request.description())
@@ -47,8 +53,8 @@ public class ProductService {
                 .brand(request.brand())
                 .stockQuantity(request.stockQuantity())
                 .lowStockThreshold(request.lowStockThreshold())
-                .barcode(request.barcode())
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
+                .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
                 .build();
         
@@ -93,6 +99,17 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
+        // Handle image update
+        if (request.image() != null && !request.image().isEmpty()) {
+            // Delete old image if exists
+            if (product.getImageUrl() != null) {
+                imageStorageService.deleteImage(product.getImageUrl());
+            }
+            // Store new image
+            String newImageUrl = imageStorageService.storeImage(request.image());
+            product.setImageUrl(newImageUrl);
+        }
+        
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
@@ -119,7 +136,6 @@ public class ProductService {
         product.setBrand(request.brand());
         product.setStockQuantity(request.stockQuantity());
         product.setLowStockThreshold(request.lowStockThreshold());
-        product.setBarcode(request.barcode());
         product.setWarrantyPeriodMonths(request.warrantyPeriodMonths());
         
         Product updatedProduct = productRepository.save(product);
@@ -133,8 +149,12 @@ public class ProductService {
     // Delete product
     @Transactional
     public void deleteProduct(UUID productId) {
-        if (!productRepository.existsById(productId)) {
-            throw new ResourceNotFoundException("Product not found");
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        
+        // Delete associated image if exists
+        if (product.getImageUrl() != null) {
+            imageStorageService.deleteImage(product.getImageUrl());
         }
         
         productRepository.deleteById(productId);
@@ -297,8 +317,8 @@ public class ProductService {
                 product.getBrand(),
                 product.getStockQuantity(),
                 product.getLowStockThreshold(),
-                product.getBarcode(),
                 product.getWarrantyPeriodMonths(),
+                product.getImageUrl(),
                 product.getCreatedAt()
         );
     }

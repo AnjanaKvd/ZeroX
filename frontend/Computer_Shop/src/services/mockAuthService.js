@@ -50,7 +50,7 @@ export const getUserProfile = async () => {
   try {
     const token = localStorage.getItem('token');
     
-    const response = await fetch('/api/users/profile', {
+    const response = await fetch('/api/auth/profile', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

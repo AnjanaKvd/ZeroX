@@ -8,15 +8,24 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product);
+    addToCart({ ...product, quantity: 1 });
   };
   
+  if (!product) return null;
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link to={`/products/${product.productId}`}>
+      <Link to={`/products/${product.id || product.productId}`}>
         <div className="h-48 bg-gray-200 flex items-center justify-center">
-          {/* Placeholder for product image */}
-          <span className="text-gray-500">Product Image</span>
+          {product.image ? (
+            <img 
+              src={product.image} 
+              alt={product.name} 
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-gray-500">Product Image</span>
+          )}
         </div>
         
         <div className="p-4">

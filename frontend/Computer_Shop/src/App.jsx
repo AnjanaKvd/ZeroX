@@ -1,77 +1,65 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { Suspense, useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 import AppRoutes from './routes/AppRoutes';
-import { checkApiConnection } from './services/apiHealthCheck';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import LoadingOverlay from './components/common/LoadingOverlay';
+import useApiHealthCheck from './hooks/useApiHealthCheck';
 import './assets/styles/index.css';
 
 const App = () => {
-  const [apiConnected, setApiConnected] = useState(true);
-  const [apiCheckComplete, setApiCheckComplete] = useState(false);
+  const { apiConnected, apiCheckComplete } = useApiHealthCheck();
+  const [appError, setAppError] = useState(null);
 
+  // Add global error handler
   useEffect(() => {
-    // Check API connection when app loads
-    const checkConnection = async () => {
-      try {
-        const isConnected = await checkApiConnection();
-        setApiConnected(isConnected);
-      } catch (error) {
-        console.error("Error during API check:", error);
-        setApiConnected(false);
-      } finally {
-        setApiCheckComplete(true);
-      }
+    const handleGlobalError = (event) => {
+      console.error('Global error:', event.error);
+      setAppError('An unexpected error occurred. Please refresh the page.');
     };
-    
-    checkConnection();
-  }, []);
 
-  useEffect(() => {
-    // Debug CORS issues by testing a simple request
-    const testCors = async () => {
-      try {
-        console.log("Testing CORS with a simple fetch request...");
-        const response = await fetch("http://localhost:8080/api/products?page=0&size=1", {
-          method: "GET",
-          headers: {
-            "Accept": "application/json"
-          }
-        });
-        
-        if (response.ok) {
-          console.log("CORS test successful! Server is accessible.");
-          const data = await response.json();
-          console.log("Sample data:", data);
-        } else {
-          console.error("CORS test failed with status:", response.status);
-          const text = await response.text();
-          console.error("Error details:", text);
-        }
-      } catch (error) {
-        console.error("CORS test failed with error:", error);
-        if (error.message.includes("No 'Access-Control-Allow-Origin'")) {
-          console.error("This is a CORS issue! Make sure your Spring Boot has proper CORS configuration.");
-        }
-      }
-    };
-    
-    testCors();
+    window.addEventListener('error', handleGlobalError);
+    return () => window.removeEventListener('error', handleGlobalError);
   }, []);
 
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
+      {appError && (
+        <div className="fixed top-0 left-0 right-0 bg-red-100 border-b border-red-400 text-red-700 px-4 py-3 text-center z-50">
+          {appError}
+          <button 
+            className="ml-4 bg-red-700 text-white px-2 py-1 rounded text-sm"
+            onClick={() => window.location.reload()}
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+      
       <AuthProvider>
-        <CartProvider>
-          {apiCheckComplete && !apiConnected && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-0 left-0 right-0 z-50 text-center">
-              Unable to connect to the backend API. Please ensure your backend server is running.
+        <ToastProvider>
+          <CartProvider>
+            <div className="flex flex-col min-h-screen">
+              {/* API Connection Warning */}
+              {!apiConnected && apiCheckComplete && (
+                <div 
+                  role="alert"
+                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 text-center"
+                >
+                  ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
+                </div>
+              )}
+
+              {/* Main Application Routes */}
+              <Suspense fallback={<LoadingOverlay />}>
+                <AppRoutes />
+              </Suspense>
             </div>
-          )}
-          <AppRoutes />
-        </CartProvider>
+          </CartProvider>
+        </ToastProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

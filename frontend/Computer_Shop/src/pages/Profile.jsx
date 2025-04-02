@@ -1,8 +1,6 @@
 import { useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { AuthContext } from '../context/AuthContext';
-import Header from '../components/common/Header/Header';
-import Footer from '../components/common/Footer/Footer';
 import api from '../services/api';
 
 const Profile = () => {
@@ -25,7 +23,7 @@ const Profile = () => {
     
     try {
       // Call the actual API endpoint
-      const response = await api.put('/api/users/profile', data);
+      const response = await api.put('/api/auth/profile', data);
       setUpdateSuccess(true);
       setIsEditing(false);
     } catch (error) {
@@ -36,7 +34,6 @@ const Profile = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -202,7 +199,6 @@ const Profile = () => {
         </div>
       </main>
       
-      <Footer />
     </div>
   );
 };
