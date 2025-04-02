@@ -1,17 +1,45 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { getCategories } from '../../services/categoryService';
 
 const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
-    categoryName: '',
+    categoryId: '',
     sku: '',
     brand: '',
     stockQuantity: '',
-    imagePath: ''
+    lowStockThreshold: '',
+    barcode: '',
+    warrantyPeriodMonths: ''
   });
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState(null);
+
+  // Fetch categories when modal opens
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        setCategoryError(null);
+        const response = await getCategories();
+        console.log("Categories response:", response); // Debug: Check category structure
+        setCategories(response || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setCategoryError("Failed to load categories. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (product && mode === 'edit') {
@@ -19,11 +47,13 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         name: product.name || '',
         description: product.description || '',
         price: product.price || '',
-        categoryName: product.categoryName || '',
+        categoryId: product.categoryId || '',
         sku: product.sku || '',
         brand: product.brand || '',
         stockQuantity: product.stockQuantity || '',
-        imagePath: product.imagePath || ''
+        lowStockThreshold: product.lowStockThreshold || '',
+        barcode: product.barcode || '',
+        warrantyPeriodMonths: product.warrantyPeriodMonths || ''
       });
     } else {
       // Reset form for add mode
@@ -31,11 +61,13 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         name: '',
         description: '',
         price: '',
-        categoryName: '',
+        categoryId: '',
         sku: '',
         brand: '',
         stockQuantity: '',
-        imagePath: ''
+        lowStockThreshold: '',
+        barcode: '',
+        warrantyPeriodMonths: ''
       });
     }
   }, [product, mode]);
@@ -58,36 +90,65 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
       stockQuantity: parseInt(formData.stockQuantity),
     };
     
-    // If in edit mode, preserve the ID
-    if (mode === 'edit' && product) {
-      submissionData.productId = product.productId;
+    // Convert empty strings to null
+    Object.keys(submissionData).forEach(key => {
+      if (submissionData[key] === '') {
+        submissionData[key] = null;
+      }
+    });
+    
+    // Optional number fields should be parsed if they have values
+    if (submissionData.lowStockThreshold) {
+      submissionData.lowStockThreshold = parseInt(submissionData.lowStockThreshold);
+    }
+    if (submissionData.warrantyPeriodMonths) {
+      submissionData.warrantyPeriodMonths = parseInt(submissionData.warrantyPeriodMonths);
     }
     
-    onSubmit(submissionData, mode);
+    console.log("Submitting form with data:", submissionData); // Debug: Check submission data
+    onSubmit(submissionData);
   };
 
   if (!isOpen) return null;
 
+  // Helper function to determine the category ID property name
+  const getCategoryIdProperty = () => {
+    if (categories.length === 0) return 'id';
+    const category = categories[0];
+    // Check possible property names that could contain the UUID
+    if (category.categoryId !== undefined) return 'categoryId';
+    if (category.id !== undefined) return 'id';
+    if (category.uuid !== undefined) return 'uuid';
+    // Default fallback
+    return Object.keys(category).find(key => 
+      typeof category[key] === 'string' && 
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category[key])
+    ) || 'id';
+  };
+
+  // Get the appropriate category ID property
+  const categoryIdProperty = getCategoryIdProperty();
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-          aria-label="Close modal"
-        >
-          <X size={24} />
-        </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center px-6 py-4 border-b">
+          <h2 className="text-xl font-semibold text-gray-800">
+            {mode === 'add' ? 'Add New Product' : 'Edit Product'}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
         
-        <h2 className="text-xl font-bold mb-4">
-          {mode === 'add' ? 'Add New Product' : 'Edit Product'}
-        </h2>
-        
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Product Name
+                Product Name *
               </label>
               <input
                 type="text"
@@ -101,21 +162,22 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                Description *
               </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
+                rows={3}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
-                rows="3"
+                required
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price ($)
+                  Price ($) *
                 </label>
                 <input
                   type="number"
@@ -131,7 +193,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Stock Quantity
+                  Stock Quantity *
                 </label>
                 <input
                   type="number"
@@ -148,7 +210,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  SKU
+                  SKU *
                 </label>
                 <input
                   type="text"
@@ -156,9 +218,43 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   value={formData.sku}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
                 />
               </div>
               
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category *
+                </label>
+                {loading ? (
+                  <div className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500">
+                    Loading categories...
+                  </div>
+                ) : categoryError ? (
+                  <div className="text-red-500 text-sm">{categoryError}</div>
+                ) : (
+                  <select
+                    name="categoryId"
+                    value={formData.categoryId}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    required
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map(category => (
+                      <option 
+                        key={category[categoryIdProperty]} 
+                        value={category[categoryIdProperty]}
+                      >
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Brand
@@ -171,33 +267,49 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Low Stock Threshold
+                </label>
+                <input
+                  type="number"
+                  name="lowStockThreshold"
+                  value={formData.lowStockThreshold}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <input
-                type="text"
-                name="categoryName"
-                value={formData.categoryName}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Image URL
-              </label>
-              <input
-                type="text"
-                name="imagePath"
-                value={formData.imagePath}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                placeholder="https://example.com/image.jpg"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Barcode
+                </label>
+                <input
+                  type="text"
+                  name="barcode"
+                  value={formData.barcode}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Warranty (Months)
+                </label>
+                <input
+                  type="number"
+                  name="warrantyPeriodMonths"
+                  value={formData.warrantyPeriodMonths}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
             </div>
           </div>
           
@@ -205,16 +317,16 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
-            
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              disabled={loading}
             >
-              {mode === 'add' ? 'Add Product' : 'Save Changes'}
+              {mode === 'add' ? 'Create Product' : 'Update Product'}
             </button>
           </div>
         </form>
