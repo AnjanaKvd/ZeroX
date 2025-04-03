@@ -43,7 +43,7 @@ const signUpSchema = z
 const Register = () => {
   const { register: registerUser } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [error, setError] = useState("");
+  const [registrationError, setRegistrationError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const {
@@ -57,16 +57,51 @@ const Register = () => {
   const onSubmit = async (data) => {
     console.log("Form data:", data);
     setLoading(true);
-    setError("");
+    setRegistrationError("");
     try {
       const result = await registerUser(data);
       if (result.success) {
         navigate("/login");
       } else {
-        setError(result.message);
+        const errorMessage = result.message || "Registration failed";
+
+        if (errorMessage.includes("maximum registration attempts")) {
+          setRegistrationError(
+            "This email has been used too many times. Please use a different email."
+          );
+        } else if (errorMessage.includes("active account")) {
+          setRegistrationError(
+            "An active account already exists with this email."
+          );
+        } else if (errorMessage.includes("Duplicate entry")) {
+          setRegistrationError(
+            "You signed up with this email before! Please use a different email."
+          );
+        } else {
+          setRegistrationError(errorMessage);
+        }
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "An unexpected error occurred. Please try again.";
+
+      if (errorMessage.includes("maximum registration attempts")) {
+        setRegistrationError(
+          "This email has been used too many times. Please use a different email."
+        );
+      } else if (errorMessage.includes("active account")) {
+        setRegistrationError(
+          "An active account already exists with this email."
+        );
+      } else if (errorMessage.includes("Duplicate entry")) {
+        setRegistrationError(
+          "This email is already associated with an account."
+        );
+      } else {
+        setRegistrationError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -80,8 +115,10 @@ const Register = () => {
         <div className="bg-white shadow-lg p-6 w-full max-w-md rounded-lg">
           <h3 className="text-center text-2xl font-semibold mb-4">Sign Up</h3>
 
-          {error && (
-            <p className="bg-red-100 text-blue-600 p-2 rounded-md">{error}</p>
+          {registrationError && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+              {registrationError}
+            </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)}>

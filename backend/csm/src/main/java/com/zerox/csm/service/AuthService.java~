@@ -93,7 +93,7 @@ public class AuthService {
 
         // Check if email already exists
         if (userRepository.findByEmail(request.email()).isPresent()) {
-
+            
             throw new IllegalArgumentException("Email already in use");
         }
 

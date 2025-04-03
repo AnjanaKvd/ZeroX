@@ -97,7 +97,7 @@ public class AuthController {
         }
     }
 
-    @DeleteMapping("/deleteaccount")
+    @DeleteMapping("/account")
     public ResponseEntity<?> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails
     ) {

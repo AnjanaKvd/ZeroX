@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,6 +19,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+
+
+//soft delete for users
+@SQLDelete(sql = "UPDATE users SET is_deleted = 1 WHERE user_id = ?")
+//default users are not deleted
+@Where(clause = "is_deleted = 0")
+
+
 public class User {
     @Id
     @GeneratedValue
@@ -44,6 +54,10 @@ public class User {
 
     @Column(name = "loyalty_points")
     private Integer loyaltyPoints;
+
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean isDeleted;
+
 
     public UUID getUserId() {
         return userId;
