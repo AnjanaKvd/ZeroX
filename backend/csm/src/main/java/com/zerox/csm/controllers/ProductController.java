@@ -5,6 +5,7 @@ import com.zerox.csm.dto.ProductDto;
 import com.zerox.csm.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 // src/main/java/com/zerox/csm/controller/ProductController.java
 @RestController
@@ -37,18 +39,20 @@ public class ProductController {
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keywords
     ) {
         return ResponseEntity.ok(productService.searchProducts(
-                query, categoryId, minPrice, maxPrice, brand, sortBy, sortDirection, page, size
+                query, categoryId, minPrice, maxPrice, brand, sortBy, sortDirection, page, size,keywords
         ));
     }
-    
+
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDto.ProductResponse> getProductById(@PathVariable UUID productId) {
         return ResponseEntity.ok(productService.getProduct(productId));
     }
-    
+
+
     @GetMapping("/sku/{sku}")
     public ResponseEntity<ProductDto.ProductResponse> getProductBySku(@PathVariable String sku) {
         return ResponseEntity.ok(productService.getProductBySku(sku));

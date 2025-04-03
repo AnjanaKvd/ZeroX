@@ -10,6 +10,7 @@ import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.StockAlertRepository;
 import com.zerox.csm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -87,6 +88,12 @@ public class ProductService {
         
         return mapToProductResponse(product);
     }
+
+//    public ProductDto.ProductResponse getKeyWords(String keywords){
+//        Product product = productRepository.findById(keywords)
+//                .orElseThrow(() -> new ResourceNotFoundException("KeyWords not Found"));
+//        return mapToProductResponse(product);
+//    }
     
     // Get product by SKU
     public ProductDto.ProductResponse getProductBySku(String sku) {
@@ -174,7 +181,8 @@ public class ProductService {
             String sortBy,
             String sortDirection,
             int page,
-            int size
+            int size,
+            String keywords
     ) {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection == null || sortDirection.equalsIgnoreCase("asc") ? "ASC" : "DESC"), 
                 sortBy == null ? "name" : sortBy);
@@ -182,9 +190,9 @@ public class ProductService {
         
         Page<Product> products;
         if (query != null && !query.trim().isEmpty()) {
-            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, pageable);
+            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand,keywords,pageable);
         } else {
-            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, pageable);
+            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, keywords,pageable);
         }
         
         return products.map(this::mapToProductResponse);
@@ -324,7 +332,16 @@ public class ProductService {
                 product.getBarcode(),
                 product.getWarrantyPeriodMonths(),
                 product.getCreatedAt(),
-                product.getImagePath()
+                product.getImagePath(),
+                product.getKeywords()
         );
     }
+//    @Autowired
+//    private ModelMapper modelMapper;
+//    public ProductDto updateKeywords(ProductDto productDto){
+//        ProductRepository.save(modelMapper.map(ProductDto, Product.class));
+//        return productDto;
+//    }
+
+
 }
