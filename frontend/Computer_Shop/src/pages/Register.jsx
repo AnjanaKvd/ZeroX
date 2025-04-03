@@ -9,29 +9,67 @@ import { FormInput, ErrorMessage, AuthButton } from '../components/auth/FormElem
 const Register = () => {
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
-    mode: 'onBlur',
+  const [registrationError, setRegistrationError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(signUpSchema),
   });
 
-  const password = watch('password');
-
-  const handleRegistration = useCallback(async (data) => {
-    setIsLoading(true);
-    setError('');
-
+  const onSubmit = async (data) => {
+    console.log("Form data:", data);
+    setLoading(true);
+    setRegistrationError("");
     try {
       const result = await registerUser(data);
-      if (!result?.success) {
-        throw new Error(result?.message || 'Registration failed');
+      if (result.success) {
+        navigate("/login");
+      } else {
+        const errorMessage = result.message || "Registration failed";
+
+        if (errorMessage.includes("maximum registration attempts")) {
+          setRegistrationError(
+            "This email has been used too many times. Please use a different email."
+          );
+        } else if (errorMessage.includes("active account")) {
+          setRegistrationError(
+            "An active account already exists with this email."
+          );
+        } else if (errorMessage.includes("Duplicate entry")) {
+          setRegistrationError(
+            "You signed up with this email before! Please use a different email."
+          );
+        } else {
+          setRegistrationError(errorMessage);
+        }
       }
 
       navigate('/');
     } catch (err) {
-      setError(err.message || 'An error occurred during registration');
-      console.error('Registration error:', err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "An unexpected error occurred. Please try again.";
+
+      if (errorMessage.includes("maximum registration attempts")) {
+        setRegistrationError(
+          "This email has been used too many times. Please use a different email."
+        );
+      } else if (errorMessage.includes("active account")) {
+        setRegistrationError(
+          "An active account already exists with this email."
+        );
+      } else if (errorMessage.includes("Duplicate entry")) {
+        setRegistrationError(
+          "This email is already associated with an account."
+        );
+      } else {
+        setRegistrationError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -39,68 +77,67 @@ const Register = () => {
 
   return (
     <>
-      {error && <ErrorMessage message={error} />}
+      <Header />
 
-      <form onSubmit={handleSubmit(handleRegistration)} noValidate>
-        <FormInput
-          id="fullName"
-          label="Full Name"
-          type="text"
-          placeholder="John Doe"
-          error={errors.fullName}
-          register={register('fullName', {
-            required: 'Full name is required',
-            minLength: {
-              value: 2,
-              message: 'Name must be at least 2 characters',
-            },
-          })}
-        />
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+          <h3 className="mb-4 text-2xl font-semibold text-center">Sign Up</h3>
 
-        <FormInput
-          id="email"
-          label="Email Address"
-          type="email"
-          placeholder="your.email@example.com"
-          error={errors.email}
-          register={register('email', {
-            required: 'Email is required',
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: 'Invalid email address',
-            },
-          })}
-        />
+          {registrationError && (
+            <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-md">
+              {registrationError}
+            </div>
+          )}
 
-        <FormInput
-          id="phone"
-          label="Phone Number"
-          type="tel"
-          placeholder="1234567890"
-          error={errors.phone}
-          register={register('phone', {
-            required: 'Phone number is required',
-            pattern: {
-              value: /^\+?[1-9]\d{7,14}$/,
-              message: 'Invalid phone number format',
-            },
-          })}
-        />
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Full Name</label>
+              <input
+                {...register("fullName")}
+                className="w-full p-2 border rounded-md"
+              />
+              {errors.fullName && (
+                <p className="text-sm text-red-500">
+                  {errors.fullName.message}
+                </p>
+              )}
+            </div>
 
-        <FormInput
-          id="password"
-          label="Password"
-          type="password"
-          placeholder="••••••••"
-          error={errors.password}
-          register={register('password', {
-            required: 'Password is required',
-            minLength: {
-              value: 8,
-              message: 'Password must be at least 8 characters',
-            },
-          })}
-        />
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Email Address</label>
+              <input
+                {...register("email")}
+                className="w-full p-2 border rounded-md"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Phone Number</label>
+              <input
+                {...register("phone")}
+                className="w-full p-2 border rounded-md"
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-500">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium">Password</label>
+              <input
+                type="password"
+                {...register("password")}
+                className="w-full p-2 border rounded-md"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
         <FormInput
           id="confirmPassword"

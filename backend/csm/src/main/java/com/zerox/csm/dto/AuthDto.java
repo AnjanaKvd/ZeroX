@@ -13,9 +13,6 @@ public class AuthDto {
             @NotBlank String password
     ) {
 
-//        public UUID getUsername() {
-//            return UUID.randomUUID();
-//        }
     }
     
     public record RegisterRequest(
@@ -29,6 +26,8 @@ public class AuthDto {
     public record AuthResponse(
             String token,
             String email,
-            String role
+            String role,
+            String fullName,
+            String phone
     ) {}
 } 

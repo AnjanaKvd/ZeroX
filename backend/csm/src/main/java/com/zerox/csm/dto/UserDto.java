@@ -17,6 +17,7 @@ public class UserDto {
     private int loyaltyPoints;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
+    private boolean isDeleted;
 
     public UUID getUserId() {
         return userId;
@@ -82,6 +83,14 @@ public class UserDto {
         this.lastLogin = lastLogin;
     }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
     public record UserUpdateRequest(
             @NotBlank String fullName,
             @NotBlank @Email String email,
@@ -91,6 +100,18 @@ public class UserDto {
 
         public UUID getUserId() {
             return userId;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public String getPhone() {
+            return phone;
         }
     }
 
