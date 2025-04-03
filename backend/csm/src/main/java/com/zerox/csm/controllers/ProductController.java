@@ -37,10 +37,12 @@ public class ProductController {
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "null") String keywords
+
     ) {
         return ResponseEntity.ok(productService.searchProducts(
-                query, categoryId, minPrice, maxPrice, brand, sortBy, sortDirection, page, size
+                query, categoryId, minPrice, maxPrice, brand, sortBy, sortDirection, page, size, keywords
         ));
     }
     

@@ -61,4 +61,8 @@ public class Product {
 
     @Column(name = "image_path")
     private String imagePath;
+
+    @Column(name = "keywords")
+    private String keywords;
+
 }

@@ -174,7 +174,8 @@ public class ProductService {
             String sortBy,
             String sortDirection,
             int page,
-            int size
+            int size,
+            String keywords
     ) {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection == null || sortDirection.equalsIgnoreCase("asc") ? "ASC" : "DESC"), 
                 sortBy == null ? "name" : sortBy);
@@ -182,9 +183,9 @@ public class ProductService {
         
         Page<Product> products;
         if (query != null && !query.trim().isEmpty()) {
-            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, pageable);
+            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, keywords, pageable);
         } else {
-            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, pageable);
+            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, keywords,pageable);
         }
         
         return products.map(this::mapToProductResponse);
@@ -324,7 +325,8 @@ public class ProductService {
                 product.getBarcode(),
                 product.getWarrantyPeriodMonths(),
                 product.getCreatedAt(),
-                product.getImagePath()
+                product.getImagePath(),
+                product.getKeywords()
         );
     }
 }
