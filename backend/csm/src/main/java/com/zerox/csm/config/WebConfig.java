@@ -11,6 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.springframework.beans.factory.annotation.Value;
 import java.nio.file.Paths;
+import java.io.File;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -41,15 +42,24 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Get absolute path to upload directory
         String uploadPath = Paths.get(uploadDir)
                 .toAbsolutePath()
                 .normalize()
                 .toString();
         
+        // Make sure the path ends with a separator
+        if (!uploadPath.endsWith(File.separator)) {
+            uploadPath += File.separator;
+        }
+        
+        // Configure resource handler
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadPath + "/")
+                .addResourceLocations("file:" + uploadPath)
                 .setCachePeriod(3600)
                 .resourceChain(true)
                 .addResolver(new PathResourceResolver());
+                
+        System.out.println("Configured uploads directory at: " + uploadPath);
     }
 } 

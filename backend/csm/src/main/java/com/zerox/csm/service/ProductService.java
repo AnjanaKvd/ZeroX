@@ -31,6 +31,7 @@ public class ProductService {
     private final InventoryLogRepository inventoryLogRepository;
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
 
     // Create a new product
     @Transactional
@@ -99,6 +100,11 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        
+        int oldStock = product.getStockQuantity();
+        
         // Handle image update
         if (request.image() != null && !request.image().isEmpty()) {
             // Delete old image if exists
@@ -110,24 +116,7 @@ public class ProductService {
             product.setImageUrl(newImageUrl);
         }
         
-        Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-        
-        User changedBy = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        // Check if stock quantity changed and log it
-        int oldStock = product.getStockQuantity();
-        if (oldStock != request.stockQuantity()) {
-            logInventoryChange(
-                product,
-                oldStock,
-                request.stockQuantity(),
-                changedBy,
-                InventoryLog.InventoryChangeType.ADJUSTMENT
-            );
-        }
-        
+        // Update product fields
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
@@ -139,6 +128,27 @@ public class ProductService {
         product.setWarrantyPeriodMonths(request.warrantyPeriodMonths());
         
         Product updatedProduct = productRepository.save(product);
+        
+        // Log inventory change if stock quantity has changed
+        if (oldStock != request.stockQuantity()) {
+            User changedBy = null;
+            if (userId != null) {
+                changedBy = userRepository.findById(userId)
+                        .orElse(null);
+            }
+            
+            InventoryLog.InventoryChangeType changeType = request.stockQuantity() > oldStock ?
+                    InventoryLog.InventoryChangeType.RESTOCK :
+                    InventoryLog.InventoryChangeType.ADJUSTMENT;
+            
+            logInventoryChange(
+                updatedProduct,
+                oldStock,
+                request.stockQuantity(),
+                changedBy,
+                changeType
+            );
+        }
         
         // Check if stock is below threshold
         checkLowStockLevel(updatedProduct);
