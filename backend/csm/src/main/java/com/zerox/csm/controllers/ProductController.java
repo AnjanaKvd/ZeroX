@@ -2,17 +2,20 @@ package com.zerox.csm.controllers;
 
 import com.zerox.csm.dto.InventoryLogDto;
 import com.zerox.csm.dto.ProductDto;
+import com.zerox.csm.service.ImageStorageService;
 import com.zerox.csm.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,6 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final ImageStorageService imageStorageService;
 
     @GetMapping
     public ResponseEntity<Page<ProductDto.ProductResponse>> searchProducts(
@@ -52,20 +56,20 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductBySku(sku));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProductDto.ProductResponse> createProduct(@Valid @RequestBody ProductDto.ProductRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(request));
+    public ResponseEntity<ProductDto.ProductResponse> createProduct(
+            @Valid @ModelAttribute ProductDto.ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(productService.createProduct(request));
     }
     
-    @PutMapping("/{productId}")
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto.ProductResponse> updateProduct(
             @PathVariable UUID productId,
-            @Valid @RequestBody ProductDto.ProductRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        // Here you would get the userId from userDetails
+            @Valid @ModelAttribute ProductDto.ProductRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         UUID userId = getUserId(userDetails);
         return ResponseEntity.ok(productService.updateProduct(productId, request, userId));
     }

@@ -3,6 +3,7 @@ package com.zerox.csm.dto;
 import jakarta.validation.constraints.NotBlank;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,20 +11,30 @@ public class CategoryDto {
     
     public record CategoryRequest(
             @NotBlank String name,
+            String slug,
+            String description,
+            String icon,
             UUID parentCategoryId
     ) {}
     
     public record CategoryResponse(
             UUID categoryId,
             String name,
+            String slug,
+            String description,
+            String icon,
             UUID parentCategoryId,
             String parentCategoryName,
-            List<CategoryBriefResponse> subCategories
+            List<CategoryBriefResponse> subCategories,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
     ) {}
     
     public record CategoryBriefResponse(
             UUID categoryId,
-            String name
+            String name,
+            String slug,
+            String icon
     ) {}
     
     public record ProductInCategoryResponse(

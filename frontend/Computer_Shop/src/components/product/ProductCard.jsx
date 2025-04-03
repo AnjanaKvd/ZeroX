@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { Package } from 'lucide-react';
+import { getFullImageUrl, getProductImageUrl } from '../../utils/imageUtils';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -18,7 +20,7 @@ const ProductCard = ({ product }) => {
       productId: product.productId,
       name: product.name,
       price: product.price,
-      image: product.imagePath,
+      image: product.imageUrl, // Keep as is for cart storage
       quantity: 1
     };
     
@@ -31,18 +33,27 @@ const ProductCard = ({ product }) => {
     return null;
   }
 
+  // Get image URL using the helper function
+  const imageUrl = getProductImageUrl(product);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       <Link to={`/products/${product.productId}`}>
         <div className="h-48 bg-gray-200 flex items-center justify-center">
-          {product.imagePath ? (
+          {imageUrl ? (
             <img 
-              src={product.imagePath} 
+              src={imageUrl}
               alt={product.name} 
               className="h-full w-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/placeholder-image.png'; // Add a placeholder image
+              }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <Package size={32} />
+            </div>
           )}
         </div>
         <div className="p-4">

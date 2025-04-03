@@ -12,6 +12,7 @@ import Pagination from '../components/common/Pagination';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { ErrorMessage} from '../components/auth/FormElements';
 import { debounce } from '../utils/helpers';
+import { getProductImageUrl } from '../utils/imageUtils';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -200,7 +201,7 @@ const AdminDashboard = () => {
                       <div className="h-10 w-10 flex-shrink-0">
                         <img
                           className="h-10 w-10 rounded object-cover"
-                          src={product.image || '/placeholder-product.jpg'}
+                          src={getProductImageUrl(product) || '/placeholder-product.jpg'}
                           alt={product.name}
                         />
                       </div>

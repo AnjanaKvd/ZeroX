@@ -50,8 +50,8 @@ public class Product {
     @Column(name = "low_stock_threshold")
     private Integer lowStockThreshold;
     
-    @Column(name = "barcode", unique = true)
-    private String barcode;
+    @Column(name = "image_url")
+    private String imageUrl;
     
     @Column(name = "warranty_period_months")
     private Integer warrantyPeriodMonths;

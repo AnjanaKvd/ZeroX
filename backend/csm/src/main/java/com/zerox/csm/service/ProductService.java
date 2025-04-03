@@ -31,12 +31,19 @@ public class ProductService {
     private final InventoryLogRepository inventoryLogRepository;
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
 
     // Create a new product
     @Transactional
     public ProductDto.ProductResponse createProduct(ProductDto.ProductRequest request) {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        // Handle image upload
+        String imageUrl = null;
+        if (request.image() != null && !request.image().isEmpty()) {
+            imageUrl = imageStorageService.storeImage(request.image());
+        }
 
         Product product = Product.builder()
                 .name(request.name())
@@ -47,8 +54,8 @@ public class ProductService {
                 .brand(request.brand())
                 .stockQuantity(request.stockQuantity())
                 .lowStockThreshold(request.lowStockThreshold())
-                .barcode(request.barcode())
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
+                .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
                 .build();
         
@@ -96,21 +103,20 @@ public class ProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
-        User changedBy = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        // Check if stock quantity changed and log it
         int oldStock = product.getStockQuantity();
-        if (oldStock != request.stockQuantity()) {
-            logInventoryChange(
-                product,
-                oldStock,
-                request.stockQuantity(),
-                changedBy,
-                InventoryLog.InventoryChangeType.ADJUSTMENT
-            );
+        
+        // Handle image update
+        if (request.image() != null && !request.image().isEmpty()) {
+            // Delete old image if exists
+            if (product.getImageUrl() != null) {
+                imageStorageService.deleteImage(product.getImageUrl());
+            }
+            // Store new image
+            String newImageUrl = imageStorageService.storeImage(request.image());
+            product.setImageUrl(newImageUrl);
         }
         
+        // Update product fields
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
@@ -119,10 +125,30 @@ public class ProductService {
         product.setBrand(request.brand());
         product.setStockQuantity(request.stockQuantity());
         product.setLowStockThreshold(request.lowStockThreshold());
-        product.setBarcode(request.barcode());
         product.setWarrantyPeriodMonths(request.warrantyPeriodMonths());
         
         Product updatedProduct = productRepository.save(product);
+        
+        // Log inventory change if stock quantity has changed
+        if (oldStock != request.stockQuantity()) {
+            User changedBy = null;
+            if (userId != null) {
+                changedBy = userRepository.findById(userId)
+                        .orElse(null);
+            }
+            
+            InventoryLog.InventoryChangeType changeType = request.stockQuantity() > oldStock ?
+                    InventoryLog.InventoryChangeType.RESTOCK :
+                    InventoryLog.InventoryChangeType.ADJUSTMENT;
+            
+            logInventoryChange(
+                updatedProduct,
+                oldStock,
+                request.stockQuantity(),
+                changedBy,
+                changeType
+            );
+        }
         
         // Check if stock is below threshold
         checkLowStockLevel(updatedProduct);
@@ -133,8 +159,12 @@ public class ProductService {
     // Delete product
     @Transactional
     public void deleteProduct(UUID productId) {
-        if (!productRepository.existsById(productId)) {
-            throw new ResourceNotFoundException("Product not found");
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        
+        // Delete associated image if exists
+        if (product.getImageUrl() != null) {
+            imageStorageService.deleteImage(product.getImageUrl());
         }
         
         productRepository.deleteById(productId);
@@ -297,8 +327,8 @@ public class ProductService {
                 product.getBrand(),
                 product.getStockQuantity(),
                 product.getLowStockThreshold(),
-                product.getBarcode(),
                 product.getWarrantyPeriodMonths(),
+                product.getImageUrl(),
                 product.getCreatedAt()
         );
     }

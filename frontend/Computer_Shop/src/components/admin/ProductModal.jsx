@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { getCategories } from '../../services/categoryService';
+import { getFullImageUrl } from '../../utils/imageUtils';
 
 const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' }) => {
   const [formData, setFormData] = useState({
@@ -12,9 +13,10 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
     brand: '',
     stockQuantity: '',
     lowStockThreshold: '',
-    barcode: '',
-    warrantyPeriodMonths: ''
+    warrantyPeriodMonths: '',
+    image: null
   });
+  const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
@@ -52,11 +54,20 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         brand: product.brand || '',
         stockQuantity: product.stockQuantity || '',
         lowStockThreshold: product.lowStockThreshold || '',
-        barcode: product.barcode || '',
-        warrantyPeriodMonths: product.warrantyPeriodMonths || ''
+        warrantyPeriodMonths: product.warrantyPeriodMonths || '',
+        image: null
       });
+      
+      // If there's an image URL from the server, use the helper function
+      if (product.imageUrl || product.imagePath || product.image) {
+        import('../../utils/imageUtils').then(module => {
+          const imageUrl = module.getProductImageUrl(product);
+          setImagePreview(imageUrl);
+        });
+      } else {
+        setImagePreview(null);
+      }
     } else {
-      // Reset form for add mode
       setFormData({
         name: '',
         description: '',
@@ -66,47 +77,67 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         brand: '',
         stockQuantity: '',
         lowStockThreshold: '',
-        barcode: '',
-        warrantyPeriodMonths: ''
+        warrantyPeriodMonths: '',
+        image: null
       });
+      setImagePreview(null);
     }
   }, [product, mode]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type, files } = e.target;
+    
+    if (type === 'file') {
+      const file = files[0];
+      if (file) {
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!validTypes.includes(file.type)) {
+          alert('Please upload a valid image file (JPG, PNG, or WebP)');
+          return;
+        }
+
+        if (file.size > maxSize) {
+          alert('Image size should be less than 5MB');
+          return;
+        }
+
+        const previewUrl = URL.createObjectURL(file);
+        setImagePreview(previewUrl);
+        setFormData(prev => ({
+          ...prev,
+          image: file
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Format data before submission
-    const submissionData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      stockQuantity: parseInt(formData.stockQuantity),
-    };
+    const submitFormData = new FormData();
     
-    // Convert empty strings to null
-    Object.keys(submissionData).forEach(key => {
-      if (submissionData[key] === '') {
-        submissionData[key] = null;
+    Object.keys(formData).forEach(key => {
+      if (key === 'image') {
+        if (formData.image) {
+          submitFormData.append('image', formData.image);
+        }
+      } else if (formData[key] !== '') {
+        if (['price', 'stockQuantity', 'lowStockThreshold', 'warrantyPeriodMonths'].includes(key)) {
+          submitFormData.append(key, Number(formData[key]));
+        } else {
+          submitFormData.append(key, formData[key]);
+        }
       }
     });
     
-    // Optional number fields should be parsed if they have values
-    if (submissionData.lowStockThreshold) {
-      submissionData.lowStockThreshold = parseInt(submissionData.lowStockThreshold);
-    }
-    if (submissionData.warrantyPeriodMonths) {
-      submissionData.warrantyPeriodMonths = parseInt(submissionData.warrantyPeriodMonths);
-    }
-    
-    console.log("Submitting form with data:", submissionData); // Debug: Check submission data
-    onSubmit(submissionData);
+    onSubmit(submitFormData);
   };
 
   if (!isOpen) return null;
@@ -284,18 +315,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Barcode
-                </label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={formData.barcode}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-              </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -309,6 +328,58 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   min="0"
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Product Image
+              </label>
+              <div className="mt-1 flex items-center space-x-4">
+                <div className="flex-shrink-0 h-32 w-32 border rounded-lg overflow-hidden bg-gray-100">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-gray-400">
+                      <Upload size={24} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <input
+                    type="file"
+                    name="image"
+                    onChange={handleChange}
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    {mode === 'edit' ? 'Change Image' : 'Upload Image'}
+                  </label>
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setFormData(prev => ({ ...prev, image: null }));
+                      }}
+                      className="py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Remove Image
+                    </button>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    JPG, PNG, or WebP. Max 5MB.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

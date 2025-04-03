@@ -23,12 +23,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    
+
     public AuthResponse login(LoginRequest request) {
         // Authenticate user
         authenticationManager.authenticate(
@@ -37,11 +37,11 @@ public class AuthService {
                         request.password()
                 )
         );
-        
+
         // Generate token
         var user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        
+
         var jwt = jwtService.generateToken(
                 org.springframework.security.core.userdetails.User.builder()
                         .username(user.getEmail())
@@ -49,20 +49,22 @@ public class AuthService {
                         .authorities("ROLE_" + user.getRole().name())
                         .build()
         );
-        
+
         // Update last login time
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
-        
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+
+//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+        return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone());
     }
-    
+
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new IllegalArgumentException("Email already in use");
         }
-        
+
         // Create new user
         var user = User.builder()
                 .email(request.email())
@@ -73,9 +75,9 @@ public class AuthService {
                 .createdAt(LocalDateTime.now())
                 .role(UserRole.CUSTOMER) // Changed from USER to CUSTOMER
                 .build();
-        
+
         userRepository.save(user);
-        
+
         // Generate token
         var jwt = jwtService.generateToken(
                 org.springframework.security.core.userdetails.User.builder()
@@ -84,8 +86,10 @@ public class AuthService {
                         .authorities("ROLE_" + user.getRole().name())
                         .build()
         );
-        
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+
+//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
+        return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone());
     }
 
 //    public UserProfileResponse getUserProfile(UUID userId) {
@@ -142,7 +146,7 @@ public class AuthService {
 
     //this is working but mail change a once is not working
     public UserDto.UserProfileResponse getUserProfile(String email) {
-        User user = userRepository.findByEmail(String.valueOf(email))
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return new UserDto.UserProfileResponse(
@@ -181,14 +185,44 @@ public class AuthService {
                 updatedUser.getLastLogin()
         );
     }*/
+//    public UserDto.UserProfileResponse updateUserProfile(UUID userId, UserDto.UserUpdateRequest request) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+//
+//        // Update fields
+//        user.setFullName(request.fullName());
+//        user.setEmail(request.email());
+//        user.setPhone(request.phone());
+//
+//        User updatedUser = userRepository.save(user);
+//
+//        return new UserDto.UserProfileResponse(
+//                updatedUser.getUserId(),
+//                updatedUser.getEmail(),
+//                updatedUser.getFullName(),
+//                updatedUser.getPhone(),
+//                updatedUser.getRole(),
+//                updatedUser.getLoyaltyPoints(),
+//                updatedUser.getCreatedAt(),
+//                updatedUser.getLastLogin()
+//        );
+//    }
+
     public UserDto.UserProfileResponse updateUserProfile(UUID userId, UserDto.UserUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Update fields
+        // Update only allowed fields
         user.setFullName(request.fullName());
-        user.setEmail(request.email());
         user.setPhone(request.phone());
+
+        // Only update email if it's different and available
+        if (!user.getEmail().equals(request.email())) {
+            AuthService authService = null;
+            if (!authService.userExistsByEmail(request.email())) {
+                user.setEmail(request.email());
+            }
+        }
 
         User updatedUser = userRepository.save(user);
 
