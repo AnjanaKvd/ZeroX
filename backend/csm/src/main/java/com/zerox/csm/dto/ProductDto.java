@@ -23,7 +23,8 @@ public class ProductDto {
             @PositiveOrZero int lowStockThreshold,
             String barcode,
             Integer warrantyPeriodMonths,
-            MultipartFile image
+            MultipartFile image,
+            String keywords
     ) {}
 
     public record ProductResponse(
@@ -39,7 +40,8 @@ public class ProductDto {
             String barcode,
             Integer warrantyPeriodMonths,
             LocalDateTime createdAt,
-            String imagePath
+            String imagePath,
+            String keywords
     ) {}
     
     public record ProductSearchRequest(
@@ -49,7 +51,8 @@ public class ProductDto {
             BigDecimal maxPrice,
             String brand,
             String sortBy,
-            String sortDirection
+            String sortDirection,
+            String keywords
     ) {}
     
     public record StockUpdateRequest(
