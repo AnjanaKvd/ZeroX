@@ -2,6 +2,7 @@ package com.zerox.csm.controllers;
 
 import com.zerox.csm.dto.InventoryLogDto;
 import com.zerox.csm.dto.ProductDto;
+import com.zerox.csm.service.ImageStorageService;
 import com.zerox.csm.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final ImageStorageService imageStorageService;
 
     @GetMapping
     public ResponseEntity<Page<ProductDto.ProductResponse>> searchProducts(
@@ -59,9 +61,9 @@ public class ProductController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto.ProductResponse> createProduct(
-            @Valid @ModelAttribute ProductDto.ProductRequest request
-    ) {
-        return ResponseEntity.ok(productService.createProduct(request));
+            @Valid @ModelAttribute ProductDto.ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(productService.createProduct(request));
     }
     
     @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -69,9 +71,8 @@ public class ProductController {
     public ResponseEntity<ProductDto.ProductResponse> updateProduct(
             @PathVariable UUID productId,
             @Valid @ModelAttribute ProductDto.ProductRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        UUID userId = extractUserId(userDetails);
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = getUserId(userDetails);
         return ResponseEntity.ok(productService.updateProduct(productId, request, userId));
     }
     

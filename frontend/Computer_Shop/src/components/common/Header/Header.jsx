@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
-import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import ThemeToggle from '../ThemeToggle';
+import { useTheme } from '../../../context/ThemeContext';
 
 const Header = () => {
   const { user, logout, hasRole } = useAuth();
   const { cartItems } = useCart();
+  const { theme } = useTheme();
   
-  // Safely calculate cart items count
   const cartItemCount = cartItems?.reduce((total, item) => total + (item.quantity || 0), 0) || 0;
 
   const handleLogout = async () => {
@@ -19,21 +21,24 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
+      theme === 'dark' ? 'border-background-dark' : 'border-background-light'
+    } bg-surface shadow-sm`}>
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <nav className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-blue-600 transition-colors hover:text-blue-700">
-              TechZone
-            </h1>
+          <Link 
+            to="/" 
+            className="text-2xl font-bold tracking-tight transition-colors text-primary hover:text-primary-hover"
+          >
+            TechZone
           </Link>
 
-          {/* Navigation */}
-          <nav className="items-center hidden space-x-8 md:flex">
+          {/* Primary Navigation */}
+          <div className="items-center hidden gap-8 md:flex">
             <Link 
               to="/products" 
-              className="font-medium text-gray-700 transition-colors hover:text-blue-600"
+              className="text-sm font-medium transition-colors text-text-primary hover:text-primary-hover"
             >
               Products
             </Link>
@@ -41,68 +46,79 @@ const Header = () => {
             {hasRole('ADMIN') && (
               <Link
                 to="/admin"
-                className="font-medium text-gray-700 transition-colors hover:text-blue-600"
+                className="text-sm font-medium transition-colors text-text-primary hover:text-primary-hover"
               >
-                Admin
+                Dashboard
               </Link>
             )}
-          </nav>
+          </div>
 
-          {/* User Actions */}
-          <div className="flex items-center space-x-6">
+          {/* User Controls */}
+          <div className="flex items-center gap-6">
+            <ThemeToggle />
+            
+            <Link
+              to="/cart"
+              className="relative p-2 transition-colors rounded-md hover:bg-background"
+              aria-label="Shopping Cart"
+            >
+              <ShoppingCartIcon className="w-6 h-6 text-text-primary" />
+              {cartItemCount > 0 && (
+                <span className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full -top-1 -right-1 bg-primary">
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
+
             {user ? (
-              <>
-                <Link
-                  to="/cart"
-                  className="relative text-gray-700 transition-colors hover:text-blue-600"
-                  aria-label="Shopping Cart"
+              <div className="relative group">
+                <button 
+                  className="flex items-center gap-2 p-2 transition-colors rounded-md hover:bg-background"
+                  aria-label="User menu"
                 >
-                  <ShoppingCartIcon className="w-6 h-6" />
-                  {cartItemCount > 0 && (
-                    <span className="absolute px-2 py-1 text-xs font-bold text-white bg-blue-600 rounded-full -top-2 -right-3">
-                      {cartItemCount}
-                    </span>
-                  )}
-                </Link>
-
-                <div className="relative group">
-                  <button className="font-medium text-gray-700 transition-colors hover:text-blue-600">
+                  <UserCircleIcon className="w-6 h-6 text-text-primary" />
+                  <span className="hidden text-sm font-medium sm:inline text-text-primary">
                     {user.email}
-                  </button>
-                  <div className="absolute right-0 hidden w-48 py-1 mt-2 bg-white rounded-md shadow-lg group-hover:block">
+                  </span>
+                </button>
+                
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 hidden w-48 mt-2 origin-top-right border divide-y rounded-lg shadow-lg group-hover:block bg-surface divide-border">
+                  <div className="py-1">
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-2 px-4 py-2 text-sm transition-colors text-text-primary hover:bg-background"
                     >
+                      <UserCircleIcon className="w-5 h-5" />
                       Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                      className="w-full px-4 py-2 text-sm text-left transition-colors text-text-primary hover:bg-background"
                     >
                       Logout
                     </button>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="flex space-x-4">
+              <div className="flex gap-4">
                 <Link
                   to="/login"
-                  className="font-medium text-gray-700 transition-colors hover:text-blue-600"
+                  className="text-sm font-medium transition-colors text-text-primary hover:text-primary-hover"
                 >
-                  Login
+                  Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="font-medium text-gray-700 transition-colors hover:text-blue-600"
+                  className="text-sm font-medium transition-colors text-primary hover:text-primary-hover"
                 >
-                  Register
+                  Create Account
                 </Link>
               </div>
             )}
           </div>
-        </div>
+        </nav>
       </div>
     </header>
   );

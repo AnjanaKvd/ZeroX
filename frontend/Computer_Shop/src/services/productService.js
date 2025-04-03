@@ -1,4 +1,5 @@
 import api from './api';
+import { getFullImageUrl } from '../utils/imageUtils';
 
 export const getProducts = async (params = {}) => {
   try {
@@ -86,7 +87,11 @@ export const deleteProduct = async (productId) => {
 
 export const createProduct = async (productData) => {
   try {
-    const response = await api.post('/products', productData);
+    const response = await api.post('/products', productData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating product:', error);
@@ -96,7 +101,11 @@ export const createProduct = async (productData) => {
 
 export const updateProduct = async (productId, productData) => {
   try {
-    const response = await api.put(`/products/${productId}`, productData);
+    const response = await api.put(`/products/${productId}`, productData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating product:', error);
@@ -122,4 +131,5 @@ export const getInventoryLogs = async (productId, params = {}) => {
     console.error('Error fetching inventory logs:', error);
     throw error;
   }
-}; 
+};
+

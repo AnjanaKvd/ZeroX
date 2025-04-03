@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,10 +22,8 @@ public class ProductDto {
             String brand,
             @PositiveOrZero int stockQuantity,
             @PositiveOrZero int lowStockThreshold,
-            String barcode,
             Integer warrantyPeriodMonths,
-            MultipartFile image,
-            String keywords
+            MultipartFile image
     ) {}
 
     public record ProductResponse(
@@ -37,11 +36,9 @@ public class ProductDto {
             String brand,
             int stockQuantity,
             int lowStockThreshold,
-            String barcode,
             Integer warrantyPeriodMonths,
-            LocalDateTime createdAt,
-            String imagePath,
-            String keywords
+            String imageUrl,
+            LocalDateTime createdAt
     ) {}
     
     public record ProductSearchRequest(

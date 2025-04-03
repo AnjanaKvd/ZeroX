@@ -14,7 +14,7 @@ public class AuthDto {
     ) {
 
     }
-    
+
     public record RegisterRequest(
             @NotBlank @Email String email,
             @NotBlank @Size(min = 8, max = 100) String password,
@@ -22,7 +22,7 @@ public class AuthDto {
             @NotBlank String phone
 
     ) {}
-    
+
     public record AuthResponse(
             String token,
             String email,
@@ -30,4 +30,4 @@ public class AuthDto {
             String fullName,
             String phone
     ) {}
-} 
+}

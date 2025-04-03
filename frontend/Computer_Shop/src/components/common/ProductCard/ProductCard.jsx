@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { CartContext } from '../../../context/CartContext';
+import { getFullImageUrl } from '../../../utils/imageUtils';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useContext(CartContext);
@@ -19,7 +20,7 @@ const ProductCard = ({ product }) => {
         <div className="h-48 bg-gray-200 flex items-center justify-center">
           {product.image ? (
             <img 
-              src={product.image} 
+              src={getFullImageUrl(product.image)} 
               alt={product.name} 
               className="h-full w-full object-cover"
             />

@@ -2,6 +2,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AppRoutes from './routes/AppRoutes';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingOverlay from './components/common/LoadingOverlay';
@@ -26,10 +27,10 @@ const App = () => {
   return (
     <ErrorBoundary>
       {appError && (
-        <div className="fixed top-0 left-0 right-0 bg-red-100 border-b border-red-400 text-red-700 px-4 py-3 text-center z-50">
+        <div className="fixed top-0 left-0 right-0 bg-error-light border-b border-error-light text-white px-4 py-3 text-center z-50 dark:bg-error-dark">
           {appError}
           <button 
-            className="ml-4 bg-red-700 text-white px-2 py-1 rounded text-sm"
+            className="ml-4 bg-white text-error-light dark:bg-gray-800 dark:text-error-dark px-2 py-1 rounded text-sm"
             onClick={() => window.location.reload()}
           >
             Refresh
@@ -37,28 +38,30 @@ const App = () => {
         </div>
       )}
       
-      <AuthProvider>
-        <ToastProvider>
-          <CartProvider>
-            <div className="flex flex-col min-h-screen">
-              {/* API Connection Warning */}
-              {!apiConnected && apiCheckComplete && (
-                <div 
-                  role="alert"
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 text-center"
-                >
-                  ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
-                </div>
-              )}
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <CartProvider>
+              <div className="flex flex-col min-h-screen">
+                {/* API Connection Warning */}
+                {!apiConnected && apiCheckComplete && (
+                  <div 
+                    role="alert"
+                    className="bg-error-light/10 dark:bg-error-dark/10 border border-error-light dark:border-error-dark text-error-light dark:text-error-dark px-4 py-3 text-center"
+                  >
+                    ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
+                  </div>
+                )}
 
-              {/* Main Application Routes */}
-              <Suspense fallback={<LoadingOverlay />}>
-                <AppRoutes />
-              </Suspense>
-            </div>
-          </CartProvider>
-        </ToastProvider>
-      </AuthProvider>
+                {/* Main Application Routes */}
+                <Suspense fallback={<LoadingOverlay />}>
+                  <AppRoutes />
+                </Suspense>
+              </div>
+            </CartProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 };

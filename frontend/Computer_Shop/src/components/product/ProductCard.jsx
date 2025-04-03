@@ -1,67 +1,85 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { FiPackage } from 'react-icons/fi';
+import { getFullImageUrl, getProductImageUrl } from '../../utils/imageUtils';
+import { useTheme } from '../../context/ThemeContext';
+import { Spinner } from '../common/LoadingSpinner/Spinner';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
-  
-  // Debug log to see individual product structure
-  console.log('ProductCard received product:', product);
+  const { theme } = useTheme();
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Create a cart item with correct ID structure
     const cartItem = {
       id: product.productId,
       productId: product.productId,
       name: product.name,
       price: product.price,
-      image: product.imagePath,
+      image: product.imageUrl,
       quantity: 1
     };
     
     addToCart(cartItem);
   };
 
-  // Guard clause to prevent rendering with invalid data
-  if (!product || !product.productId) {
-    console.error('Invalid product data:', product);
-    return null;
-  }
+  if (!product?.productId) return null;
+
+  const imageUrl = getProductImageUrl(product);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link to={`/products/${product.productId}`}>
-        <div className="h-48 bg-gray-200 flex items-center justify-center">
-          {product.imagePath ? (
+    <article className={`group relative overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition-all duration-300 hover:shadow-md`}>
+      <Link to={`/products/${product.productId}`} className="block h-full">
+        {/* Image Container */}
+        <div className="relative aspect-square bg-background">
+          {imageUrl ? (
             <img 
-              src={product.imagePath} 
-              alt={product.name} 
-              className="h-full w-full object-cover"
+              src={imageUrl}
+              alt={product.name}
+              className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
+              loading="lazy"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/placeholder-product.png';
+              }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+            <div className="flex h-full items-center justify-center text-text-secondary">
+              <FiPackage className="h-12 w-12 opacity-40" />
+            </div>
           )}
         </div>
+
+        {/* Product Info */}
         <div className="p-4">
-          <h2 className="text-lg font-semibold">{product.name}</h2>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-2">{product.description}</p>
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-blue-600">${Number(product.price).toFixed(2)}</span>
-            <button 
+          <h3 className="mb-2 text-lg font-semibold text-text-primary">
+            {product.name}
+          </h3>
+          
+          <p className="mb-3 line-clamp-2 text-sm text-text-secondary">
+            {product.description}
+          </p>
+
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold text-primary">
+              ${Number(product.price).toFixed(2)}
+            </span>
+            
+            <button
               onClick={handleAddToCart}
-              className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700"
-              aria-label="Add to cart"
+              className="flex items-center justify-center rounded-lg bg-primary p-2 text-surface hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              aria-label={`Add ${product.name} to cart`}
             >
               <ShoppingCartIcon className="h-5 w-5" />
             </button>
           </div>
         </div>
       </Link>
-    </div>
+    </article>
   );
 };
 
-export default ProductCard; 
+export default ProductCard;
