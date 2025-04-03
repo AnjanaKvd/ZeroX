@@ -4,28 +4,7 @@ import * as categoryService from '../services/categoryService';
 import CategoryModal from '../components/admin/CategoryModal';
 import ConfirmModal from '../components/admin/ConfirmModal';
 import LoadingOverlay from '../components/common/LoadingOverlay';
-
-// Helper function to dynamically get Icon component
-const DynamicIcon = ({ iconName, className = "w-6 h-6" }) => {
-  if (!iconName) return null;
-
-  try {
-    // If the icon name starts with 'Fa', it's from react-icons/fa
-    if (iconName.startsWith('Fa')) {
-      const { [iconName]: Icon } = require('react-icons/fa');
-      return <Icon className={className} />;
-    } 
-    // If the icon name starts with 'Si', it's from react-icons/si
-    else if (iconName.startsWith('Si')) {
-      const { [iconName]: Icon } = require('react-icons/si');
-      return <Icon className={className} />;
-    }
-    return null;
-  } catch (error) {
-    console.error('Icon not found:', iconName);
-    return null;
-  }
-};
+import { IconRenderer } from '../utils/iconRegistry';
 
 // Helper function to get category ID from various possible properties
 const getCategoryId = (category) => {
@@ -215,7 +194,7 @@ const CategoryManagement = () => {
                 <tr key={getCategoryId(category)}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      <DynamicIcon iconName={category.icon} className="w-6 h-6 text-blue-600" />
+                      <IconRenderer iconName={category.icon} className="w-6 h-6 text-blue-600" />
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

@@ -1,195 +1,164 @@
 import { useState, useEffect, useCallback } from 'react';
-import { debounce } from '../utils/helpers';
-import { getProducts, getCategories } from '../services/productService';
-import HeroBanner from "../components/home/HeroBanner"
-import CategorySection from '../components/home/CategorySection';
+import { useTheme } from '../context/ThemeContext';
+import { getProducts } from '../services/productService';
+import HeroBanner from "../components/home/HeroBanner";
 import ProductGrid from '../components/product/ProductGrid';
 import FilterPanel from '../components/common/FilterPanel';
 import Pagination from '../components/common/Pagination';
-import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 
-// Create mock data as fallback
-const MOCK_PRODUCTS = [
-  { id: 1, name: "Sample Product 1", price: 99.99, description: "This is a sample product" },
-  { id: 2, name: "Sample Product 2", price: 149.99, description: "Another sample product" },
-];
-
-const MOCK_CATEGORIES = [
-  { id: 1, name: "Electronics" },
-  { id: 2, name: "Clothing" },
-];
-
 const Home = () => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 0,
-    totalPages: 0,
-    totalElements: 0,
-    size: 12
+  const { theme } = useTheme();
+  const [state, setState] = useState({
+    products: [],
+    loading: true,
+    error: null,
+    pagination: {
+      page: 0,
+      totalPages: 0,
+      totalElements: 0,
+      size: 12
+    },
+    filters: {
+      searchQuery: '',
+      minPrice: '',
+      maxPrice: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
+      page: 1,
+      pageSize: 12
+    }
   });
-  
-  const [filters, setFilters] = useState({
-    categoryId: '',
-    searchQuery: '',
-    minPrice: '',
-    maxPrice: '',
-    sortBy: 'name',
-    sortOrder: 'asc',
-    page: 1,
-    pageSize: 12
-  });
 
-  // Add a timeout for loading
-  useEffect(() => {
-    // If still loading after 10 seconds, use mock data
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.warn("Data fetch timeout - using mock data");
-        setProducts(MOCK_PRODUCTS);
-        setCategories(MOCK_CATEGORIES);
-        setLoading(false);
-      }
-    }, 10000);
-
-    return () => clearTimeout(timeoutId);
-  }, [loading]);
-
-  // Fetch data with better error handling
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
+      setState(prev => ({ ...prev, loading: true }));
       
-      // Fetch both products and categories
-      const [productsResponse, categoriesResponse] = await Promise.all([
-        getProducts(),
-        getCategories()
-      ]);
-      
-      console.log('Products response:', productsResponse);
-      console.log('Categories response:', categoriesResponse);
-      
-      // Extract products from the content array
-      const productItems = productsResponse.content || [];
-      setProducts(productItems);
-      
-      // Set categories directly
-      setCategories(categoriesResponse || []);
-      
+      const productsResponse = await getProducts();
+
+      setState(prev => ({
+        ...prev,
+        products: productsResponse.content || [],
+        error: null
+      }));
     } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Failed to load data. Please try again later.');
+      console.error('Data fetch error:', err);
+      setState(prev => ({
+        ...prev,
+        error: 'Failed to load data. Please try again later.'
+      }));
     } finally {
-      // Always turn off loading
-      setLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
   }, []);
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({
+    setState(prev => ({
       ...prev,
-      [name]: value,
-      page: 1 // Reset to first page on filter change
+      filters: {
+        ...prev.filters,
+        [name]: value,
+        page: 1
+      }
     }));
   };
 
   const handlePageChange = (newPage) => {
-    fetchProducts(newPage, pagination.size);
+    fetchProducts(newPage, state.pagination.size);
   };
 
-  // Separate function for fetching products
   const fetchProducts = async (page = 0, size = 12) => {
     try {
-      setLoading(true);
+      setState(prev => ({ ...prev, loading: true }));
       
-      // Get products with pagination
       const productsResponse = await getProducts({ page, size });
       
-      // Check if response has expected structure
-      if (productsResponse && productsResponse.content) {
-        setProducts(productsResponse.content);
-        setPagination({
-          page: productsResponse.pageable?.pageNumber || 0,
-          totalPages: productsResponse.totalPages || 1,
-          totalElements: productsResponse.totalElements || 0,
-          size: productsResponse.pageable?.pageSize || 12
-        });
-      } else {
-        console.error('Unexpected API response format:', productsResponse);
-        setError('Received unexpected data format from server');
-        setProducts([]);
+      if (productsResponse?.content) {
+        setState(prev => ({
+          ...prev,
+          products: productsResponse.content,
+          pagination: {
+            page: productsResponse.pageable?.pageNumber || 0,
+            totalPages: productsResponse.totalPages || 1,
+            totalElements: productsResponse.totalElements || 0,
+            size: productsResponse.pageable?.pageSize || 12
+          },
+          error: null
+        }));
       }
     } catch (err) {
-      console.error('Error fetching products:', err);
-      setError('Failed to load products. Please try again later.');
-      setProducts([]);
+      console.error('Products fetch error:', err);
+      setState(prev => ({
+        ...prev,
+        error: 'Failed to load products. Please try again later.',
+        products: []
+      }));
     } finally {
-      // IMPORTANT: Always set loading to false regardless of success/failure
-      setLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
   };
 
   return (
-    <>
-      <HeroBanner 
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background-dark' : 'bg-background-light'}`}>
+      <HeroBanner
         title="Custom Gaming PCs & Components"
         subtitle="Build Your Ultimate Gaming Rig"
         ctaText="Shop Now"
         ctaLink="/products"
+        theme={theme}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <FilterPanel
-          categories={categories}
-          filters={filters}
+          filters={state.filters}
           onFilterChange={handleFilterChange}
-          className="my-8"
+          theme={theme}
+          className="mb-8"
         />
 
-        {error && (
+        {state.error && (
           <ErrorDisplay 
-            error={error}
-            onRetry={() => fetchData()}
-            className="my-8"
+            error={state.error}
+            onRetry={fetchData}
+            theme={theme}
+            className="mb-8"
           />
         )}
 
-        {/* <LoadingOverlay isLoading={loading}> */}
-          <CategorySection 
-            categories={categories}
-            onSelectCategory={(id) => handleFilterChange('categoryId', id)}
-            selectedCategory={filters.categoryId}
-            className="my-8"
-          />
-
-          <div className="my-8">
-            <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
-            {loading ? (
-              <LoadingSpinner />
-            ) : (
-              <ProductGrid products={products} loading={loading} />
-            )}
-          </div>
-        {/* </LoadingOverlay> */}
+        <section className="mb-8">
+          <h2 className={`text-2xl font-bold mb-6 ${
+            theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
+          }`}>
+            Featured Products
+          </h2>
+          
+          {state.loading ? (
+            <div className="flex justify-center items-center h-64">
+              <LoadingSpinner theme={theme} />
+            </div>
+          ) : (
+            <ProductGrid 
+              products={state.products} 
+              theme={theme}
+            />
+          )}
+        </section>
 
         <Pagination
-          currentPage={pagination.page}
-          totalPages={pagination.totalPages}
+          currentPage={state.pagination.page}
+          totalPages={state.pagination.totalPages}
           onPageChange={handlePageChange}
-          disabled={loading}
+          disabled={state.loading}
+          theme={theme}
           className="mt-8"
         />
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

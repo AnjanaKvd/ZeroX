@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { slugify } from '../../utils/helpers';
 import IconPickerModal from './IconPickerModal';
+import { IconRenderer } from '../../utils/iconRegistry';
 
 const CategoryModal = ({ isOpen, onClose, onSubmit, category = null, mode = 'add' }) => {
   const [formData, setFormData] = useState({
@@ -95,28 +96,6 @@ const CategoryModal = ({ isOpen, onClose, onSubmit, category = null, mode = 'add
 
   if (!isOpen) return null;
 
-  // Dynamically get the IconComponent if one is selected
-  const IconComponent = formData.icon ? 
-    // Using dynamic import to get the icon component
-    (() => {
-      try {
-        // If the icon name starts with 'Fa', it's from react-icons/fa
-        if (formData.icon.startsWith('Fa')) {
-          const { [formData.icon]: Icon } = require('react-icons/fa');
-          return Icon;
-        } 
-        // If the icon name starts with 'Si', it's from react-icons/si
-        else if (formData.icon.startsWith('Si')) {
-          const { [formData.icon]: Icon } = require('react-icons/si');
-          return Icon;
-        }
-        return null;
-      } catch (error) {
-        console.error('Icon not found:', formData.icon);
-        return null;
-      }
-    })() : null;
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -205,8 +184,8 @@ const CategoryModal = ({ isOpen, onClose, onSubmit, category = null, mode = 'add
                     errors.icon ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
-                  {IconComponent ? (
-                    <IconComponent className="w-5 h-5 mr-2 text-gray-700" />
+                  {formData.icon ? (
+                    <IconRenderer iconName={formData.icon} className="w-5 h-5 mr-2 text-gray-700" />
                   ) : (
                     <span className="w-5 h-5 mr-2 bg-gray-200 rounded-sm"></span>
                   )}
