@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
+import logoImage from '../../../assets/images/logo.png';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -13,9 +14,9 @@ const Footer = () => {
           <div className="space-y-4">
             <Link 
               to="/" 
-              className="text-2xl font-bold text-primary hover:text-primary-hover transition-colors"
+              className="flex items-center text-2xl font-bold text-primary hover:text-primary-hover transition-colors"
             >
-              TechZone
+              <img src={logoImage} alt="Taprodev Computers" className="h-9 w-auto mr-2" />
             </Link>
             <p className={`text-sm ${
               theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
@@ -61,24 +62,25 @@ const Footer = () => {
             <address className={`not-italic text-sm ${
               theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
             }`}>
-              <p>123 Tech Avenue</p>
-              <p>Silicon Valley, CA 94025</p>
+              <p>No. 89/2/B,</p>
+              <p> Gonawala,</p>
+              <p> Digana</p>
               <p className="mt-2">
                 Email:{' '}
                 <a 
-                  href="mailto:support@techzone.com" 
+                  href="mailto:support@Taprodev Computers.com" 
                   className="hover:text-primary-hover transition-colors"
                 >
-                  support@techzone.com
+                  taprodev@gmail.com
                 </a>
               </p>
               <p>
                 Phone:{' '}
                 <a 
-                  href="tel:+11234567890" 
+                  href="tel:+94757333502" 
                   className="hover:text-primary-hover transition-colors"
                 >
-                  (123) 456-7890
+                  (94)757333502
                 </a>
               </p>
             </address>
@@ -90,7 +92,7 @@ const Footer = () => {
           theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
         }`}>
           <p className="text-sm">
-            &copy; {currentYear} TechZone. All rights reserved.
+            &copy; {currentYear} Taprodev Computers. All rights reserved.
             <span className="mx-2">|</span>
             <Link 
               to="/privacy" 
