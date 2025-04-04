@@ -10,14 +10,12 @@ import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.StockAlertRepository;
 import com.zerox.csm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,7 +31,7 @@ public class ProductService {
     private final InventoryLogRepository inventoryLogRepository;
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
-    private final FileStorageService fileStorageService;
+    private final ImageStorageService imageStorageService;
 
     // Create a new product
     @Transactional
@@ -42,9 +40,9 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         // Handle image upload
-        String imagePath = null;
+        String imageUrl = null;
         if (request.image() != null && !request.image().isEmpty()) {
-            imagePath = fileStorageService.storeFile(request.image());
+            imageUrl = imageStorageService.storeImage(request.image());
         }
 
         Product product = Product.builder()
@@ -56,10 +54,9 @@ public class ProductService {
                 .brand(request.brand())
                 .stockQuantity(request.stockQuantity())
                 .lowStockThreshold(request.lowStockThreshold())
-                .barcode(request.barcode())
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
+                .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
-                .imagePath(imagePath)
                 .build();
         
         Product savedProduct = productRepository.save(product);
@@ -88,12 +85,6 @@ public class ProductService {
         
         return mapToProductResponse(product);
     }
-
-//    public ProductDto.ProductResponse getKeyWords(String keywords){
-//        Product product = productRepository.findById(keywords)
-//                .orElseThrow(() -> new ResourceNotFoundException("KeyWords not Found"));
-//        return mapToProductResponse(product);
-//    }
     
     // Get product by SKU
     public ProductDto.ProductResponse getProductBySku(String sku) {
@@ -109,35 +100,23 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
-        // Handle image update
-        if (request.image() != null && !request.image().isEmpty()) {
-            // Delete old image if exists
-            if (product.getImagePath() != null) {
-                fileStorageService.deleteFile(product.getImagePath());
-            }
-            // Store new image
-            String imagePath = fileStorageService.storeFile(request.image());
-            product.setImagePath(imagePath);
-        }
-
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
-        User changedBy = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        // Check if stock quantity changed and log it
         int oldStock = product.getStockQuantity();
-        if (oldStock != request.stockQuantity()) {
-            logInventoryChange(
-                product,
-                oldStock,
-                request.stockQuantity(),
-                changedBy,
-                InventoryLog.InventoryChangeType.ADJUSTMENT
-            );
+        
+        // Handle image update
+        if (request.image() != null && !request.image().isEmpty()) {
+            // Delete old image if exists
+            if (product.getImageUrl() != null) {
+                imageStorageService.deleteImage(product.getImageUrl());
+            }
+            // Store new image
+            String newImageUrl = imageStorageService.storeImage(request.image());
+            product.setImageUrl(newImageUrl);
         }
         
+        // Update product fields
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
@@ -146,10 +125,30 @@ public class ProductService {
         product.setBrand(request.brand());
         product.setStockQuantity(request.stockQuantity());
         product.setLowStockThreshold(request.lowStockThreshold());
-        product.setBarcode(request.barcode());
         product.setWarrantyPeriodMonths(request.warrantyPeriodMonths());
         
         Product updatedProduct = productRepository.save(product);
+        
+        // Log inventory change if stock quantity has changed
+        if (oldStock != request.stockQuantity()) {
+            User changedBy = null;
+            if (userId != null) {
+                changedBy = userRepository.findById(userId)
+                        .orElse(null);
+            }
+            
+            InventoryLog.InventoryChangeType changeType = request.stockQuantity() > oldStock ?
+                    InventoryLog.InventoryChangeType.RESTOCK :
+                    InventoryLog.InventoryChangeType.ADJUSTMENT;
+            
+            logInventoryChange(
+                updatedProduct,
+                oldStock,
+                request.stockQuantity(),
+                changedBy,
+                changeType
+            );
+        }
         
         // Check if stock is below threshold
         checkLowStockLevel(updatedProduct);
@@ -164,8 +163,8 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
         // Delete associated image if exists
-        if (product.getImagePath() != null) {
-            fileStorageService.deleteFile(product.getImagePath());
+        if (product.getImageUrl() != null) {
+            imageStorageService.deleteImage(product.getImageUrl());
         }
         
         productRepository.deleteById(productId);
@@ -181,8 +180,7 @@ public class ProductService {
             String sortBy,
             String sortDirection,
             int page,
-            int size,
-            String keywords
+            int size
     ) {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection == null || sortDirection.equalsIgnoreCase("asc") ? "ASC" : "DESC"), 
                 sortBy == null ? "name" : sortBy);
@@ -190,9 +188,9 @@ public class ProductService {
         
         Page<Product> products;
         if (query != null && !query.trim().isEmpty()) {
-            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand,keywords,pageable);
+            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, pageable);
         } else {
-            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, keywords,pageable);
+            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, pageable);
         }
         
         return products.map(this::mapToProductResponse);
@@ -329,19 +327,9 @@ public class ProductService {
                 product.getBrand(),
                 product.getStockQuantity(),
                 product.getLowStockThreshold(),
-                product.getBarcode(),
                 product.getWarrantyPeriodMonths(),
-                product.getCreatedAt(),
-                product.getImagePath(),
-                product.getKeywords()
+                product.getImageUrl(),
+                product.getCreatedAt()
         );
     }
-//    @Autowired
-//    private ModelMapper modelMapper;
-//    public ProductDto updateKeywords(ProductDto productDto){
-//        ProductRepository.save(modelMapper.map(ProductDto, Product.class));
-//        return productDto;
-//    }
-
-
 }

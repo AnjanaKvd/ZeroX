@@ -50,18 +50,12 @@ public class Product {
     @Column(name = "low_stock_threshold")
     private Integer lowStockThreshold;
     
-    @Column(name = "barcode", unique = true)
-    private String barcode;
+    @Column(name = "image_url")
+    private String imageUrl;
     
     @Column(name = "warranty_period_months")
     private Integer warrantyPeriodMonths;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "image_path")
-    private String imagePath;
-
-    @Column(name = "keywords")
-    private String keywords;
 }

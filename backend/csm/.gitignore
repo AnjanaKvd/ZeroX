@@ -32,5 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
-.env
-backend\csm\src\main\resources\.env
+
+.mvn
+
+# Environment variables
+src/main/resources/.env
+src/main/resources/.env

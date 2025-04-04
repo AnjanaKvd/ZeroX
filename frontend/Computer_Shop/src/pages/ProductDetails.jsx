@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 import { Plus, Minus, ShoppingCart } from 'lucide-react'; // or your icon library
+import { getFullImageUrl, getProductImageUrl } from '../utils/imageUtils';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -77,9 +78,9 @@ const ProductDetails = () => {
         {/* Product Image */}
         <div className="md:w-1/2">
           <div className="bg-gray-200 rounded-lg h-80 md:h-96 flex items-center justify-center">
-            {product.imagePath || product.image ? (
+            {getProductImageUrl(product) ? (
               <img 
-                src={product.imagePath || product.image} 
+                src={getProductImageUrl(product)} 
                 alt={product.name} 
                 className="max-h-full max-w-full object-contain"
               />

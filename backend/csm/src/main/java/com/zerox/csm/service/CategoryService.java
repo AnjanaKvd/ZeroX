@@ -54,8 +54,17 @@ public class CategoryService {
                     .orElseThrow(() -> new ResourceNotFoundException("Parent category not found"));
         }
         
+        // Generate slug if not provided
+        String slug = request.slug();
+        if (slug == null || slug.isBlank()) {
+            slug = generateSlug(request.name());
+        }
+        
         Category category = Category.builder()
                 .name(request.name())
+                .slug(slug)
+                .description(request.description())
+                .icon(request.icon())
                 .parentCategory(parentCategory)
                 .subCategories(new ArrayList<>())
                 .products(new ArrayList<>())
@@ -93,6 +102,17 @@ public class CategoryService {
         
         category.setName(request.name());
         
+        // Update slug if provided
+        if (request.slug() != null && !request.slug().isBlank()) {
+            category.setSlug(request.slug());
+        } else if (!request.name().equals(category.getName())) {
+            // Generate new slug if name has changed and no new slug provided
+            category.setSlug(generateSlug(request.name()));
+        }
+        
+        category.setDescription(request.description());
+        category.setIcon(request.icon());
+        
         return mapToCategoryResponse(categoryRepository.save(category));
     }
 
@@ -129,17 +149,39 @@ public class CategoryService {
             validateNoCyclicReference(category.getParentCategory(), potentialChildId);
         }
     }
+    
+    // Helper method to generate a slug from name
+    private String generateSlug(String name) {
+        if (name == null || name.isBlank()) {
+            return UUID.randomUUID().toString();
+        }
+        
+        return name.toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "") // Remove all non-alphanumeric characters except spaces and hyphens
+                .replaceAll("\\s+", "-")         // Replace spaces with hyphens
+                .replaceAll("-+", "-")           // Replace multiple hyphens with single hyphen
+                .trim();
+    }
 
     // Mapping methods
     private CategoryResponse mapToCategoryResponse(Category category) {
         return new CategoryResponse(
                 category.getCategoryId(),
                 category.getName(),
+                category.getSlug(),
+                category.getDescription(),
+                category.getIcon(),
                 category.getParentCategory() != null ? category.getParentCategory().getCategoryId() : null,
                 category.getParentCategory() != null ? category.getParentCategory().getName() : null,
                 category.getSubCategories().stream()
-                        .map(sub -> new CategoryBriefResponse(sub.getCategoryId(), sub.getName()))
-                        .collect(Collectors.toList())
+                        .map(sub -> new CategoryBriefResponse(
+                                sub.getCategoryId(), 
+                                sub.getName(), 
+                                sub.getSlug(),
+                                sub.getIcon()))
+                        .collect(Collectors.toList()),
+                category.getCreatedAt(),
+                category.getUpdatedAt()
         );
     }
     

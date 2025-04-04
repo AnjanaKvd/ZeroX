@@ -17,8 +17,6 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
     Optional<Product> findBySku(String sku);
     
-    Optional<Product> findByBarcode(String barcode);
-    
     @Query("SELECT p FROM Product p WHERE " +
             "(:category IS NULL OR p.category.categoryId = :category) AND " +
             "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
@@ -29,7 +27,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("brand") String brand,
-            @Param("keywords") String keywords,
             Pageable pageable
     );
     
@@ -46,7 +43,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("brand") String brand,
-            @Param("keywords") String keywords,
             Pageable pageable
     );
 }
