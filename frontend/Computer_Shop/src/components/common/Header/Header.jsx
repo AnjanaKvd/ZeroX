@@ -30,9 +30,9 @@ const Header = () => {
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center text-2xl font-bold tracking-tight text-primary hover:text-primary-hover transition-colors"
+            className="flex items-center text-2xl font-bold tracking-tight transition-colors text-primary hover:text-primary-hover"
           >
-            <img src={logoImage} alt="Taprodev Computers" className="h-9 w-auto mr-2" />
+            <img src={logoImage} alt="Taprodev Computers" className="w-auto mr-2 h-9" />
           </Link>
 
           {/* Primary Navigation */}

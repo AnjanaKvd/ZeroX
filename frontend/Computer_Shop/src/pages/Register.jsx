@@ -102,31 +102,31 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-white w-full max-w-md rounded-lg p-6 shadow-md">
-      <h3 className="text-center text-2xl font-semibold mb-4">Sign Up</h3>
+    <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+      <h3 className="mb-4 text-2xl font-semibold text-center">Sign Up</h3>
 
       {registrationError && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+        <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-md">
           {registrationError}
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Full Name</label>
+          <label className="block mb-1 text-sm font-medium">Full Name</label>
           <input
             {...register("fullName")}
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
           />
           {errors.fullName && (
-            <p className="text-red-500 text-sm mt-1">
+            <p className="mt-1 text-sm text-red-500">
               {errors.fullName.message}
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block mb-1 text-sm font-medium">
             Email Address
           </label>
           <input
@@ -134,37 +134,37 @@ const Register = () => {
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
           />
           {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Phone Number</label>
+          <label className="block mb-1 text-sm font-medium">Phone Number</label>
           <input
             {...register("phone")}
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
           />
           {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label className="block mb-1 text-sm font-medium">Password</label>
           <input
             type="password"
             {...register("password")}
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
           />
           {errors.password && (
-            <p className="text-red-500 text-sm mt-1">
+            <p className="mt-1 text-sm text-red-500">
               {errors.password.message}
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block mb-1 text-sm font-medium">
             Confirm Password
           </label>
           <input
@@ -173,7 +173,7 @@ const Register = () => {
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
           />
           {errors.confirmPassword && (
-            <p className="text-red-500 text-sm mt-1">
+            <p className="mt-1 text-sm text-red-500">
               {errors.confirmPassword.message}
             </p>
           )}
@@ -182,7 +182,7 @@ const Register = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition disabled:opacity-70"
+          className="w-full py-2 font-medium text-white transition bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-70"
         >
           {loading ? "Creating account..." : "Create Account"}
         </button>
@@ -193,7 +193,7 @@ const Register = () => {
           Already have an account?{" "}
           <Link
             to="/login"
-            className="text-blue-600 hover:underline font-medium"
+            className="font-medium text-blue-600 hover:underline"
           >
             Sign In
           </Link>
