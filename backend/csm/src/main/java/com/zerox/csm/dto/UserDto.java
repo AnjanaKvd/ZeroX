@@ -125,7 +125,7 @@ public class UserDto {
             LocalDateTime createdAt,
             LocalDateTime lastLogin
     ) {}
-    
+
     public record AdminUserResponse(
             UUID userId,
             String email,
@@ -136,7 +136,7 @@ public class UserDto {
             LocalDateTime createdAt,
             LocalDateTime lastLogin
     ) {}
-    
+
 
 
     public record PasswordChangeRequest(

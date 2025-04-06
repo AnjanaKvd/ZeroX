@@ -1,13 +1,43 @@
-// pages/Register.jsx
-import { useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { AuthLayout } from '../components/layouts/AuthLayout';
-import { FormInput, ErrorMessage, AuthButton } from '../components/auth/FormElements';
+import { useContext, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { z } from "zod";
+
+const signUpSchema = z
+  .object({
+    fullName: z
+      .string()
+      .nonempty({ message: "Name is required!" })
+      .min(3, { message: "Full name must be at least 3 characters!" }),
+    email: z
+      .string()
+      .nonempty({ message: "Email is required!" })
+      .email({ message: "Invalid email format!" }),
+    phone: z
+      .string()
+      .nonempty({ message: "Phone number is required!" })
+      .regex(/^(?:\+94|0)\d{9}$/, {
+        message: "Invalid format! Use +94XXXXXXXXX or 0XXXXXXXXX",
+      })
+      .min(10, { message: "Phone number must be at least 10 digits!" })
+      .max(12, { message: "Phone number must be at most 12 digits!" }),
+    password: z
+      .string()
+      .nonempty({ message: "Password is required!" })
+      .min(8, { message: "Password must be at least 8 characters!" }),
+    confirmPassword: z
+      .string()
+      .nonempty({ message: "Confirmation password is required!" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match!",
+    path: ["confirmPassword"],
+  });
 
 const Register = () => {
-  const { register: registerUser } = useAuth();
+  const { register: registerUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [registrationError, setRegistrationError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,150 +51,155 @@ const Register = () => {
   });
 
   const onSubmit = async (data) => {
-    console.log("Form data:", data);
     setLoading(true);
     setRegistrationError("");
     try {
       const result = await registerUser(data);
-      if (result.success) {
-        navigate("/login");
+      if (result?.success) {
+        // Redirect to login with success state
+        navigate("/login", {
+          state: {
+            registrationSuccess: true,
+            email: data.email,
+          },
+        });
       } else {
-        const errorMessage = result.message || "Registration failed";
-
-        if (errorMessage.includes("maximum registration attempts")) {
+        setRegistrationError(result?.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+      if (err.response) {
+        if (
+          err.response.data?.message?.includes("maximum registration attempts")
+        ) {
           setRegistrationError(
-            "This email has been used too many times. Please use a different email."
+            "This email has reached maximum registration attempts. Use a different email."
           );
-        } else if (errorMessage.includes("active account")) {
+        } else if (
+          err.response.data?.message?.includes("Email already in use")
+        ) {
           setRegistrationError(
-            "An active account already exists with this email."
+            "An account already exists with this email. Please login instead."
           );
-        } else if (errorMessage.includes("Duplicate entry")) {
+        } else if (err.response.data?.message?.includes("deleted")) {
           setRegistrationError(
-            "You signed up with this email before! Please use a different email."
+            "This email was previously used for a deleted account and cannot be reused."
           );
         } else {
-          setRegistrationError(errorMessage);
+          setRegistrationError(
+            err.response.data?.message ||
+              "Registration failed. Please try again."
+          );
         }
-      }
-
-      navigate('/');
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "An unexpected error occurred. Please try again.";
-
-      if (errorMessage.includes("maximum registration attempts")) {
-        setRegistrationError(
-          "This email has been used too many times. Please use a different email."
-        );
-      } else if (errorMessage.includes("active account")) {
-        setRegistrationError(
-          "An active account already exists with this email."
-        );
-      } else if (errorMessage.includes("Duplicate entry")) {
-        setRegistrationError(
-          "This email is already associated with an account."
-        );
+      } else if (err.request) {
+        setRegistrationError("Network error. Please check your connection.");
       } else {
-        setRegistrationError(errorMessage);
+        setRegistrationError("An unexpected error occurred.");
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [registerUser, navigate]);
+  };
 
   return (
-    <>
-      <Header />
+    <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+      <h3 className="mb-4 text-2xl font-semibold text-center">Sign Up</h3>
 
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-          <h3 className="mb-4 text-2xl font-semibold text-center">Sign Up</h3>
+      {registrationError && (
+        <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-md">
+          {registrationError}
+        </div>
+      )}
 
-          {registrationError && (
-            <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-md">
-              {registrationError}
-            </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <label className="block mb-1 text-sm font-medium">Full Name</label>
+          <input
+            {...register("fullName")}
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
+          />
+          {errors.fullName && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.fullName.message}
+            </p>
           )}
+        </div>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Full Name</label>
-              <input
-                {...register("fullName")}
-                className="w-full p-2 border rounded-md"
-              />
-              {errors.fullName && (
-                <p className="text-sm text-red-500">
-                  {errors.fullName.message}
-                </p>
-              )}
-            </div>
+        <div>
+          <label className="block mb-1 text-sm font-medium">
+            Email Address
+          </label>
+          <input
+            {...register("email")}
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Email Address</label>
-              <input
-                {...register("email")}
-                className="w-full p-2 border rounded-md"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
-            </div>
+        <div>
+          <label className="block mb-1 text-sm font-medium">Phone Number</label>
+          <input
+            {...register("phone")}
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
+          />
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>
+          )}
+        </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Phone Number</label>
-              <input
-                {...register("phone")}
-                className="w-full p-2 border rounded-md"
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone.message}</p>
-              )}
-            </div>
+        <div>
+          <label className="block mb-1 text-sm font-medium">Password</label>
+          <input
+            type="password"
+            {...register("password")}
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
+          />
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Password</label>
-              <input
-                type="password"
-                {...register("password")}
-                className="w-full p-2 border rounded-md"
-              />
-              {errors.password && (
-                <p className="text-sm text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+        <div>
+          <label className="block mb-1 text-sm font-medium">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            {...register("confirmPassword")}
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-300"
+          />
+          {errors.confirmPassword && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
 
-        <FormInput
-          id="confirmPassword"
-          label="Confirm Password"
-          type="password"
-          placeholder="••••••••"
-          error={errors.confirmPassword}
-          register={register('confirmPassword', {
-            required: 'Please confirm your password',
-            validate: value => value === password || 'Passwords do not match',
-          })}
-        />
-
-        <AuthButton isLoading={isLoading}>
-          Create Account
-        </AuthButton>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2 font-medium text-white transition bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-70"
+        >
+          {loading ? "Creating account..." : "Create Account"}
+        </button>
       </form>
 
       <div className="mt-4 text-center">
         <p className="text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Sign in
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-blue-600 hover:underline"
+          >
+            Sign In
           </Link>
         </p>
       </div>
-    </>
+    </div>
   );
 };
 

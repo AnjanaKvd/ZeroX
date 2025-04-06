@@ -4,6 +4,7 @@ import { useCart } from '../../../context/CartContext';
 import { ShoppingCartIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import ThemeToggle from '../ThemeToggle';
 import { useTheme } from '../../../context/ThemeContext';
+import logoImage from '../../../assets/images/logo.png';
 
 const Header = () => {
   const { user, logout, hasRole } = useAuth();
@@ -29,9 +30,9 @@ const Header = () => {
           {/* Logo */}
           <Link 
             to="/" 
-            className="text-2xl font-bold tracking-tight transition-colors text-primary hover:text-primary-hover"
+            className="flex items-center text-2xl font-bold tracking-tight transition-colors text-primary hover:text-primary-hover"
           >
-            TechZone
+            <img src={logoImage} alt="Taprodev Computers" className="w-auto mr-2 h-9" />
           </Link>
 
           {/* Primary Navigation */}
