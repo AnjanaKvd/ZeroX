@@ -27,7 +27,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("brand") String brand,
-            @Param("keywords") String keywords,
             Pageable pageable
     );
     
@@ -44,7 +43,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("brand") String brand,
-            @Param("keywords") String keywords,
             Pageable pageable
     );
 }

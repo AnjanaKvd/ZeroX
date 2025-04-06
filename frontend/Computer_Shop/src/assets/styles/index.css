@@ -1,7 +1,94 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer base {
+     :root {
+        /* Light theme (default) */
+        --color-primary: 26, 165, 222;
+        /* #1AA5DE */
+        --color-primary-hover: 22, 144, 194;
+        /* #1690C2 */
+        --color-secondary: 84, 101, 117;
+        /* #546575 */
+        --color-secondary-hover: 69, 85, 102;
+        /* #455566 */
+        --color-accent: 245, 124, 0;
+        /* #F57C00 */
+        --color-accent-hover: 230, 112, 2;
+        /* #E67002 */
+        --color-success: 46, 125, 50;
+        /* #2E7D32 */
+        --color-error: 211, 47, 47;
+        /* #D32F2F */
+        --color-surface: 255, 255, 255;
+        /* #FFFFFF */
+        --color-background: 248, 250, 252;
+        /* #F8FAFC */
+        --color-text-primary: 33, 37, 41;
+        /* #212529 */
+        --color-text-secondary: 84, 101, 117;
+        /* #546575 */
+        --color-border: 229, 231, 235;
+        /* #E5E7EB */
+    }
+    .dark {
+        /* Dark theme */
+        --color-primary: 26, 165, 222;
+        /* #1AA5DE - Keeping primary color the same */
+        --color-primary-hover: 40, 179, 236;
+        /* #28B3EC - Slightly lighter for dark mode */
+        --color-secondary: 84, 101, 117;
+        /* #546575 */
+        --color-secondary-hover: 99, 118, 137;
+        /* #637689 - Slightly lighter for dark mode */
+        --color-accent: 245, 124, 0;
+        /* #F57C00 */
+        --color-accent-hover: 255, 144, 20;
+        /* #FF9014 - Slightly lighter for dark mode */
+        --color-success: 102, 187, 106;
+        /* #66BB6A */
+        --color-error: 239, 83, 80;
+        /* #EF5350 */
+        --color-surface: 30, 30, 30;
+        /* #1E1E1E */
+        --color-background: 18, 18, 18;
+        /* #121212 */
+        --color-text-primary: 224, 224, 224;
+        /* #E0E0E0 */
+        --color-text-secondary: 160, 170, 180;
+        /* #A0AAB4 */
+        --color-border: 55, 55, 55;
+        /* #373737 */
+    }
+}
 
 body {
-  @apply bg-gray-50;
-} 
+    @apply bg-background-light dark: bg-background-dark text-text-light-primary dark: text-text-dark-primary transition-colors duration-300;
+}
+
+
+/* Common utility classes that can be used across components */
+
+.card {
+    @apply bg-surface-light dark: bg-surface-dark rounded-lg border border-border shadow-sm transition-colors duration-300;
+}
+
+.form-input {
+    @apply bg-surface-light dark: bg-surface-dark border border-border rounded-md px-3 py-2 focus: outline-none focus: ring-2 focus: ring-primary focus: border-transparent transition-colors duration-300 text-text-light-primary dark: text-text-dark-primary;
+}
+
+.btn-primary {
+    @apply bg-primary hover: bg-primary-hover text-white font-medium py-2 px-4 rounded-md transition-colors duration-300;
+}
+
+.btn-secondary {
+    @apply bg-background-light dark: bg-background-dark hover: bg-gray-200 dark: hover: bg-gray-700 text-text-light-primary dark: text-text-dark-primary border border-border font-medium py-2 px-4 rounded-md transition-colors duration-300;
+}
+
+.card-title {
+    @apply text-lg font-semibold text-text-light-primary dark: text-text-dark-primary mb-2;
+}
+
+.section-title {
+    @apply text-2xl font-bold text-text-light-primary dark: text-text-dark-primary mb-4;
+}

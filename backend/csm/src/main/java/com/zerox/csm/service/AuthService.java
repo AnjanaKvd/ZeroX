@@ -32,6 +32,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+
     public AuthResponse login(LoginRequest request) {
         // Authenticate user
         authenticationManager.authenticate(
@@ -66,6 +67,21 @@ public class AuthService {
 //        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
                 user.getFullName(), user.getPhone());
+    }
+
+
+    @Transactional
+    public void deleteAccount(UUID userId) {
+        // Verify user exists and isn't already deleted
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.isDeleted()) {
+            throw new IllegalStateException("Account already deleted");
+        }
+
+        // Perform the soft delete
+        userRepository.softDelete(userId);
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -125,61 +141,9 @@ public class AuthService {
                         .build()
         );
 
-//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
                 user.getFullName(), user.getPhone());
     }
-
-//    public UserProfileResponse getUserProfile(UUID userId) {
-//        // The username should be the email from JWT
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-//
-//        return new UserProfileResponse(
-//                user.getUserId(),
-//                user.getEmail(),
-//                user.getFullName(),
-//                user.getPhone(),
-//                user.getRole(),
-//                user.getLoyaltyPoints(),
-//                user.getCreatedAt(),
-//                user.getLastLogin()
-//        );
-//    }
-//
-//    public UserProfileResponse updateProfile(UUID userId, UserDto.UserUpdateRequest request) {
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-//
-//        // Check if email is being changed to one that already exists
-//        if (!user.getEmail().equals(request.email()) &&
-//                userRepository.findByEmail(request.email()).isPresent()) {
-//            throw new IllegalArgumentException("Email already in use");
-//        }
-//
-//        user.setFullName(request.fullName());
-//        user.setEmail(request.email());
-//        user.setPhone(request.phone());
-//
-//        userRepository.save(user);
-//
-//        return this.getUserProfile(user.getUserId());
-//    }
-//
-//
-//    public void changePassword(String email, UserDto.PasswordChangeRequest request) {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-//
-//        // Verify current password
-//        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-//            throw new IllegalArgumentException("Current password is incorrect");
-//        }
-//
-//        // Update to new password
-//        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-//        userRepository.save(user);
-//    }
 
 
     //this is working but mail change a once is not working
@@ -209,14 +173,6 @@ public class AuthService {
         user.setFullName(request.fullName());
         user.setPhone(request.phone());
 
-        // Only update email if it's different and available
-        if (!user.getEmail().equals(request.email())) {
-            AuthService authService = null;
-            if (!authService.userExistsByEmail(request.email())) {
-                user.setEmail(request.email());
-            }
-        }
-
         User updatedUser = userRepository.save(user);
 
         return new UserDto.UserProfileResponse(
@@ -231,29 +187,29 @@ public class AuthService {
         );
     }
 
-   public void changePassword(String email, UserDto.PasswordChangeRequest request) {
-       User user = userRepository.findByEmail(email)
-               .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public void changePassword(String email, UserDto.PasswordChangeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-       // Verifying current password
-       if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-           throw new PasswordChangeException("Current password is incorrect");
-       }
+        // Verifying current password
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new PasswordChangeException("Current password is incorrect");
+        }
 
-       // Validating new password
-       if (request.newPassword().length() < 8) {
-           throw new PasswordChangeException("Password must be at least 8 characters");
-       }
+        // Validating new password
+        if (request.newPassword().length() < 8) {
+            throw new PasswordChangeException("Password must be at least 8 characters");
+        }
 
-       // Verifying password confirmation
-       if (!request.newPassword().equals(request.confirmPassword())) {
-           throw new PasswordChangeException("New passwords don't match");
-       }
+        // Verifying password confirmation
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new PasswordChangeException("New passwords don't match");
+        }
 
-       // Update password
-       user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-       userRepository.save(user);
-   }
+        // Update password
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
 
 
 

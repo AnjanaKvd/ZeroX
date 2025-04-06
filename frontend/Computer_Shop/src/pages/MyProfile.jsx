@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
 
-const Profile = () => {
+const MyProfile = () => {
   const { user, updateUser } = useContext(AuthContext);
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -21,7 +21,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get("/auth/profile");
+        const response = await api.get("/api/auth/profile");
         const userProfile = response.data;
 
         // Format the createdAt date to be more readable
@@ -76,7 +76,7 @@ const Profile = () => {
     setUpdateError(null);
 
     try {
-      const response = await api.put("/auth/profile", {
+      const response = await api.put("/api/auth/profile", {
         fullName: data.fullName,
         email: data.email,
         phone: data.phone,
@@ -121,7 +121,7 @@ const Profile = () => {
     setPasswordError("");
 
     try {
-      await api.post("/auth/changepassword", {
+      await api.post("/api/auth/changepassword", {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
         confirmPassword: data.confirmPassword,
@@ -144,7 +144,7 @@ const Profile = () => {
   const handleDeleteAccount = async () => {
     setDeleteError("");
     try {
-      await api.delete("/auth/deleteaccount");
+      await api.delete("/api/auth/deleteaccount");
       // Clear user data and redirect to login
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -538,4 +538,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default MyProfile;
