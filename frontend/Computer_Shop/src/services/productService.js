@@ -1,4 +1,5 @@
 import api from './api';
+import { getFullImageUrl } from '../utils/imageUtils';
 
 export const getProducts = async (params = {}) => {
   try {
@@ -130,4 +131,5 @@ export const getInventoryLogs = async (productId, params = {}) => {
     console.error('Error fetching inventory logs:', error);
     throw error;
   }
-}; 
+};
+

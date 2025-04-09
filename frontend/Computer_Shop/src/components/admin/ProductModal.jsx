@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
 import { getCategories } from '../../services/categoryService';
+import { getFullImageUrl } from '../../utils/imageUtils';
 
 const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' }) => {
   const [formData, setFormData] = useState({
@@ -56,7 +57,16 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         warrantyPeriodMonths: product.warrantyPeriodMonths || '',
         image: null
       });
-      setImagePreview(product.imageUrl || null);
+      
+      // If there's an image URL from the server, use the helper function
+      if (product.imageUrl || product.imagePath || product.image) {
+        import('../../utils/imageUtils').then(module => {
+          const imageUrl = module.getProductImageUrl(product);
+          setImagePreview(imageUrl);
+        });
+      } else {
+        setImagePreview(null);
+      }
     } else {
       setFormData({
         name: '',

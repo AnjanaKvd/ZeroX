@@ -136,6 +136,22 @@ export const debounce = (func, wait = 300, immediate = false) => {
     );
   };
   
+  /**
+   * Convert string to slug format
+   * @param {string} text - Text to convert to slug
+   * @returns {string} Slug-formatted string
+   */
+  export const slugify = (text) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')     // Replace spaces with -
+      .replace(/&/g, '-and-')   // Replace & with 'and'
+      .replace(/[^\w\-]+/g, '') // Remove all non-word characters
+      .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+  };
+  
   export default {
     debounce,
     throttle,
@@ -147,4 +163,5 @@ export const debounce = (func, wait = 300, immediate = false) => {
     truncateText,
     capitalizeFirst,
     isMobileDevice,
+    slugify,
   };

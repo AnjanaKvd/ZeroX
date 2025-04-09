@@ -11,6 +11,7 @@ import ConfirmModal from '../components/admin/ConfirmModal';
 import Pagination from '../components/common/Pagination';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { ErrorMessage } from '../components/auth/FormElements';
+import { getProductImageUrl } from '../utils/imageUtils';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -309,10 +310,10 @@ const ProductManagement = () => {
                     <td className="px-4 py-4">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          {product.imagePath ? (
+                          {getProductImageUrl(product) ? (
                             <img
                               className="h-10 w-10 rounded object-cover"
-                              src={product.imagePath}
+                              src={getProductImageUrl(product)}
                               alt={product.name}
                             />
                           ) : (

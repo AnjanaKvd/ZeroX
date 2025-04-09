@@ -36,11 +36,11 @@ public class SecurityConfig {
                                 "/api/reviews/product/**",
                                 "/api/shipping/track/**",
                                 "/api/discounts/verify",
-                                "/api/carts/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/error"
+                                "/error",
+                                "/api/images/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
