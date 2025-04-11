@@ -29,11 +29,10 @@ public class AdminController {
     public String listProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "null") String keywords,
             Model model
     ) {
         Page<ProductDto.ProductResponse> products = productService.searchProducts(
-                null, null, null, null, null, "name", "asc", page, size,keywords
+                null, null, null, null, null, "name", "asc", page, size
         );
         model.addAttribute("products", products);
         model.addAttribute("categories", categoryService.getAllCategories());

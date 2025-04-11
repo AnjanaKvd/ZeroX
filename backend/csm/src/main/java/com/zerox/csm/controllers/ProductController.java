@@ -39,12 +39,10 @@ public class ProductController {
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "null") String keywords
-
+            @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok(productService.searchProducts(
-                query, categoryId, minPrice, maxPrice, brand, sortBy, sortDirection, page, size, keywords
+                query, categoryId, minPrice, maxPrice, brand, sortBy, sortDirection, page, size
         ));
     }
     
@@ -106,7 +104,7 @@ public class ProductController {
     }
     
     // Helper method to extract userId from UserDetails
-    private UUID extractUserId(UserDetails userDetails) {
+    private UUID getUserId(UserDetails userDetails) {
         // This is a placeholder - you would implement this based on how your UserDetails
         // has been extended to include the userId
         return UUID.fromString("00000000-0000-0000-0000-000000000000"); 
