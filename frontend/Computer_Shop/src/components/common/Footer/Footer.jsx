@@ -8,15 +8,15 @@ const Footer = () => {
 
   return (
     <footer className={`mt-auto bg-surface border-t border-border transition-colors duration-300`}>
-      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           {/* Brand Section */}
           <div className="space-y-4">
             <Link 
               to="/" 
-              className="flex items-center text-2xl font-bold transition-colors text-primary hover:text-primary-hover"
+              className="flex items-center text-2xl font-bold text-primary hover:text-primary-hover transition-colors"
             >
-              <img src={logoImage} alt="Taprodev Computers" className="w-auto mr-2 h-9" />
+              <img src={logoImage} alt="Taprodev Computers" className="h-9 w-auto mr-2" />
             </Link>
             <p className={`text-sm ${
               theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
@@ -69,7 +69,7 @@ const Footer = () => {
                 Email:{' '}
                 <a 
                   href="mailto:support@Taprodev Computers.com" 
-                  className="transition-colors hover:text-primary-hover"
+                  className="hover:text-primary-hover transition-colors"
                 >
                   taprodev@gmail.com
                 </a>
@@ -78,7 +78,7 @@ const Footer = () => {
                 Phone:{' '}
                 <a 
                   href="tel:+94757333502" 
-                  className="transition-colors hover:text-primary-hover"
+                  className="hover:text-primary-hover transition-colors"
                 >
                   (94)757333502
                 </a>
@@ -96,14 +96,14 @@ const Footer = () => {
             <span className="mx-2">|</span>
             <Link 
               to="/privacy" 
-              className="transition-colors hover:text-primary-hover"
+              className="hover:text-primary-hover transition-colors"
             >
               Privacy Policy
             </Link>
             <span className="mx-2">|</span>
             <Link 
               to="/terms" 
-              className="transition-colors hover:text-primary-hover"
+              className="hover:text-primary-hover transition-colors"
             >
               Terms of Service
             </Link>

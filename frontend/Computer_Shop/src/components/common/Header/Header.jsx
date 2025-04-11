@@ -25,21 +25,21 @@ const Header = () => {
     <header className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
       theme === 'dark' ? 'border-background-dark' : 'border-background-light'
     } bg-surface shadow-sm`}>
-      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <nav className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center text-2xl font-bold tracking-tight transition-colors text-primary hover:text-primary-hover"
+            className="flex items-center text-2xl font-bold tracking-tight text-primary hover:text-primary-hover transition-colors"
           >
-            <img src={logoImage} alt="Taprodev Computers" className="w-auto mr-2 h-9" />
+            <img src={logoImage} alt="Taprodev Computers" className="h-9 w-auto mr-2" />
           </Link>
 
           {/* Primary Navigation */}
-          <div className="items-center hidden gap-8 md:flex">
+          <div className="hidden md:flex items-center gap-8">
             <Link 
               to="/products" 
-              className="text-sm font-medium transition-colors text-text-primary hover:text-primary-hover"
+              className="text-sm font-medium text-text-primary hover:text-primary-hover transition-colors"
             >
               Products
             </Link>
@@ -47,7 +47,7 @@ const Header = () => {
             {hasRole('ADMIN') && (
               <Link
                 to="/admin"
-                className="text-sm font-medium transition-colors text-text-primary hover:text-primary-hover"
+                className="text-sm font-medium text-text-primary hover:text-primary-hover transition-colors"
               >
                 Dashboard
               </Link>
@@ -60,12 +60,12 @@ const Header = () => {
             
             <Link
               to="/cart"
-              className="relative p-2 transition-colors rounded-md hover:bg-background"
+              className="relative p-2 rounded-md hover:bg-background transition-colors"
               aria-label="Shopping Cart"
             >
-              <ShoppingCartIcon className="w-6 h-6 text-text-primary" />
+              <ShoppingCartIcon className="h-6 w-6 text-text-primary" />
               {cartItemCount > 0 && (
-                <span className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full -top-1 -right-1 bg-primary">
+                <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 bg-primary text-xs font-bold text-white rounded-full">
                   {cartItemCount}
                 </span>
               )}
@@ -74,28 +74,28 @@ const Header = () => {
             {user ? (
               <div className="relative group">
                 <button 
-                  className="flex items-center gap-2 p-2 transition-colors rounded-md hover:bg-background"
+                  className="flex items-center gap-2 p-2 rounded-md hover:bg-background transition-colors"
                   aria-label="User menu"
                 >
-                  <UserCircleIcon className="w-6 h-6 text-text-primary" />
-                  <span className="hidden text-sm font-medium sm:inline text-text-primary">
+                  <UserCircleIcon className="h-6 w-6 text-text-primary" />
+                  <span className="hidden sm:inline text-sm font-medium text-text-primary">
                     {user.email}
                   </span>
                 </button>
                 
                 {/* Dropdown Menu */}
-                <div className="absolute right-0 hidden w-48 mt-2 origin-top-right border divide-y rounded-lg shadow-lg group-hover:block bg-surface divide-border">
+                <div className="hidden group-hover:block absolute right-0 mt-2 w-48 origin-top-right rounded-lg shadow-lg bg-surface border divide-y divide-border">
                   <div className="py-1">
                     <Link
                       to="/profile"
-                      className="flex items-center gap-2 px-4 py-2 text-sm transition-colors text-text-primary hover:bg-background"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-text-primary hover:bg-background transition-colors"
                     >
-                      <UserCircleIcon className="w-5 h-5" />
+                      <UserCircleIcon className="h-5 w-5" />
                       Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full px-4 py-2 text-sm text-left transition-colors text-text-primary hover:bg-background"
+                      className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-background transition-colors"
                     >
                       Logout
                     </button>
@@ -106,13 +106,13 @@ const Header = () => {
               <div className="flex gap-4">
                 <Link
                   to="/login"
-                  className="text-sm font-medium transition-colors text-text-primary hover:text-primary-hover"
+                  className="text-sm font-medium text-text-primary hover:text-primary-hover transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="text-sm font-medium transition-colors text-primary hover:text-primary-hover"
+                  className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
                 >
                   Create Account
                 </Link>

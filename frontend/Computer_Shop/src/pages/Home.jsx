@@ -113,7 +113,7 @@ const Home = () => {
         theme={theme}
       />
 
-      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <FilterPanel
           filters={state.filters}
           onFilterChange={handleFilterChange}
@@ -138,7 +138,7 @@ const Home = () => {
           </h2>
           
           {state.loading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex justify-center items-center h-64">
               <LoadingSpinner theme={theme} />
             </div>
           ) : (
