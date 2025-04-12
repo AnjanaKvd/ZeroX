@@ -46,7 +46,8 @@ public class SearchService {
                         product.getProductId().toString(),
                         scores.get(product.getProductId()),
                         product.getName(),
-                        product.getPrice()
+                        product.getPrice(),
+                        product.getImageUrl()
                 ))
                 .sorted(Comparator.comparingInt(SearchDto::getScore).reversed())
                 .collect(Collectors.toList());

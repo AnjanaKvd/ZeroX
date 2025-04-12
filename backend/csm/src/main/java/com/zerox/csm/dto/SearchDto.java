@@ -16,8 +16,9 @@ public class SearchDto {
     private Integer score;
     private String name;
     private BigDecimal price;
+    private String imageUrl;
 
-    public SearchDto(String productId, int score, String name, BigDecimal price){
+    public SearchDto(String productId, int score, String name, BigDecimal price,String imageUrl){
         this.productId = productId;
         this.name = name;
         this.score = score;
@@ -31,4 +32,6 @@ public class SearchDto {
     public String getName() {return name;}
 
     public BigDecimal getPrice() {return price;}
+
+    public String getimageUrl() {return imageUrl;}
 }

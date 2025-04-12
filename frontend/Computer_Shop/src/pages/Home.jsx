@@ -66,6 +66,15 @@ const Home = () => {
         page: 1
       }
     }));
+    
+    // If searchResults are provided, update products directly
+    if (name === 'searchResults' && Array.isArray(value)) {
+      setState(prev => ({
+        ...prev,
+        products: value,
+        loading: false
+      }));
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -134,7 +143,7 @@ const Home = () => {
           <h2 className={`text-2xl font-bold mb-6 ${
             theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
           }`}>
-            Featured Products
+            {state.filters.isSearchResults ? `Search Results for "${state.filters.searchQuery}"` : 'Featured Products'}
           </h2>
           
           {state.loading ? (
@@ -149,14 +158,16 @@ const Home = () => {
           )}
         </section>
 
-        <Pagination
-          currentPage={state.pagination.page}
-          totalPages={state.pagination.totalPages}
-          onPageChange={handlePageChange}
-          disabled={state.loading}
-          theme={theme}
-          className="mt-8"
-        />
+        {!state.filters.isSearchResults && (
+          <Pagination
+            currentPage={state.pagination.page}
+            totalPages={state.pagination.totalPages}
+            onPageChange={handlePageChange}
+            disabled={state.loading}
+            theme={theme}
+            className="mt-8"
+          />
+        )}
       </main>
     </div>
   );
