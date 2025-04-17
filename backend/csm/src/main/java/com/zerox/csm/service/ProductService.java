@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -58,7 +57,6 @@ public class ProductService {
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
                 .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
-                .imagePath(imagePath)
                 .build();
         
         Product savedProduct = productRepository.save(product);
@@ -102,17 +100,6 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
-        // Handle image update
-        if (request.image() != null && !request.image().isEmpty()) {
-            // Delete old image if exists
-            if (product.getImagePath() != null) {
-                fileStorageService.deleteFile(product.getImagePath());
-            }
-            // Store new image
-            String imagePath = fileStorageService.storeFile(request.image());
-            product.setImagePath(imagePath);
-        }
-
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
@@ -193,8 +180,7 @@ public class ProductService {
             String sortBy,
             String sortDirection,
             int page,
-            int size,
-            String keywords
+            int size
     ) {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection == null || sortDirection.equalsIgnoreCase("asc") ? "ASC" : "DESC"), 
                 sortBy == null ? "name" : sortBy);
@@ -202,9 +188,9 @@ public class ProductService {
         
         Page<Product> products;
         if (query != null && !query.trim().isEmpty()) {
-            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, keywords, pageable);
+            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, pageable);
         } else {
-            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, keywords,pageable);
+            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, pageable);
         }
         
         return products.map(this::mapToProductResponse);

@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.springframework.web.multipart.MultipartFile;
 
 // src/main/java/com/zerox/csm/dto/ProductDto.java
 public class ProductDto {
@@ -48,8 +47,7 @@ public class ProductDto {
             BigDecimal maxPrice,
             String brand,
             String sortBy,
-            String sortDirection,
-            String keywords
+            String sortDirection
     ) {}
     
     public record StockUpdateRequest(

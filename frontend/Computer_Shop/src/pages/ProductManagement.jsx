@@ -137,12 +137,12 @@ const ProductManagement = () => {
   };
 
   return (
-    <div className="container px-4 py-8 mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Product Management</h1>
         <button
           onClick={() => openModal('add')}
-          className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
         >
           <Plus className="mr-2" size={18} />
           Add Product
@@ -154,7 +154,7 @@ const ProductManagement = () => {
       )}
 
       {/* Advanced Filters */}
-      <div className="p-4 mb-6 bg-white rounded-md shadow">
+      <div className="bg-white p-4 mb-6 rounded-md shadow">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium">Filters</h2>
           <button 
@@ -165,9 +165,9 @@ const ProductManagement = () => {
           </button>
         </div>
         
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Search
             </label>
             <div className="relative">
@@ -177,14 +177,14 @@ const ProductManagement = () => {
                 value={filters.query}
                 onChange={handleInputChange}
                 placeholder="Search products..."
-                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             </div>
           </div>
           
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Brand
             </label>
             <input
@@ -198,7 +198,7 @@ const ProductManagement = () => {
           </div>
           
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Min Price
             </label>
             <input
@@ -213,7 +213,7 @@ const ProductManagement = () => {
           </div>
           
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Max Price
             </label>
             <input
@@ -230,14 +230,14 @@ const ProductManagement = () => {
       </div>
 
       {/* Products Table */}
-      <div className="overflow-hidden bg-white rounded-md shadow-md">
+      <div className="bg-white shadow-md rounded-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th 
                   scope="col" 
-                  className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase cursor-pointer"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('name')}
                 >
                   <div className="flex items-center">
@@ -249,7 +249,7 @@ const ProductManagement = () => {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase cursor-pointer"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('sku')}
                 >
                   <div className="flex items-center">
@@ -261,7 +261,7 @@ const ProductManagement = () => {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase cursor-pointer"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('price')}
                 >
                   <div className="flex items-center">
@@ -273,7 +273,7 @@ const ProductManagement = () => {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase cursor-pointer"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort('stockQuantity')}
                 >
                   <div className="flex items-center">
@@ -285,7 +285,7 @@ const ProductManagement = () => {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase"
+                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Actions
                 </th>
@@ -309,15 +309,15 @@ const ProductManagement = () => {
                   <tr key={product.productId} className="hover:bg-gray-50">
                     <td className="px-4 py-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 w-10 h-10">
+                        <div className="h-10 w-10 flex-shrink-0">
                           {getProductImageUrl(product) ? (
                             <img
-                              className="object-cover w-10 h-10 rounded"
+                              className="h-10 w-10 rounded object-cover"
                               src={getProductImageUrl(product)}
                               alt={product.name}
                             />
                           ) : (
-                            <div className="flex items-center justify-center w-10 h-10 bg-gray-200 rounded">
+                            <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
                               <Package size={18} className="text-gray-500" />
                             </div>
                           )}
@@ -351,7 +351,7 @@ const ProductManagement = () => {
                         {product.stockQuantity} in stock
                       </span>
                     </td>
-                    <td className="px-4 py-4 space-x-2 text-sm font-medium text-right">
+                    <td className="px-4 py-4 text-sm font-medium space-x-2 text-right">
                       <button
                         onClick={() => openModal('edit', product)}
                         className="text-blue-600 hover:text-blue-900"
