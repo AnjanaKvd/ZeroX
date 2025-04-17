@@ -161,10 +161,9 @@ public class ProductDiscountService {
     @Transactional(readOnly = true)
     public ProductDiscountDto.ActiveDiscountResponse getActiveDiscountForProduct(UUID productId) {
         LocalDateTime now = LocalDateTime.now();
-        ProductDiscount discount = discountRepository.findActiveDiscountForProduct(productId, now)
-                .orElseThrow(() -> new ResourceNotFoundException("No active discount found for this product"));
-        
-        return mapToActiveDiscountResponse(discount);
+        return discountRepository.findActiveDiscountForProduct(productId, now)
+                .map(this::mapToActiveDiscountResponse)
+                .orElse(null);
     }
 
     private ProductDiscountDto.DiscountResponse mapToDiscountResponse(ProductDiscount discount) {

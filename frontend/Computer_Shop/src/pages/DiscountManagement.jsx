@@ -28,6 +28,7 @@ const DiscountManagement = () => {
   const [filters, setFilters] = useState({
     query: '',
     status: '', // 'active', 'scheduled', 'expired'
+    showDeleted: false,
     minDiscountPct: '',
     maxDiscountPct: '',
     sortBy: 'productName',
@@ -138,6 +139,7 @@ const DiscountManagement = () => {
     setFilters({
       query: '',
       status: '',
+      showDeleted: false,
       minDiscountPct: '',
       maxDiscountPct: '',
       sortBy: 'productName',
@@ -149,6 +151,11 @@ const DiscountManagement = () => {
 
   // Filter discounts based on search query
   const filteredDiscounts = discounts.filter(discount => {
+    // First check if we should show deleted discounts
+    if (discount.active === false && !filters.showDeleted) {
+      return false;
+    }
+    
     const searchLower = filters.query.toLowerCase();
     const matchesSearch = 
       discount.productName?.toLowerCase().includes(searchLower) ||
@@ -191,6 +198,11 @@ const DiscountManagement = () => {
   };
 
   const getDiscountStatus = (discount) => {
+    // First check if the discount is deleted/inactive
+    if (discount.active === false) {
+      return { status: 'deleted', label: 'Deleted', color: 'bg-gray-100 text-gray-800' };
+    }
+    
     const now = new Date();
     const startDate = new Date(discount.startDate);
     const endDate = new Date(discount.endDate);
@@ -300,6 +312,19 @@ const DiscountManagement = () => {
             />
           </div>
         </div>
+        <div className="flex items-center mt-4">
+          <input
+            type="checkbox"
+            id="showDeleted"
+            name="showDeleted"
+            checked={filters.showDeleted}
+            onChange={(e) => setFilters(prev => ({ ...prev, showDeleted: e.target.checked }))}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <label htmlFor="showDeleted" className="ml-2 text-sm text-gray-700">
+            Show deleted discounts
+          </label>
+        </div>
       </div>
 
       {/* Discounts Table */}
@@ -397,9 +422,11 @@ const DiscountManagement = () => {
                   const savingsAmount = discount.originalPrice - discount.discountPrice;
                   const savingsPercentage = (savingsAmount / discount.originalPrice) * 100;
                   const status = getDiscountStatus(discount);
+                  const isDeleted = discount.active === false;
                   
                   return (
-                    <tr key={discount.discountId} className="hover:bg-gray-50">
+                    <tr key={discount.discountId} 
+                        className={`hover:bg-gray-50 ${isDeleted ? 'bg-gray-100 opacity-60' : ''}`}>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {discount.productName}
@@ -407,6 +434,11 @@ const DiscountManagement = () => {
                         <div className="text-sm text-gray-500">
                           SKU: {discount.productSku}
                         </div>
+                        {isDeleted && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            Deleted
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         ${discount.originalPrice.toFixed(2)}
@@ -429,25 +461,37 @@ const DiscountManagement = () => {
                         {formatDate(discount.endDate)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${status.color}`}>
-                          {status.label}
-                        </span>
+                        {isDeleted ? (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Deleted
+                          </span>
+                        ) : (
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${status.color}`}>
+                            {status.label}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openModal('edit', discount)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                          title="Edit discount"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => openModal('delete', discount)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete discount"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {isDeleted ? (
+                          <div className="text-gray-400 italic text-xs">Cannot modify deleted discounts</div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => openModal('edit', discount)}
+                              className="text-blue-600 hover:text-blue-900 mr-3"
+                              title="Edit discount"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() => openModal('delete', discount)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete discount"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );

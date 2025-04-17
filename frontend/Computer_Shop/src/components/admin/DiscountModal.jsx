@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X, Info } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, Info, AlertCircle, Search, XCircle } from 'lucide-react';
+import { getActiveDiscountForProduct } from '../../services/discountService';
 
 const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add', products = [] }) => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,10 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
   
   const [errors, setErrors] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeDiscount, setActiveDiscount] = useState(null);
+  const [isCheckingDiscount, setIsCheckingDiscount] = useState(false);
 
   // Set form data when editing
   useEffect(() => {
@@ -41,6 +46,13 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
         price: discount.originalPrice,
         sku: discount.productSku
       });
+      
+      // Set search query to product name
+      if (product) {
+        setSearchQuery(product.name);
+      } else if (discount.productName) {
+        setSearchQuery(discount.productName);
+      }
     } else {
       // Reset form for adding new discount
       setFormData({
@@ -50,33 +62,98 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
         endDate: ''
       });
       setSelectedProduct(null);
+      setSearchQuery('');
+      setActiveDiscount(null);
     }
   }, [discount, products, mode]);
 
-  // Update selectedProduct when productId changes
+  // Check for active discount when product changes
   useEffect(() => {
-    if (formData.productId) {
-      const product = products.find(p => p.productId === formData.productId);
-      setSelectedProduct(product);
-    } else {
-      setSelectedProduct(null);
+    async function checkForActiveDiscount() {
+      // Don't make API calls if no product is selected
+      if (!formData.productId || formData.productId === '') {
+        setActiveDiscount(null);
+        setIsCheckingDiscount(false);
+        return;
+      }
+      
+      // Don't check for active discounts in edit mode
+      if (mode === 'edit') {
+        return;
+      }
+      
+      setIsCheckingDiscount(true);
+      
+      try {
+        const activeDiscountData = await getActiveDiscountForProduct(formData.productId);
+        setActiveDiscount(activeDiscountData);
+      } catch (error) {
+        // Error is handled in the service layer
+        setActiveDiscount(null);
+      } finally {
+        setIsCheckingDiscount(false);
+      }
     }
-  }, [formData.productId, products]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
     
-    // Clear errors for the field
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
+    checkForActiveDiscount();
+  }, [formData.productId, mode]);
+
+  // Filter products based on search
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    
+    // Don't filter if we've already selected a product
+    // (this was the issue - we need to check selectedProduct here)
+    if (selectedProduct && searchQuery === selectedProduct.name) return [];
+    
+    return products.filter(product => 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.sku && product.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+    ).slice(0, 10);
+  }, [products, searchQuery, selectedProduct]);
+
+  // Clear selected product
+  const handleClearProduct = () => {
+    setSelectedProduct(null);
+    setFormData(prev => ({ ...prev, productId: '' }));
+    setSearchQuery('');
+    setActiveDiscount(null);
+    // Set showSuggestions to true so dropdown appears again
+    setShowSuggestions(true);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    // If we've cleared the search, also clear the selected product
+    if (!e.target.value) {
+      setSelectedProduct(null);
+      setFormData(prev => ({ ...prev, productId: '' }));
+      setActiveDiscount(null);
     }
+    setShowSuggestions(true);
+  };
+
+  // Handle product selection from dropdown
+  const handleProductSelect = (product) => {
+    setFormData(prev => ({ ...prev, productId: product.productId }));
+    setSelectedProduct(product);
+    setSearchQuery(product.name);
+    setShowSuggestions(false); // Hide suggestions after selection
+  };
+
+  // Handle input focus
+  const handleInputFocus = () => {
+    // Only show suggestions if there is text and no product selected
+    if (searchQuery && !selectedProduct) {
+      setShowSuggestions(true);
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
 
   const validateForm = () => {
@@ -84,6 +161,10 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
     
     if (!formData.productId) {
       newErrors.productId = 'Please select a product';
+    }
+    
+    if (activeDiscount && mode === 'add') {
+      newErrors.productId = 'This product already has an active discount';
     }
     
     if (!formData.discountPrice || isNaN(formData.discountPrice) || Number(formData.discountPrice) <= 0) {
@@ -171,23 +252,112 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Product *
               </label>
+              
+              {/* Searchable Product Dropdown with Clear Button */}
+              <div className="relative">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search for a product..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onFocus={handleInputFocus}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 pl-10 pr-10"
+                    disabled={mode === 'edit'} // Can't change product when editing
+                  />
+                  <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                  
+                  {/* Clear button - only show when a product is selected */}
+                  {selectedProduct && mode === 'add' && (
+                    <button
+                      type="button"
+                      onClick={handleClearProduct}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-700"
+                      aria-label="Clear selected product"
+                    >
+                      <XCircle size={18} />
+                    </button>
+                  )}
+                </div>
+                
+                {/* Show suggestions when appropriate */}
+                {showSuggestions && searchQuery && mode === 'add' && (
+                  <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-y-auto">
+                    {filteredProducts.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500">No products found</div>
+                    ) : (
+                      filteredProducts.map(product => (
+                        <div
+                          key={product.productId}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                          onClick={() => handleProductSelect(product)}
+                        >
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-xs text-gray-500">
+                            SKU: {product.sku} - ${product.price?.toFixed(2)}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected Product Display */}
+              {mode === 'edit' && (
+                <div className="mt-2 bg-gray-100 p-2 rounded-md">
+                  <span className="text-sm font-medium">
+                    {selectedProduct?.name || discount?.productName || 'Selected product'}
+                  </span>
+                </div>
+              )}
+              
+              {/* Hidden select for form validation */}
               <select
                 name="productId"
                 value={formData.productId}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                disabled={mode === 'edit'} // Can't change product when editing
+                onChange={() => {}}
+                className="hidden"
                 required
               >
                 <option value="">Select a product</option>
                 {products.map(product => (
                   <option key={product.productId} value={product.productId}>
-                    {product.name} (${product.price?.toFixed(2)})
+                    {product.name}
                   </option>
                 ))}
               </select>
+              
               {errors.productId && (
                 <p className="text-red-500 text-sm mt-1">{errors.productId}</p>
+              )}
+              
+              {/* Loading indicator */}
+              {isCheckingDiscount && (
+                <div className="flex items-center text-sm text-gray-500 mt-2">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Checking if product has active discounts...
+                </div>
+              )}
+              
+              {/* Active Discount Warning */}
+              {activeDiscount && (
+                <div className="mt-2 bg-red-50 border border-red-200 p-3 rounded-md flex items-start">
+                  <AlertCircle size={20} className="text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-700">
+                    <p className="font-medium text-red-800">This product already has an active discount!</p>
+                    <div className="mt-2 space-y-1">
+                      <p><span className="font-medium">Current price:</span> ${activeDiscount.discountPrice.toFixed(2)}</p>
+                      <p><span className="font-medium">Original price:</span> ${activeDiscount.originalPrice.toFixed(2)}</p>
+                      <p><span className="font-medium">Discount ends:</span> {formatDate(activeDiscount.endDate)}</p>
+                    </div>
+                    <p className="mt-3 font-medium">You cannot create a new discount until the current one expires.</p>
+                  </div>
+                </div>
               )}
             </div>
             
@@ -207,11 +377,12 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
                 type="number"
                 name="discountPrice"
                 value={formData.discountPrice}
-                onChange={handleChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, discountPrice: e.target.value }))}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 step="0.01"
                 min="0"
                 required
+                disabled={!!activeDiscount && mode === 'add'}
               />
               {errors.discountPrice && (
                 <p className="text-red-500 text-sm mt-1">{errors.discountPrice}</p>
@@ -233,9 +404,10 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
                   type="datetime-local"
                   name="startDate"
                   value={formData.startDate}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
+                  disabled={!!activeDiscount && mode === 'add'}
                 />
                 {errors.startDate && (
                   <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>
@@ -250,9 +422,10 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
                   type="datetime-local"
                   name="endDate"
                   value={formData.endDate}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
+                  disabled={!!activeDiscount && mode === 'add'}
                 />
                 {errors.endDate && (
                   <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>
@@ -279,7 +452,8 @@ const DiscountModal = ({ isOpen, onClose, onSubmit, discount = null, mode = 'add
             </button>
             <button
               type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={!!activeDiscount && mode === 'add'}
             >
               {mode === 'add' ? 'Create Discount' : 'Update Discount'}
             </button>

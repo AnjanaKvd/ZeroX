@@ -68,7 +68,9 @@ public class ProductDiscountController {
     public ResponseEntity<ProductDiscountDto.ActiveDiscountResponse> getActiveDiscountForProduct(
             @PathVariable UUID productId) {
         
-        return ResponseEntity.ok(discountService.getActiveDiscountForProduct(productId));
+        ProductDiscountDto.ActiveDiscountResponse discount = discountService.getActiveDiscountForProduct(productId);
+        
+        return ResponseEntity.ok(discount);
     }
 
     @PutMapping("/{discountId}")

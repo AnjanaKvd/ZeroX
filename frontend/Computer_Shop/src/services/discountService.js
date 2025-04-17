@@ -63,11 +63,11 @@ export const getDiscountsByProductId = async (productId) => {
 export const getActiveDiscountForProduct = async (productId) => {
   try {
     const response = await api.get(`/discounts/product/${productId}/active`);
-    return response.data;
-  } catch (error) {
-    if (error.response?.status === 404) {
-      return null; // No active discount for this product
+    if(response){
+      return response.data;
     }
+    return null;
+  } catch (error) {
     console.error(`Error fetching active discount for product ${productId}:`, error);
     throw error;
   }
