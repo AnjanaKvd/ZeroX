@@ -20,6 +20,7 @@ const AdminLayout = () => {
   const adminLinks = [
     { path: '/admin/dashboard', label: 'Dashboard' },
     { path: '/admin/products', label: 'Product Management' },
+    { path: '/admin/discounts', label: 'Discount Management' },
     { path: '/admin/categories', label: 'Category Management' },
     { path: '/admin/orders', label: 'Order Management' },
     { path: '/admin/users', label: 'User Management' },

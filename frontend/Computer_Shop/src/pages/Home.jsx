@@ -7,6 +7,7 @@ import FilterPanel from '../components/common/FilterPanel';
 import Pagination from '../components/common/Pagination';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import DiscountedProducts from '../components/discount/DiscountedProducts';
 
 const Home = () => {
   const { theme } = useTheme();
@@ -114,6 +115,7 @@ const Home = () => {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
         <FilterPanel
           filters={state.filters}
           onFilterChange={handleFilterChange}
@@ -130,6 +132,8 @@ const Home = () => {
           />
         )}
 
+        <DiscountedProducts />
+
         <section className="mb-8">
           <h2 className={`text-2xl font-bold mb-6 ${
             theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
@@ -144,7 +148,6 @@ const Home = () => {
           ) : (
             <ProductGrid 
               products={state.products} 
-              theme={theme}
             />
           )}
         </section>
