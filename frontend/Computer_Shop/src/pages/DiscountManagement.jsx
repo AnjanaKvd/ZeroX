@@ -329,15 +329,15 @@ const DiscountManagement = () => {
 
       {/* Discounts Table */}
       <div className="bg-white shadow-md rounded-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+      <div className="overflow-x-visible">
+      <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th 
-                  scope="col" 
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('productName')}
-                >
+              <th 
+  scope="col" 
+  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer max-w-[200px]"
+  onClick={() => handleSort('productName')}
+>
                   <div className="flex items-center">
                     <span>Product</span>
                     {filters.sortBy === 'productName' && (
@@ -427,7 +427,7 @@ const DiscountManagement = () => {
                   return (
                     <tr key={discount.discountId} 
                         className={`hover:bg-gray-50 ${isDeleted ? 'bg-gray-100 opacity-60' : ''}`}>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 max-w-[200px] break-words">
                         <div className="text-sm font-medium text-gray-900">
                           {discount.productName}
                         </div>
