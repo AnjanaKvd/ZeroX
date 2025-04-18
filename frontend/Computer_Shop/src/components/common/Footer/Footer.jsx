@@ -14,9 +14,9 @@ const Footer = () => {
           <div className="space-y-4">
             <Link 
               to="/" 
-              className="flex items-center text-2xl font-bold transition-colors text-primary hover:text-primary-hover"
+              className="flex items-center text-2xl font-bold text-primary hover:text-primary-hover transition-colors"
             >
-              <img src={logoImage} alt="Taprodev Computers" className="w-auto mr-2 h-9" />
+              <img src={logoImage} alt="Taprodev Computers" className="h-9 w-auto mr-2" />
             </Link>
             <p className={`text-sm ${
               theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
@@ -69,7 +69,7 @@ const Footer = () => {
                 Email:{' '}
                 <a 
                   href="mailto:support@Taprodev Computers.com" 
-                  className="transition-colors hover:text-primary-hover"
+                  className="hover:text-primary-hover transition-colors"
                 >
                   taprodev@gmail.com
                 </a>
@@ -78,7 +78,7 @@ const Footer = () => {
                 Phone:{' '}
                 <a 
                   href="tel:+94757333502" 
-                  className="transition-colors hover:text-primary-hover"
+                  className="hover:text-primary-hover transition-colors"
                 >
                   (94)757333502
                 </a>

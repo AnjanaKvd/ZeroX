@@ -67,6 +67,15 @@ const Home = () => {
         page: 1
       }
     }));
+    
+    // If searchResults are provided, update products directly
+    if (name === 'searchResults' && Array.isArray(value)) {
+      setState(prev => ({
+        ...prev,
+        products: value,
+        loading: false
+      }));
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -114,7 +123,7 @@ const Home = () => {
         theme={theme}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         
         <FilterPanel
           filters={state.filters}
@@ -138,11 +147,11 @@ const Home = () => {
           <h2 className={`text-2xl font-bold mb-6 ${
             theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
           }`}>
-            Featured Products
+            {state.filters.isSearchResults ? `Search Results for "${state.filters.searchQuery}"` : 'Featured Products'}
           </h2>
           
           {state.loading ? (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex items-center justify-center h-64">
               <LoadingSpinner theme={theme} />
             </div>
           ) : (
@@ -152,14 +161,16 @@ const Home = () => {
           )}
         </section>
 
-        <Pagination
-          currentPage={state.pagination.page}
-          totalPages={state.pagination.totalPages}
-          onPageChange={handlePageChange}
-          disabled={state.loading}
-          theme={theme}
-          className="mt-8"
-        />
+        {!state.filters.isSearchResults && (
+          <Pagination
+            currentPage={state.pagination.page}
+            totalPages={state.pagination.totalPages}
+            onPageChange={handlePageChange}
+            disabled={state.loading}
+            theme={theme}
+            className="mt-8"
+          />
+        )}
       </main>
     </div>
   );
