@@ -4,8 +4,6 @@ import { useForm } from 'react-hook-form';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { createOrder } from '../services/orderService';
-import Header from '../components/common/Header/Header';
-import Footer from '../components/common/Footer/Footer';
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart, discountCode } = useContext(CartContext);
@@ -71,7 +69,6 @@ const Checkout = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Checkout</h1>
@@ -294,8 +291,6 @@ const Checkout = () => {
           </div>
         </form>
       </main>
-      
-      <Footer />
     </div>
   );
 };
