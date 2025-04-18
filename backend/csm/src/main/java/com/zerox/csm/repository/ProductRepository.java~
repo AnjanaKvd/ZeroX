@@ -45,5 +45,4 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("brand") String brand,
             Pageable pageable
     );
-
 }
