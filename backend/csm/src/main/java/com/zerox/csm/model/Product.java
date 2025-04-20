@@ -58,4 +58,7 @@ public class Product {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name ="keywords")
+    private String keywords;
 }
