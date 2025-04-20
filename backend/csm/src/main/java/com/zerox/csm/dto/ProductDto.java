@@ -22,8 +22,7 @@ public class ProductDto {
             @PositiveOrZero int stockQuantity,
             @PositiveOrZero int lowStockThreshold,
             Integer warrantyPeriodMonths,
-            MultipartFile image,
-            String keywords
+            MultipartFile image
     ) {}
 
     public record ProductResponse(
@@ -38,8 +37,7 @@ public class ProductDto {
             int lowStockThreshold,
             Integer warrantyPeriodMonths,
             String imageUrl,
-            LocalDateTime createdAt,
-            String keywords
+            LocalDateTime createdAt
     ) {}
     
     public record ProductSearchRequest(

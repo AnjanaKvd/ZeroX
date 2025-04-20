@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getProductById } from '../services/productService';
-import { useCart } from '../context/CartContext';
-import { useTheme } from '../context/ThemeContext';
-import LoadingOverlay from '../components/common/LoadingOverlay';
-import ErrorDisplay from '../components/common/ErrorDisplay';
-import { Plus, Minus, ShoppingCart } from 'lucide-react'; // or your icon library
-import { getFullImageUrl, getProductImageUrl } from '../utils/imageUtils';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getProductById } from "../services/productService";
+import { useCart } from "../context/CartContext";
+import { useTheme } from "../context/ThemeContext";
+import LoadingOverlay from "../components/common/LoadingOverlay";
+import ErrorDisplay from "../components/common/ErrorDisplay";
+import { Plus, Minus, ShoppingCart } from "lucide-react"; // or your icon library
+import { getFullImageUrl, getProductImageUrl } from "../utils/imageUtils";
+import DisplayRatingAndReviews from "../pages/DisplayRatingAndReviews";
+import ReviewForm from "../pages/ReviewForm"; // Import the ReviewForm component
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -14,29 +16,20 @@ const ProductDetails = () => {
   const { addToCart } = useCart();
   const { theme } = useTheme();
   const [product, setProduct] = useState(null);
-  const [discount, setDiscount] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false); // State for modal visibility
+
+  const openReviewForm = () => setIsReviewFormOpen(true);
+  const closeReviewForm = () => setIsReviewFormOpen(false);
 
   useEffect(() => {
-    const fetchProductAndDiscount = async () => {
+    const fetchProduct = async () => {
       try {
         setLoading(true);
-        
-        // First fetch the product details
-        const productData = await getProductById(id);
-        setProduct(productData);
-        
-        try {
-          // Then fetch discount information, if it exists
-          const discountData = await getActiveDiscountForProduct(id);
-          setDiscount(discountData); // This will be null if the product has no active discount
-        } catch (discountErr) {
-          // Even if there's an error fetching the discount, we still show the product
-          console.error('Error fetching discount:', discountErr);
-          setDiscount(null);
-        }
+        const data = await getProductById(id);
+        setProduct(data);
       } catch (err) {
         console.error("Error fetching product details:", err);
         setError("Failed to load product details. Please try again later.");
@@ -45,40 +38,8 @@ const ProductDetails = () => {
       }
     };
 
-    fetchProductAndDiscount();
+    fetchProduct();
   }, [id]);
-
-  useEffect(() => {
-    // Update countdown timer if discount exists
-    if (!discount) return;
-    
-    const calculateTimeLeft = () => {
-      const endDate = new Date(discount.endDate);
-      const now = new Date();
-      const difference = endDate - now;
-      
-      if (difference <= 0) {
-        setTimeLeft('Expired');
-        return;
-      }
-      
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      
-      let timeString = '';
-      if (days > 0) timeString += `${days}d `;
-      if (hours > 0 || days > 0) timeString += `${hours}h `;
-      timeString += `${minutes}m`;
-      
-      setTimeLeft(timeString);
-    };
-
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 60000); // Update every minute
-    
-    return () => clearInterval(timer);
-  }, [discount]);
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
@@ -105,7 +66,7 @@ const ProductDetails = () => {
         id: product.productId || product.id,
         productId: product.productId || product.id,
         name: product.name,
-        price: discount ? discount.discountPrice : product.price,
+        price: product.price,
         image: product.imagePath || product.image,
         quantity: quantity,
       };
@@ -180,40 +141,8 @@ const ProductDetails = () => {
           >
             {product.name}
           </h1>
-          
-          {/* Price section with discount if available */}
-          <div className="mb-4">
-            {discount ? (
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl font-bold text-primary">
-                    ${Number(discount.discountPrice).toFixed(2)}
-                  </div>
-                  <div className="text-lg line-through text-text-secondary">
-                    ${Number(discount.originalPrice).toFixed(2)}
-                  </div>
-                  <span className="py-1 px-2 bg-red-500 text-white text-sm font-semibold rounded-md">
-                    {discount.savingsPercentage.toFixed(0)}% OFF
-                  </span>
-                </div>
-                <div className="mt-2 text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                    You save: ${discount.savingsAmount.toFixed(2)}
-                  </span>
-                </div>
-                {timeLeft && (
-                  <div className="mt-1 text-sm">
-                    <span className={`font-medium ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`}>
-                      Offer ends in: {timeLeft}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-2xl font-bold text-primary">
-                ${Number(product.price).toFixed(2)}
-              </div>
-            )}
+          <div className="text-2xl font-bold text-primary mb-4">
+            ${Number(product.price).toFixed(2)}
           </div>
 
           <div className="mb-6">

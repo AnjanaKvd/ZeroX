@@ -2,19 +2,9 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { FiPackage } from 'react-icons/fi';
-import { getProductImageUrl } from '../../utils/imageUtils';
+import { getFullImageUrl, getProductImageUrl } from '../../utils/imageUtils';
 import { useTheme } from '../../context/ThemeContext';
 import { Spinner } from '../common/LoadingSpinner/Spinner';
-
-// Data URI for a simple gray square with text (doesn't require network)
-const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3ENo Image%3C/text%3E%3C/svg%3E";
-
-// Format image URL to ensure it's absolute
-const formatImageUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('data:') || url.startsWith('http')) return url;
-  return `http://localhost:8080${url}`;
-};
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -25,28 +15,24 @@ const ProductCard = ({ product }) => {
     e.stopPropagation();
     
     const cartItem = {
-      id: product.productId || product.id,
-      productId: product.productId || product.id,
+      id: product.productId,
+      productId: product.productId,
       name: product.name,
       price: product.price,
-      image: product.imageUrl ? formatImageUrl(product.imageUrl) : placeholderImage,
+      image: product.imageUrl,
       quantity: 1
     };
     
     addToCart(cartItem);
   };
 
-  // Make sure we have a valid product ID (could be productId or id depending on API source)
-  const productId = product.productId || product.id;
-  if (!productId) return null;
+  if (!product?.productId) return null;
 
-  // Use the product imageUrl directly if available, otherwise use the image utility
-  const rawImageUrl = product.imageUrl || getProductImageUrl(product);
-  const imageUrl = rawImageUrl ? formatImageUrl(rawImageUrl) : placeholderImage;
+  const imageUrl = getProductImageUrl(product);
 
   return (
     <article className={`group relative overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition-all duration-300 hover:shadow-md`}>
-      <Link to={`/products/${productId}`} className="block h-full">
+      <Link to={`/products/${product.productId}`} className="block h-full">
         {/* Image Container */}
         <div className="relative aspect-square bg-background">
           {imageUrl ? (
@@ -57,7 +43,7 @@ const ProductCard = ({ product }) => {
               loading="lazy"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = placeholderImage;
+                e.target.src = '/placeholder-product.png';
               }}
             />
           ) : (
