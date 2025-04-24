@@ -34,7 +34,7 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          orderItemId,
+          productId,
           rating,
           comment,
         }),
