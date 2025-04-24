@@ -10,6 +10,7 @@ import java.util.UUID;
 public class ReviewDto {
     
     public record ReviewCreateRequest(
+
             @NotNull UUID productId,
             @NotNull UUID userId,
             @Min(1) @Max(5) int rating,

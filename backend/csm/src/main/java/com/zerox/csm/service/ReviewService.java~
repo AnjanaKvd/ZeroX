@@ -110,7 +110,7 @@ public class ReviewService {
                 (int) reviews.getTotalElements()
         );
     }
-
+    
     private ReviewResponse mapToReviewResponse(Review review) {
         return new ReviewResponse(
                 review.getReviewId(),

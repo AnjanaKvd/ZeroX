@@ -54,10 +54,10 @@ const FilterPanel = ({ categories, filters, onFilterChange }) => {
     };
 
     return (
-      <div className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm">
-        <div className="grid items-end grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex justify-between items-center mb-2">
               <label className="block text-sm font-medium text-gray-700">
                 Search Products
               </label>
@@ -70,7 +70,7 @@ const FilterPanel = ({ categories, filters, onFilterChange }) => {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex gap-2 items-center">
               <button
                 onClick={handleSearchClick}
                 disabled={isSearching}
@@ -84,7 +84,7 @@ const FilterPanel = ({ categories, filters, onFilterChange }) => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-grow h-10 p-2 border rounded-md"
+                className="flex-grow p-2 border rounded-md h-10"
                 placeholder="Search by name..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !isSearching) {
@@ -97,14 +97,14 @@ const FilterPanel = ({ categories, filters, onFilterChange }) => {
             
             {/* Display only error message if search fails */}
             {error && (
-              <div className="mt-2 text-sm text-red-600">
+              <div className="mt-2 text-red-600 text-sm">
                 {error}
               </div>
             )}
           </div>
           
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Price Range
             </label>
             <div className="flex gap-2">
@@ -126,7 +126,7 @@ const FilterPanel = ({ categories, filters, onFilterChange }) => {
           </div>
   
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Sort By
             </label>
             <select

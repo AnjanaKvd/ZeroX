@@ -26,6 +26,7 @@ const ProductsListing = () => {
     fetchProducts();
   }, []);
 
+  if (loading) return <LoadingOverlay />;
   if (error) return <ErrorDisplay message={error} />;
 
   return (

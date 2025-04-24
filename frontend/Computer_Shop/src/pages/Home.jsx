@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useTheme } from '../context/ThemeContext';
-import { getProducts } from '../services/productService';
+import { useState, useEffect, useCallback } from "react";
+import { useTheme } from "../context/ThemeContext";
+import { getProducts } from "../services/productService";
 import HeroBanner from "../components/home/HeroBanner";
-import ProductGrid from '../components/product/ProductGrid';
-import FilterPanel from '../components/common/FilterPanel';
-import Pagination from '../components/common/Pagination';
-import ErrorDisplay from '../components/common/ErrorDisplay';
-import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
-import DiscountedProducts from '../components/discount/DiscountedProducts';
+import ProductGrid from "../components/product/ProductGrid";
+import FilterPanel from "../components/common/FilterPanel";
+import Pagination from "../components/common/Pagination";
+import ErrorDisplay from "../components/common/ErrorDisplay";
+import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
+import DiscountedProducts from "../components/discount/DiscountedProducts";
 
 const Home = () => {
   const { theme } = useTheme();
@@ -19,38 +19,38 @@ const Home = () => {
       page: 0,
       totalPages: 0,
       totalElements: 0,
-      size: 12
+      size: 12,
     },
     filters: {
-      searchQuery: '',
-      minPrice: '',
-      maxPrice: '',
-      sortBy: 'name',
-      sortOrder: 'asc',
+      searchQuery: "",
+      minPrice: "",
+      maxPrice: "",
+      sortBy: "name",
+      sortOrder: "asc",
       page: 1,
-      pageSize: 12
-    }
+      pageSize: 12,
+    },
   });
 
   const fetchData = useCallback(async () => {
     try {
-      setState(prev => ({ ...prev, loading: true }));
-      
+      setState((prev) => ({ ...prev, loading: true }));
+
       const productsResponse = await getProducts();
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         products: productsResponse.content || [],
-        error: null
+        error: null,
       }));
     } catch (err) {
-      console.error('Data fetch error:', err);
-      setState(prev => ({
+      console.error("Data fetch error:", err);
+      setState((prev) => ({
         ...prev,
-        error: 'Failed to load data. Please try again later.'
+        error: "Failed to load data. Please try again later.",
       }));
     } finally {
-      setState(prev => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
     }
   }, []);
 
@@ -59,21 +59,21 @@ const Home = () => {
   }, [fetchData]);
 
   const handleFilterChange = (name, value) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       filters: {
         ...prev.filters,
         [name]: value,
-        page: 1
-      }
+        page: 1,
+      },
     }));
-    
+
     // If searchResults are provided, update products directly
-    if (name === 'searchResults' && Array.isArray(value)) {
-      setState(prev => ({
+    if (name === "searchResults" && Array.isArray(value)) {
+      setState((prev) => ({
         ...prev,
         products: value,
-        loading: false
+        loading: false,
       }));
     }
   };
@@ -84,37 +84,41 @@ const Home = () => {
 
   const fetchProducts = async (page = 0, size = 12) => {
     try {
-      setState(prev => ({ ...prev, loading: true }));
-      
+      setState((prev) => ({ ...prev, loading: true }));
+
       const productsResponse = await getProducts({ page, size });
-      
+
       if (productsResponse?.content) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           products: productsResponse.content,
           pagination: {
             page: productsResponse.pageable?.pageNumber || 0,
             totalPages: productsResponse.totalPages || 1,
             totalElements: productsResponse.totalElements || 0,
-            size: productsResponse.pageable?.pageSize || 12
+            size: productsResponse.pageable?.pageSize || 12,
           },
-          error: null
+          error: null,
         }));
       }
     } catch (err) {
-      console.error('Products fetch error:', err);
-      setState(prev => ({
+      console.error("Products fetch error:", err);
+      setState((prev) => ({
         ...prev,
-        error: 'Failed to load products. Please try again later.',
-        products: []
+        error: "Failed to load products. Please try again later.",
+        products: [],
       }));
     } finally {
-      setState(prev => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background-dark' : 'bg-background-light'}`}>
+    <div
+      className={`min-h-screen ${
+        theme === "dark" ? "bg-background-dark" : "bg-background-light"
+      }`}
+    >
       <HeroBanner
         title="Custom Gaming PCs & Components"
         subtitle="Build Your Ultimate Gaming Rig"
@@ -124,7 +128,6 @@ const Home = () => {
       />
 
       <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        
         <FilterPanel
           filters={state.filters}
           onFilterChange={handleFilterChange}
@@ -133,7 +136,7 @@ const Home = () => {
         />
 
         {state.error && (
-          <ErrorDisplay 
+          <ErrorDisplay
             error={state.error}
             onRetry={fetchData}
             theme={theme}
@@ -144,20 +147,24 @@ const Home = () => {
         <DiscountedProducts />
 
         <section className="mb-8">
-          <h2 className={`text-2xl font-bold mb-6 ${
-            theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
-          }`}>
-            {state.filters.isSearchResults ? `Search Results for "${state.filters.searchQuery}"` : 'Featured Products'}
+          <h2
+            className={`text-2xl font-bold mb-6 ${
+              theme === "dark"
+                ? "text-text-dark-primary"
+                : "text-text-light-primary"
+            }`}
+          >
+            {state.filters.isSearchResults
+              ? `Search Results for "${state.filters.searchQuery}"`
+              : "Featured Products"}
           </h2>
-          
+
           {state.loading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex justify-center items-center h-64">
               <LoadingSpinner theme={theme} />
             </div>
           ) : (
-            <ProductGrid 
-              products={state.products} 
-            />
+            <ProductGrid products={state.products} />
           )}
         </section>
 
