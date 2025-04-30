@@ -10,7 +10,6 @@ import com.zerox.csm.repository.InventoryLogRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.StockAlertRepository;
 import com.zerox.csm.repository.UserRepository;
-import com.zerox.csm.repository.ProductDiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +34,6 @@ public class ProductService {
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
-    private final ProductDiscountRepository productDiscountRepository;
 
     // Create a new product
     @Transactional
