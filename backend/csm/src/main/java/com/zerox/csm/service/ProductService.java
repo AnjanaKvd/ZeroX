@@ -341,13 +341,6 @@ public class ProductService {
         );
     }
 
-    private ProductDiscountDto.ActiveDiscountResponse getActiveDiscountForProduct(UUID productId) {
-        LocalDateTime now = LocalDateTime.now();
-        return productDiscountRepository.findActiveDiscountForProduct(productId, now)
-            .map(this::mapToActiveDiscountResponse)
-            .orElse(null);
-    }
-
     private ProductDiscountDto.ActiveDiscountResponse mapToActiveDiscountResponse(ProductDiscount discount) {
         BigDecimal originalPrice = discount.getProduct().getPrice();
         BigDecimal discountPrice = discount.getDiscountPrice();

@@ -22,8 +22,10 @@ public class ProductDto {
             @PositiveOrZero int stockQuantity,
             @PositiveOrZero int lowStockThreshold,
             Integer warrantyPeriodMonths,
-            MultipartFile image
-    ) {}
+            MultipartFile image,
+            String keywords
+    ) {
+    }
 
     public record ProductResponse(
             UUID productId,
@@ -37,7 +39,8 @@ public class ProductDto {
             int lowStockThreshold,
             Integer warrantyPeriodMonths,
             String imageUrl,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            String keywords
     ) {}
     
     public record ProductSearchRequest(
