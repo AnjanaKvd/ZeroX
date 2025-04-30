@@ -61,7 +61,9 @@ public class ProductService {
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
                 .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
+                .keywords(request.keywords())
                 .build();
+
         
         Product savedProduct = productRepository.save(product);
         
@@ -130,6 +132,7 @@ public class ProductService {
         product.setStockQuantity(request.stockQuantity());
         product.setLowStockThreshold(request.lowStockThreshold());
         product.setWarrantyPeriodMonths(request.warrantyPeriodMonths());
+        product.setKeywords(request.keywords());
         
         Product updatedProduct = productRepository.save(product);
         
@@ -333,7 +336,8 @@ public class ProductService {
                 product.getLowStockThreshold(),
                 product.getWarrantyPeriodMonths(),
                 product.getImageUrl(),
-                product.getCreatedAt()
+                product.getCreatedAt(),
+                product.getKeywords()
         );
     }
 
