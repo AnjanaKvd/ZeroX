@@ -102,8 +102,8 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-white w-full max-w-md rounded-lg p-6 shadow-md">
-      <h3 className="text-center text-2xl font-semibold mb-4">Sign Up</h3>
+    <div className="bg-white w-full max-w-md rounded-lg p-6">
+      {/* <h3 className="text-center text-2xl font-semibold mb-4">Sign Up</h3> */}
 
       {registrationError && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">

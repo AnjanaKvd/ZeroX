@@ -24,11 +24,16 @@ const CategoryManagement = lazy(() => import('../pages/CategoryManagement'));
 const OrderManagement = lazy(() => import('../pages/OrderManagement'));
 const UserManagement = lazy(() => import('../pages/UserManagement'));
 const DiscountManagement = lazy(() => import('../pages/DiscountManagement'));
-const Settings = lazy(() => import('../pages/Settings'));
-const Logout = lazy(() => import('../pages/Logout'));
-const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
-const Unauthorized = lazy(() => import('../pages/Unauthorized'));
-const ProductsListing = lazy(() => import('../pages/ProductsListing'));
+const Settings = lazy(() => import("../pages/Settings"));
+const Logout = lazy(() => import("../pages/Logout"));
+const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));
+const Unauthorized = lazy(() => import("../pages/Unauthorized"));
+const ProductsListing = lazy(() => import("../pages/ProductsListing"));
+const DisplayRatingAndReviews = lazy(() =>
+  import("../pages/DisplayRatingAndReviews")
+);
+const ReviewForm = lazy(() => import("../pages/ReviewForm"));
+const ReviewItem = lazy(() => import("../pages/ReviewItem"));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();

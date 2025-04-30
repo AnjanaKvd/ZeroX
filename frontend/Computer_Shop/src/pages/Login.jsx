@@ -75,8 +75,8 @@ const Login = () => {
   };
 
   return (
-    <div className="bg-white w-full max-w-md rounded-lg p-6 shadow-md">
-      <h3 className="text-center text-2xl font-semibold mb-4">Sign In</h3>
+    <div className="bg-white w-full max-w-md rounded-lg p-6 ">
+      {/* <h3 className="text-center text-2xl font-semibold mb-4">Sign In</h3> */}
 
       {registrationSuccess && (
         <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
@@ -143,4 +143,3 @@ const Login = () => {
 };
 
 export default Login;
-

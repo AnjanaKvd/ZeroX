@@ -53,7 +53,7 @@ const ProductCard = ({ product }) => {
             <img 
               src={imageUrl}
               alt={product.name}
-              className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
+              className="object-cover w-full h-full transition-opacity duration-300 group-hover:opacity-90"
               loading="lazy"
               onError={(e) => {
                 e.target.onerror = null;
@@ -61,8 +61,8 @@ const ProductCard = ({ product }) => {
               }}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-text-secondary">
-              <FiPackage className="h-12 w-12 opacity-40" />
+            <div className="flex items-center justify-center h-full text-text-secondary">
+              <FiPackage className="w-12 h-12 opacity-40" />
             </div>
           )}
         </div>
@@ -73,7 +73,7 @@ const ProductCard = ({ product }) => {
             {product.name}
           </h3>
           
-          <p className="mb-3 line-clamp-2 text-sm text-text-secondary">
+          <p className="mb-3 text-sm line-clamp-2 text-text-secondary">
             {product.description}
           </p>
 
@@ -84,10 +84,10 @@ const ProductCard = ({ product }) => {
             
             <button
               onClick={handleAddToCart}
-              className="flex items-center justify-center rounded-lg bg-primary p-2 text-surface hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="flex items-center justify-center p-2 rounded-lg bg-primary text-surface hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               aria-label={`Add ${product.name} to cart`}
             >
-              <ShoppingCartIcon className="h-5 w-5" />
+              <ShoppingCartIcon className="w-5 h-5" />
             </button>
           </div>
         </div>

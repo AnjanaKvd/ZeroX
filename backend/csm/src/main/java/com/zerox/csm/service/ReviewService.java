@@ -5,9 +5,8 @@ import com.zerox.csm.dto.ReviewDto.ReviewCreateRequest;
 import com.zerox.csm.dto.ReviewDto.ReviewResponse;
 import com.zerox.csm.dto.ReviewDto.ReviewUpdateRequest;
 import com.zerox.csm.exception.ResourceNotFoundException;
-import com.zerox.csm.model.Product;
-import com.zerox.csm.model.Review;
-import com.zerox.csm.model.User;
+import com.zerox.csm.model.*;
+import com.zerox.csm.repository.OrderRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.ReviewRepository;
 import com.zerox.csm.repository.UserRepository;
@@ -29,15 +28,16 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    
+    private final OrderRepository orderRepository;
+
     @Transactional
     public ReviewResponse createReview(ReviewCreateRequest request) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        
+
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
+
         Review review = Review.builder()
                 .product(product)
                 .user(user)
@@ -45,7 +45,7 @@ public class ReviewService {
                 .comment(request.comment())
                 .createdAt(LocalDateTime.now())
                 .build();
-        
+
         return mapToReviewResponse(reviewRepository.save(review));
     }
     
@@ -68,11 +68,11 @@ public class ReviewService {
                 .map(this::mapToReviewResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public ReviewResponse getReview(UUID reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
-        
+
         return mapToReviewResponse(review);
     }
     
@@ -110,7 +110,7 @@ public class ReviewService {
                 (int) reviews.getTotalElements()
         );
     }
-    
+
     private ReviewResponse mapToReviewResponse(Review review) {
         return new ReviewResponse(
                 review.getReviewId(),
