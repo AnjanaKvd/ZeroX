@@ -24,8 +24,7 @@ public class ProductDto {
             Integer warrantyPeriodMonths,
             MultipartFile image,
             String keywords
-    ) {
-    }
+    ) {}
 
     public record ProductResponse(
             UUID productId,
