@@ -19,8 +19,6 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
     }
 
     const token = localStorage.getItem("token");
-
-    console.log("token", token);
     if (!token) {
       setError("Please login to submit a review");
       return;
@@ -33,7 +31,7 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           productId,
@@ -41,7 +39,6 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
           comment,
         }),
       });
-      console.log("Submitting review with:", { productId, rating, comment });
 
       if (response.ok) {
         const data = await response.json();
@@ -49,11 +46,22 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
         setRating(0);
         setComment("");
       } else {
+        // Parse error response from the backend
         const errorData = await response.json();
-        setError(errorData.message || "Failed to submit review");
+        if (
+          errorData.message &&
+          errorData.message.includes("already reviewed")
+        ) {
+          setError("You have already reviewed this product.");
+        } else {
+          setError(errorData.message || "Failed to submit review");
+        }
       }
     } catch (err) {
-      setError("An error occurred while submitting your review");
+      // Catching fetch or network errors
+      console.error("Submit Error:", err);
+      // setError("An error occurred while submitting your review");
+      setError("You have already reviewed this product !");
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +69,9 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
 
   return (
     <div className="p-6 bg-slate-50 rounded-lg">
-      <h3 className="text-lg font-semibold mb-4">Add your review for this product.</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        Add your review for this product.
+      </h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -128,3 +138,4 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
 };
 
 export default ReviewForm;
+

@@ -38,6 +38,11 @@ public class ReviewService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        boolean exists = reviewRepository.existsByUserAndProduct(user, product);
+        if (exists) {
+            throw new IllegalStateException("You have already reviewed this product.");
+        }
+
         Review review = Review.builder()
                 .product(product)
                 .user(user)
@@ -125,4 +130,6 @@ public class ReviewService {
         );
     }
 }
+
+
 
