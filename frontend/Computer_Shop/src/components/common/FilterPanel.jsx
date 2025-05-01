@@ -69,30 +69,26 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
         return true;
     };
 
+    // Handle search action - can be used independently
     const handleSearchClick = async () => {
-        // Validate inputs before proceeding
-        if (!validateInputs()) return;
+        // Validate search term first
+        if (!validateInputs(true)) return;
         
         // Prevent empty searches
-        if (!searchTerm.trim() && !minPrice && !maxPrice) {
-            setValidationError("Please enter a search term or price range");
+        if (!searchTerm.trim()) {
+            setValidationError("Please enter a search term");
             return;
         }
         
         try {
             setIsSearching(true);
             setError(null);
-            console.log("Searching for:", searchTerm, "Min Price:", minPrice, "Max Price:", maxPrice);
+            console.log("Searching for:", searchTerm);
             
-            // Always update parent component filters before search
-            onFilterChange('minPrice', minPrice);
-            onFilterChange('maxPrice', maxPrice);
+            // Update parent component filters before search
             onFilterChange('searchQuery', searchTerm);
             
-            const results = await searchProducts(searchTerm, {
-                minPrice: minPrice || undefined,
-                maxPrice: maxPrice || undefined
-            });
+            const results = await searchProducts(searchTerm);
             console.log("Search results:", results);
             
             // Check if results is empty or undefined
@@ -100,29 +96,49 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
                 setError("No products found matching your search criteria.");
                 // Pass empty results to parent to clear any previous results
                 onFilterChange('searchResults', []);
-                onFilterChange('isSearchResults', true); // Still set to true for proper display
                 return;
             }
             
             // Pass the search results to parent component
             onFilterChange('searchResults', results);
-            onFilterChange('isSearchResults', true); // Flag to indicate search mode
         } catch (error) {
             console.error('Search failed:', error);
             setError("Failed to search products. Please try again.");
             onFilterChange('searchResults', []);
-            onFilterChange('isSearchResults', false);
         } finally {
             setIsSearching(false);
         }
     };
 
-    const handleClearSearch = () => {
+    // Apply price filter - can be used independently or with search results/featured products
+    const handleApplyPriceFilter = () => {
+        // Validate price filters
+        if (!validateInputs()) return;
+        
+        // Need at least one price value
+        if (!minPrice && !maxPrice) {
+            setValidationError("Please enter min or max price");
+            return;
+        }
+        
+        console.log("Applying price filter:", minPrice, maxPrice);
+        
+        // Update parent component with price values
+        onFilterChange('minPrice', minPrice);
+        onFilterChange('maxPrice', maxPrice);
+        
+        // Price filtering will be handled by parent component's data flow
+    };
+
+    // Clear all filters and search
+    const handleClearAll = () => {
         setSearchTerm('');
         setMinPrice('');
         setMaxPrice('');
         setError(null);
         setValidationError(null);
+        
+        // Reset parent component state
         onFilterChange('searchQuery', '');
         onFilterChange('minPrice', '');
         onFilterChange('maxPrice', '');
@@ -152,23 +168,14 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
               </label>
               {(filters.isSearchResults || filters.minPrice || filters.maxPrice) && (
                 <button
-                  onClick={handleClearSearch}
+                  onClick={handleClearAll}
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  Clear Filters
+                  Clear All Filters
                 </button>
               )}
             </div>
             <div className="flex gap-2 items-center">
-              <button
-                onClick={handleSearchClick}
-                disabled={isSearching}
-                className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 h-10 ${
-                  isSearching ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'
-                }`}
-              >
-                {isSearching ? 'Searching...' : 'Search'}
-              </button>
               <input
                 type="text"
                 value={searchTerm}
@@ -196,6 +203,15 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
                 }}
                 disabled={isSearching}
               />
+              <button
+                onClick={handleSearchClick}
+                disabled={isSearching}
+                className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 h-10 ${
+                  isSearching ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                {isSearching ? 'Searching...' : 'Search'}
+              </button>
             </div>
             
             {/* Display only error message if search fails */}
@@ -232,11 +248,8 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
                 placeholder="Max price"
               />
               <button
-                onClick={handleSearchClick}
-                disabled={isSearching}
-                className={`px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 h-10 ${
-                  isSearching ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'
-                }`}
+                onClick={handleApplyPriceFilter}
+                className={`px-3 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 h-10`}
                 title="Filter by price range"
               >
                 Filter
@@ -259,21 +272,7 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
               value={`${filters.sortBy}-${filters.sortOrder}`}
               onChange={(e) => {
                 const [sortBy, sortOrder] = e.target.value.split('-');
-                
-                // Apply sort immediately
                 onSortChange(sortBy, sortOrder);
-                
-                // If we have search results and price filters, apply them too
-                if (filters.isSearchResults && (minPrice || maxPrice)) {
-                  // Validate price inputs
-                  if (!validateInputs()) return;
-                  
-                  console.log(`Applying price filter: $${minPrice}-$${maxPrice} with sort: ${sortBy} (${sortOrder})`);
-                  
-                  // Update parent filters with current price values
-                  onFilterChange('minPrice', minPrice);
-                  onFilterChange('maxPrice', maxPrice);
-                }
               }}
               className="w-full p-2 border rounded-md"
             >
