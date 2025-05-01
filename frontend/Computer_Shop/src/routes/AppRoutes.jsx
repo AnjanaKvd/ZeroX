@@ -23,12 +23,17 @@ const ProductManagement = lazy(() => import('../pages/ProductManagement'));
 const CategoryManagement = lazy(() => import('../pages/CategoryManagement'));
 const OrderManagement = lazy(() => import('../pages/OrderManagement'));
 const UserManagement = lazy(() => import('../pages/UserManagement'));
-const Settings = lazy(() => import('../pages/Settings'));
-const Logout = lazy(() => import('../pages/Logout'));
-const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
-const Unauthorized = lazy(() => import('../pages/Unauthorized'));
-const ProductsListing = lazy(() => import('../pages/ProductsListing'));
-const RepairPage = lazy(() => import('../pages/RepairPage'));
+const DiscountManagement = lazy(() => import('../pages/DiscountManagement'));
+const Settings = lazy(() => import("../pages/Settings"));
+const Logout = lazy(() => import("../pages/Logout"));
+const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));
+const Unauthorized = lazy(() => import("../pages/Unauthorized"));
+const ProductsListing = lazy(() => import("../pages/ProductsListing"));
+const DisplayRatingAndReviews = lazy(() =>
+  import("../pages/DisplayRatingAndReviews")
+);
+const ReviewForm = lazy(() => import("../pages/ReviewForm"));
+const ReviewItem = lazy(() => import("../pages/ReviewItem"));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -59,7 +64,6 @@ const AppRoutes = () => {
             <Route path="products" element={<ProductsListing />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
             <Route path="cart" element={<Cart />} />
-            <Route path="repairs" element={<RepairPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 
@@ -88,6 +92,7 @@ const AppRoutes = () => {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<ProductManagement />} />
+              <Route path="discounts" element={<DiscountManagement />} />
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="orders" element={<OrderManagement />} />
               <Route path="users" element={<UserManagement />} />

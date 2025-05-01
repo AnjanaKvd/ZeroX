@@ -1,6 +1,7 @@
 package com.zerox.csm.service;
 
 import com.zerox.csm.dto.InventoryLogDto;
+import com.zerox.csm.dto.ProductDiscountDto;
 import com.zerox.csm.dto.ProductDto;
 import com.zerox.csm.exception.ResourceNotFoundException;
 import com.zerox.csm.model.*;
@@ -9,6 +10,7 @@ import com.zerox.csm.repository.InventoryLogRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.StockAlertRepository;
 import com.zerox.csm.repository.UserRepository;
+import com.zerox.csm.repository.ProductDiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -32,6 +35,7 @@ public class ProductService {
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
+    private final ProductDiscountRepository productDiscountRepository;
 
     // Create a new product
     @Transactional
@@ -57,7 +61,9 @@ public class ProductService {
                 .warrantyPeriodMonths(request.warrantyPeriodMonths())
                 .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
+                .keywords(request.keywords())
                 .build();
+
         
         Product savedProduct = productRepository.save(product);
         
@@ -126,6 +132,7 @@ public class ProductService {
         product.setStockQuantity(request.stockQuantity());
         product.setLowStockThreshold(request.lowStockThreshold());
         product.setWarrantyPeriodMonths(request.warrantyPeriodMonths());
+        product.setKeywords(request.keywords());
         
         Product updatedProduct = productRepository.save(product);
         
@@ -329,7 +336,38 @@ public class ProductService {
                 product.getLowStockThreshold(),
                 product.getWarrantyPeriodMonths(),
                 product.getImageUrl(),
-                product.getCreatedAt()
+                product.getCreatedAt(),
+                product.getKeywords()
+        );
+    }
+
+    private ProductDiscountDto.ActiveDiscountResponse getActiveDiscountForProduct(UUID productId) {
+        LocalDateTime now = LocalDateTime.now();
+        return productDiscountRepository.findActiveDiscountForProduct(productId, now)
+            .map(this::mapToActiveDiscountResponse)
+            .orElse(null);
+    }
+
+    private ProductDiscountDto.ActiveDiscountResponse mapToActiveDiscountResponse(ProductDiscount discount) {
+        BigDecimal originalPrice = discount.getProduct().getPrice();
+        BigDecimal discountPrice = discount.getDiscountPrice();
+        BigDecimal savingsAmount = originalPrice.subtract(discountPrice);
+        
+        // Calculate savings percentage
+        double savingsPercentage = savingsAmount.divide(originalPrice, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .doubleValue();
+        
+        return new ProductDiscountDto.ActiveDiscountResponse(
+                discount.getDiscountId(),
+                discount.getProduct().getProductId(),
+                discount.getProduct().getName(),
+                discount.getProduct().getSku(),
+                originalPrice,
+                discountPrice,
+                savingsAmount,
+                savingsPercentage,
+                discount.getEndDate()
         );
     }
 

@@ -1,8 +1,5 @@
 import { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { useToast } from './ToastContext';
-import {useAuth} from './AuthContext';
-import cartService from '../services/cartService';
-
 
 export const CartContext = createContext();
 

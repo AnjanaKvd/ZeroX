@@ -40,7 +40,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/error",
-                                "/api/images/**"
+                                "/api/images/**",
+                                "/api/discounts/**",
+                                "/api/productssearch/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

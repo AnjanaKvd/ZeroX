@@ -1,5 +1,7 @@
 package com.zerox.csm.repository;
 
+import com.zerox.csm.model.Order;
+import com.zerox.csm.model.Product;
 import com.zerox.csm.model.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,4 +18,4 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     List<Review> findByUserUserId(UUID userId);
     
     Double findAverageRatingByProductProductId(UUID productId);
-} 
+}
