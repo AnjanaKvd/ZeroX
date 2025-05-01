@@ -40,13 +40,17 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;
-    
+
     @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
-    
+
     @Column(name = "payment_id")
     private String paymentId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-} 
+
+    @ManyToOne
+    @JoinColumn(name = "shipping_address_id")
+    private CustomerAddress shippingAddress;
+}

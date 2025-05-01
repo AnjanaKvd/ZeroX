@@ -42,7 +42,9 @@ public class SecurityConfig {
                                 "/error",
                                 "/api/images/**",
                                 "/api/discounts/**",
-                                "/api/productssearch/**"
+                                "/api/productssearch/**",
+                                "/api/orders/**",
+                                "/api/addresses/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -7,6 +7,7 @@ import com.zerox.csm.dto.OrderDto.OrderItemResponse;
 import com.zerox.csm.exception.InsufficientStockException;
 import com.zerox.csm.exception.ResourceNotFoundException;
 import com.zerox.csm.model.*;
+import com.zerox.csm.repository.CustomerAddressRepository;
 import com.zerox.csm.repository.OrderRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.UserRepository;
@@ -30,6 +31,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final CustomerAddressRepository addressRepository;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
@@ -37,19 +39,46 @@ public class OrderService {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // 2. Validate stock availability
+        // 2. Handle address
+        CustomerAddress address;
+        if (request.addressId() != null) {
+            // Use existing address
+            address = addressRepository.findById(request.addressId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+        } else if (request.shippingAddress() != null) {
+            // Create new address for this order
+            address = CustomerAddress.builder()
+                    .user(user)
+                    .fullName(request.shippingAddress().fullName())
+                    .addressLine1(request.shippingAddress().addressLine1())
+                    .addressLine2(request.shippingAddress().addressLine2())
+                    .city(request.shippingAddress().city())
+                    .state(request.shippingAddress().state())
+                    .zipCode(request.shippingAddress().zipCode())
+                    .country(request.shippingAddress().country())
+                    .isDefault(false)
+                    .build();
+
+            address = addressRepository.save(address);
+        } else {
+            throw new IllegalArgumentException("Either addressId or shippingAddress must be provided");
+        }
+
+        // 3. Validate stock availability
         List<OrderItem> items = validateAndCreateItems(request.items());
 
-        // 3. Calculate total
+        // 4. Calculate total
         BigDecimal total = calculateTotal(items);
 
-        // 4. Create order
+        // 5. Create order
         Order order = Order.builder()
                 .user(user)
                 .items(items)
                 .totalAmount(total)
                 .status(OrderStatus.PENDING)
+                .paymentMethod(request.paymentMethod())
                 .createdAt(LocalDateTime.now())
+                .shippingAddress(address) // Add this field to Order model
                 .build();
 
         // Set back-reference to order

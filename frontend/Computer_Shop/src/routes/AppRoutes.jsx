@@ -17,6 +17,7 @@ const Cart = lazy(() => import('../pages/Cart'));
 const Checkout = lazy(() => import('../pages/Checkout'));
 const OrderConfirmation = lazy(() => import('../pages/OrderConfirmation'));
 const Profile = lazy(() => import('../pages/Profile'));
+const SavedAddresses = lazy(() => import('../pages/SavedAddresses'));
 const OrderHistory = lazy(() => import('../pages/OrderHistory'));
 const OrderDetails = lazy(() => import('../pages/OrderDetails'));
 const NotFound = lazy(() => import('../pages/NotFound'));
@@ -35,6 +36,7 @@ const DisplayRatingAndReviews = lazy(() =>
 );
 const ReviewForm = lazy(() => import("../pages/ReviewForm"));
 const ReviewItem = lazy(() => import("../pages/ReviewItem"));
+const AdminOrderDetails = lazy(() => import('../pages/AdminOrderDetails'));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -81,10 +83,11 @@ const AppRoutes = () => {
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route path="checkout" element={<Checkout />} />
-              <Route path="order-confirmation" element={<OrderConfirmation />} />
+              <Route path="order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="saved-addresses" element={<SavedAddresses />} />
               <Route path="order-history" element={<OrderHistory />} />
-              <Route path="order/:id" element={<OrderDetails />} />
+              <Route path="orders/:orderId" element={<OrderDetails />} />
             </Route>
           </Route>
 
@@ -97,6 +100,7 @@ const AppRoutes = () => {
               <Route path="discounts" element={<DiscountManagement />} />
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="orders" element={<OrderManagement />} />
+              <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<Settings />} />
             </Route>

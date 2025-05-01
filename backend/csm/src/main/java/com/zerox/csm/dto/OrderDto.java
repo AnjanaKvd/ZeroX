@@ -1,6 +1,7 @@
 package com.zerox.csm.dto;
 
 import com.zerox.csm.model.OrderStatus;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,9 +13,10 @@ import java.util.UUID;
 
 public class OrderDto {
     public record OrderRequest(
-            @NotNull UUID userId,
+            UUID userId,
             @NotEmpty List<OrderItemRequest> items,
             UUID addressId,
+            @Valid CustomerAddressDto.AddressRequest shippingAddress,
             String paymentMethod,
             String discountCode
     ) {}

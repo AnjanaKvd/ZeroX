@@ -11,6 +11,8 @@ import java.util.UUID;
 @Repository
 public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, UUID> {
     List<CustomerAddress> findByUserUserId(UUID userId);
-    
-    Optional<CustomerAddress> findByUserUserIdAndIsPrimaryTrue(UUID userId);
-} 
+
+    Optional<CustomerAddress> findByUserUserIdAndIsDefaultTrue(UUID userId);
+
+    boolean existsByUserUserIdAndIsDefaultTrue(UUID userId);
+}
