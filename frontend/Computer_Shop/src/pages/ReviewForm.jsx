@@ -60,12 +60,12 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
+    <div className="p-6 bg-slate-50 rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">Add your review for this product.</h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Rating
+            Select your rate value
           </label>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((num) => (
@@ -93,13 +93,13 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
             ))}
           </div>
         </div>
-
+        <br />
         <div className="mb-4">
           <label
             htmlFor="comment"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Your Review
+            Write a comment...
           </label>
           <textarea
             id="comment"
