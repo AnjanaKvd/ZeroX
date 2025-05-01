@@ -22,22 +22,22 @@ public class Review {
     @UuidGenerator
     @Column(name = "review_id")
     private UUID reviewId;
-    
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     @Column(name = "rating")
     private Integer rating;
-    
+
     @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
-    
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-} 
+}
