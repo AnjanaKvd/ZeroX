@@ -11,25 +11,43 @@ import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 const Home = () => {
   const { theme } = useTheme();
   const [state, setState] = useState({
-    products: [],
-    sortedProducts: [],
+    // Raw data
+    products: [], // Original products (featured or search results)
+    
+    // Processed data
+    filteredProducts: [], // Products after price filtering
+    sortedProducts: [], // Final products to display after filtering and sorting
+    
+    // UI state
     loading: true,
     error: null,
+    
+    // Pagination
     pagination: {
       page: 0,
       totalPages: 0,
       totalElements: 0,
       size: 12
     },
+    
+    // Filter and sort settings
     filters: {
+      // Search settings
       searchQuery: '',
+      isSearchResults: false, // Whether current products are from search
+      
+      // Price filter settings
       minPrice: '',
       maxPrice: '',
+      isPriceFiltered: false, // Whether price filter is applied
+      
+      // Sort settings
       sortBy: 'name',
       sortOrder: 'asc',
+      
+      // Pagination
       page: 1,
-      pageSize: 12,
-      isSearchResults: false
+      pageSize: 12
     }
   });
 
@@ -77,30 +95,20 @@ const Home = () => {
       const productsResponse = await getProducts();
       const products = productsResponse?.content || [];
 
-      // Initialize both filteredProducts and sortedProducts
-      setState(prev => {
-        // Apply current sort settings to the fetched products
-        const { sortBy, sortOrder } = prev.filters;
-        let sortedProducts = products;
-        
-        try {
-          if (products.length > 0) {
-            sortedProducts = sortProducts(products, sortBy, sortOrder);
-            console.log(`Initially sorted ${products.length} products by ${sortBy} (${sortOrder})`);
-          }
-        } catch (error) {
-          console.error('Error sorting initial products:', error);
+      // Reset search and filter flags when loading featured products
+      setState(prev => ({
+        ...prev,
+        products,
+        loading: false,
+        error: null,
+        filters: {
+          ...prev.filters,
+          isSearchResults: false,
+          isPriceFiltered: false
         }
-        
-        return {
-          ...prev,
-          products,
-          filteredProducts: products,
-          sortedProducts,
-          error: null,
-          loading: false
-        };
-      });
+      }));
+      
+      // Products will be processed by processDataFlow effect
     } catch (err) {
       console.error('Data fetch error:', err);
       setState(prev => ({
@@ -111,25 +119,23 @@ const Home = () => {
     }
   }, []);
 
+  // Effect to handle login state and show featured products for logged-in users
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Effect to handle featured products on login
-  useEffect(() => {
-    // If user is logged in, fetch featured products
     const isLoggedIn = localStorage.getItem('token') || false;
     
-    if (isLoggedIn && !state.filters.isSearchResults) {
+    if (isLoggedIn) {
       console.log("User is logged in - fetching featured products");
+      fetchData();
+    } else {
+      // If not logged in, still show something (e.g., popular products)
       fetchData();
     }
   }, [fetchData]);
 
   // Apply price filtering to featured products and return both filtered and sorted results
   const handleFeaturedProductFilter = () => {
-    // Start with all products
-    let filtered = [...state.products];
+    // Start with all products, add null check
+    let filtered = state.products ? [...state.products] : [];
     
     // Apply price filters if they exist
     if (state.filters.minPrice || state.filters.maxPrice) {
@@ -141,6 +147,9 @@ const Home = () => {
       
       // Filter the products using our existing price filter logic
       filtered = filtered.filter(product => {
+        // Add null check for product
+        if (!product) return false;
+        
         const productPrice = typeof product.price === 'number' 
           ? product.price 
           : parseFloat(product.price || '0');
@@ -157,7 +166,7 @@ const Home = () => {
         }
       }));
       
-      console.log(`Filtered featured products: ${state.products.length} → ${filtered.length}`);
+      console.log(`Filtered featured products: ${state.products ? state.products.length : 0} → ${filtered.length}`);
     }
     
     // Apply current sorting to filtered products
@@ -182,62 +191,22 @@ const Home = () => {
 
   // Effect to update featured product price filter when min/max price changes
   useEffect(() => {
-    if (!state.filters.isSearchResults && state.products.length > 0) {
-      // Apply filtering to featured products
-      const { filtered, sorted } = handleFeaturedProductFilter();
-      
-      // Set filtered products (this will trigger the sorting useEffect)
-      setState(prev => ({
-        ...prev,
-        filteredProducts: filtered,
-        sortedProducts: sorted
-      }));
-    }
-  }, [state.products, state.filters.minPrice, state.filters.maxPrice]);
-
-  // Make sure sorting happens for both search results and featured products
-  useEffect(() => {
-    // Skip if no products to sort
-    if (!state.filteredProducts || state.filteredProducts.length === 0) return;
-    
-    const { sortBy, sortOrder } = state.filters;
-    
-    try {
-      // Apply sorting to whatever is in filteredProducts (could be search results or featured products)
-      const sorted = sortProducts(state.filteredProducts, sortBy, sortOrder);
-      console.log(`Sorted ${state.filteredProducts.length} products by ${sortBy} (${sortOrder})`);
-      
-      setState(prev => ({
-        ...prev,
-        sortedProducts: sorted
-      }));
-    } catch (error) {
-      console.error('Error sorting products:', error);
-    }
-  }, [state.filteredProducts, state.filters.sortBy, state.filters.sortOrder]);
-
-  const handleFilterChange = (name, value) => {
-    setState(prev => ({
-      ...prev,
-      filters: {
-        ...prev.filters,
-        [name]: value,
-        page: 1
+    if (!state.filters.isSearchResults && state.products && state.products.length > 0) {
+      try {
+        // Apply filtering to featured products
+        const { filtered, sorted } = handleFeaturedProductFilter();
+        
+        // Set filtered products (this will trigger the sorting useEffect)
+        setState(prev => ({
+          ...prev,
+          filteredProducts: filtered || [],
+          sortedProducts: sorted || []
+        }));
+      } catch (error) {
+        console.error('Error filtering featured products:', error);
       }
-    }));
-    
-    if (name === 'searchResults' && Array.isArray(value)) {
-      setState(prev => ({
-        ...prev,
-        products: value,
-        loading: false,
-        filters: {
-          ...prev.filters,
-          isSearchResults: true
-        }
-      }));
     }
-  };
+  }, [state.products, state.filters.minPrice, state.filters.maxPrice, state.filters.isSearchResults]);
 
   // Handle sort change for both search results and featured products
   const handleSortChange = (sortBy, sortOrder) => {
@@ -245,17 +214,27 @@ const Home = () => {
     
     // Update state with new sort options
     setState(prev => {
-      // Get the correct products to sort
-      const productsToSort = prev.filteredProducts.length > 0 
-        ? prev.filteredProducts 
-        : prev.products;
+      // Get the correct products to sort based on whether we're in search results or featured products
+      let productsToSort = [];
       
-      // Apply sorting immediately
+      if (prev.filters.isSearchResults) {
+        // For search results, use the products array
+        productsToSort = prev.products || [];
+      } else {
+        // For featured products, use filteredProducts if available, otherwise use products
+        productsToSort = (prev.filteredProducts && prev.filteredProducts.length > 0) 
+          ? prev.filteredProducts 
+          : (prev.products || []);
+      }
+      
+      // Apply sorting immediately if we have products to sort
       let sortedProducts = productsToSort;
       try {
-        if (productsToSort.length > 0) {
+        if (productsToSort && productsToSort.length > 0) {
           sortedProducts = sortProducts(productsToSort, sortBy, sortOrder);
-          console.log(`Sorted ${productsToSort.length} products directly in handler`);
+          console.log(`Sorted ${productsToSort.length} ${prev.filters.isSearchResults ? 'search results' : 'featured products'} by ${sortBy} (${sortOrder})`);
+        } else {
+          console.log('No products to sort');
         }
       } catch (error) {
         console.error('Error sorting in handler:', error);
@@ -271,6 +250,93 @@ const Home = () => {
         }
       };
     });
+  };
+
+  // Effect to handle search results sorting
+  useEffect(() => {
+    if (state.filters.isSearchResults && state.products && state.products.length > 0) {
+      const { sortBy, sortOrder } = state.filters;
+      try {
+        const sorted = sortProducts(state.products, sortBy, sortOrder);
+        console.log(`Sorted ${state.products.length} search results by ${sortBy} (${sortOrder})`);
+        
+        setState(prev => ({
+          ...prev,
+          sortedProducts: sorted
+        }));
+      } catch (error) {
+        console.error('Error sorting search results:', error);
+      }
+    }
+  }, [state.products, state.filters.sortBy, state.filters.sortOrder, state.filters.isSearchResults]);
+
+  // Effect to handle featured products sorting
+  useEffect(() => {
+    // Add null check for filteredProducts
+    if (!state.filters.isSearchResults && state.filteredProducts && state.filteredProducts.length > 0) {
+      const { sortBy, sortOrder } = state.filters;
+      try {
+        const sorted = sortProducts(state.filteredProducts, sortBy, sortOrder);
+        console.log(`Sorted ${state.filteredProducts.length} featured products by ${sortBy} (${sortOrder})`);
+        
+        setState(prev => ({
+          ...prev,
+          sortedProducts: sorted
+        }));
+      } catch (error) {
+        console.error('Error sorting featured products:', error);
+      }
+    }
+  }, [state.filteredProducts, state.filters.sortBy, state.filters.sortOrder, state.filters.isSearchResults]);
+
+  // Handle filter change (for both featured and search products)
+  const handleFilterChange = (name, value) => {
+    // Special handling for search results - must come before the regular state update
+    if (name === 'searchResults' && Array.isArray(value)) {
+      console.log(`Received ${value.length} search results`);
+      
+      // Update products and set search mode
+      setState(prev => ({
+        ...prev,
+        products: value,
+        filteredProducts: value, // Initialize filtered to match search results
+        loading: false,
+        filters: {
+          ...prev.filters,
+          isSearchResults: true,
+          isPriceFiltered: false // Reset price filter for new search
+        }
+      }));
+      
+      // Products will be processed by the processDataFlow effect
+      return;
+    }
+    
+    // For all other filter changes
+    setState(prev => ({
+      ...prev,
+      filters: {
+        ...prev.filters,
+        [name]: value,
+        page: name !== 'page' ? 1 : prev.filters.page // Reset page except when changing page
+      }
+    }));
+    
+    // Reset isPriceFiltered when price filters are cleared
+    if ((name === 'minPrice' || name === 'maxPrice') && !value) {
+      const otherPriceFilter = name === 'minPrice' ? 'maxPrice' : 'minPrice';
+      const otherValue = state.filters[otherPriceFilter];
+      
+      if (!otherValue) {
+        setState(prev => ({
+          ...prev,
+          filters: {
+            ...prev.filters,
+            isPriceFiltered: false
+          }
+        }));
+      }
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -312,7 +378,7 @@ const Home = () => {
 
   // Update heading text to show what we're looking at
   const getHeadingText = () => {
-    const { isSearchResults, searchQuery, minPrice, maxPrice, sortBy, sortOrder, isFiltered } = state.filters;
+    const { isSearchResults, searchQuery, minPrice, maxPrice, isPriceFiltered, sortBy, sortOrder } = state.filters;
     
     // For search results
     if (isSearchResults) {
@@ -339,7 +405,7 @@ const Home = () => {
     let featuredTitle = 'Featured Products';
     
     // Add price filter info to featured products title if filtered
-    if (isFiltered && (minPrice || maxPrice)) {
+    if (isPriceFiltered && (minPrice || maxPrice)) {
       if (minPrice && maxPrice) {
         featuredTitle += ` ($${minPrice} - $${maxPrice})`;
       } else if (minPrice) {
@@ -351,6 +417,71 @@ const Home = () => {
     
     return featuredTitle;
   };
+
+  // Process data flow: Products -> Filtered Products -> Sorted Products
+  const processDataFlow = useCallback(() => {
+    // Skip if no products
+    if (!state.products || state.products.length === 0) return;
+    
+    // 1. Start with original products
+    const originalProducts = [...state.products];
+    let processed = originalProducts;
+    
+    // 2. Apply price filtering if needed
+    const { minPrice, maxPrice } = state.filters;
+    if (minPrice || maxPrice) {
+      const min = minPrice ? parseFloat(minPrice) : 0;
+      const max = maxPrice ? parseFloat(maxPrice) : Number.MAX_VALUE;
+      
+      console.log(`Filtering products by price range: $${min}-$${max}`);
+      
+      processed = processed.filter(product => {
+        if (!product) return false;
+        
+        const productPrice = typeof product.price === 'number' 
+          ? product.price 
+          : parseFloat(product.price || '0');
+        
+        return !isNaN(productPrice) && productPrice >= min && productPrice <= max;
+      });
+      
+      console.log(`Price filtered: ${originalProducts.length} → ${processed.length} products`);
+      
+      // Update isPriceFiltered flag
+      setState(prev => ({
+        ...prev,
+        filters: {
+          ...prev.filters,
+          isPriceFiltered: true
+        }
+      }));
+    }
+    
+    // 3. Apply sorting
+    const { sortBy, sortOrder } = state.filters;
+    let sorted = [...processed];
+    
+    try {
+      if (processed.length > 0) {
+        sorted = sortProducts(processed, sortBy, sortOrder);
+        console.log(`Sorted by ${sortBy} (${sortOrder}): ${processed.length} products`);
+      }
+    } catch (error) {
+      console.error('Error sorting products:', error);
+    }
+    
+    // 4. Update the state with both filtered and sorted results
+    setState(prev => ({
+      ...prev,
+      filteredProducts: processed,
+      sortedProducts: sorted
+    }));
+  }, [state.products, state.filters.minPrice, state.filters.maxPrice, state.filters.sortBy, state.filters.sortOrder]);
+  
+  // Effect to trigger data processing whenever relevant state changes
+  useEffect(() => {
+    processDataFlow();
+  }, [processDataFlow]);
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-background-dark' : 'bg-background-light'}`}>
@@ -393,10 +524,10 @@ const Home = () => {
             </div>
           ) : (
             <>
-              {state.sortedProducts.length > 0 ? (
+              {state.sortedProducts && state.sortedProducts.length > 0 ? (
                 <>
                   <div className="text-sm text-gray-500 mb-4">
-                    {state.sortedProducts.length} {state.filters.isSearchResults ? 'products found' : 'featured products'} 
+                    {state.sortedProducts.length} {state.filters.isSearchResults ? 'search results' : 'featured products'} 
                     {state.filters.minPrice || state.filters.maxPrice ? (
                       <span> (price range: ${state.filters.minPrice || '0'}-${state.filters.maxPrice || 'max'})</span>
                     ) : null}
