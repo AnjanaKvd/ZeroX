@@ -7,6 +7,7 @@ import com.zerox.csm.model.RepairRequest.Status;
 import com.zerox.csm.service.RepairService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,20 @@ public class RepairController {
         // You would need a method to extract userId from UserDetails
         return ResponseEntity.ok(repairService.createRepairRequest(request));
     }
-    
+//@PostMapping
+//@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+//public ResponseEntity<RepairRequestResponse> createRepairRequest(
+//        @Valid @RequestBody RepairRequestCreateRequest request,
+//        @AuthenticationPrincipal UserDetails userDetails
+//) {
+//    // Extract user ID from authentication
+//    UUID userId = extractUserIdFromUserDetails(userDetails);
+//    request.setUserId(userId); // Set the user ID
+//
+//    return ResponseEntity.ok(repairService.createRepairRequest(request));
+//}
+
+
     @GetMapping("/{repairId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'TECHNICIAN')")
     public ResponseEntity<RepairRequestResponse> getRepairRequest(
@@ -76,4 +90,5 @@ public class RepairController {
     ) {
         return ResponseEntity.ok(repairService.updateRepairRequest(repairId, request));
     }
+    
 } 

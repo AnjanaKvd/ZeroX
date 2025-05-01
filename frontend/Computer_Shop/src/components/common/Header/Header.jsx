@@ -55,6 +55,12 @@ const Header = () => {
     { to: "/contact", label: "Contact Us", icon: <PhoneIcon className="h-5 w-5" /> },
   ];
 
+  // Add the Repair link for all logged-in users
+  if (user) {
+    navItems.push({ to: "/repair", label: "Repair", icon: <ChartBarSquareIcon className="h-5 w-5" /> });
+  }
+
+  // Add the Admin Dashboard link for admins
   if (hasRole('ADMIN')) {
     navItems.push({ to: "/admin", label: "Dashboard", icon: <ChartBarSquareIcon className="h-5 w-5" /> });
   }
