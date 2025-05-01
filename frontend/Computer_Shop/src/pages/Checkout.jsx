@@ -101,6 +101,7 @@ const Checkout = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     setError(null);
+    let newAddressId = selectedAddressId;
     
     try {
       // If adding a new address, save it first
@@ -119,12 +120,21 @@ const Checkout = () => {
           
           // Save the new address and get the address ID
           const newAddress = await createAddress(user.userId, addressData);
-          console.log(newAddress);
-          setSelectedAddressId(newAddress.addressId);
+          console.log("New address created:", newAddress);
+          newAddressId = newAddress.addressId;
         } catch (addressErr) {
           console.error('Error saving address:', addressErr);
-          // Continue with checkout even if address saving fails
+          setError('Failed to save address. Please try again.');
+          setLoading(false);
+          return; // Stop the checkout process if address saving fails
         }
+      }
+      
+      // Check if we have a valid address ID
+      if (!newAddressId) {
+        setError('Please select or add a shipping address');
+        setLoading(false);
+        return;
       }
       
       // Prepare order data
@@ -134,22 +144,31 @@ const Checkout = () => {
           productId: item.productId,
           quantity: item.quantity
         })),
-        addressId: selectedAddressId,
+        addressId: newAddressId,
         paymentMethod,
-        discountCode: discountCode?.code
+        discountCode: discountCode?.code || ""
       };
+      
+      console.log("Submitting order:", orderData);
       
       // Send order to API
       const order = await createOrder(orderData);
       
+      // Log the order ID for debugging
+      console.log("Order created with ID:", order.orderId);
+      
       // Clear cart after successful order
       clearCart();
       
-      // Redirect to order confirmation
+      // Redirect to order confirmation with the order ID
       navigate(`/order-confirmation/${order.orderId}`);
     } catch (err) {
-      console.error('Error creating order', err);
+      console.error('Error creating order:', err);
       setError(err.response?.data?.message || 'An error occurred while processing your order. Please try again.');
+      // Show detailed error in console for debugging
+      if (err.response) {
+        console.error('Error response:', err.response.data);
+      }
     } finally {
       setLoading(false);
     }
@@ -157,7 +176,6 @@ const Checkout = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Checkout</h1>
@@ -431,17 +449,7 @@ const Checkout = () => {
                     <span>Credit Card</span>
                   </label>
                   
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="PAYPAL"
-                      checked={paymentMethod === 'PAYPAL'}
-                      onChange={() => setPaymentMethod('PAYPAL')}
-                      className="h-4 w-4 text-blue-600"
-                    />
-                    <span>PayPal</span>
-                  </label>
+                  
                   
                   <label className="flex items-center space-x-3">
                     <input
@@ -510,7 +518,6 @@ const Checkout = () => {
         </form>
       </main>
       
-      <Footer />
     </div>
   );
 };

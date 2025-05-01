@@ -2,20 +2,32 @@ import api from './api';
 
 export const createOrder = async (orderData) => {
   try {
+    console.log('Sending order data to API:', orderData);
     const response = await api.post('/orders', orderData);
+    console.log('Order API response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error creating order:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    }
     throw error;
   }
 };
 
 export const getOrderById = async (orderId) => {
   try {
+    console.log(`Fetching order details for ID: ${orderId}`);
     const response = await api.get(`/orders/${orderId}`);
+    console.log('Order API response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching order details:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    }
     throw error;
   }
 };
@@ -42,10 +54,14 @@ export const getAllOrders = async (params = {}) => {
 
 export const updateOrderStatus = async (orderId, status) => {
   try {
+    console.log(`Updating order ${orderId} status to ${status}`);
     const response = await api.put(`/orders/${orderId}/status`, { status });
     return response.data;
   } catch (error) {
     console.error('Error updating order status:', error);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+    }
     throw error;
   }
 };

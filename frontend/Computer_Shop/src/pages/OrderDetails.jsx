@@ -33,6 +33,12 @@ const OrderDetails = () => {
   }, [orderId]);
   
   const handleCancelOrder = async () => {
+    // Only allow cancellation of pending orders
+    if (order.status !== 'PENDING') {
+      showToast('Only pending orders can be cancelled', 'error');
+      return;
+    }
+    
     if (!window.confirm('Are you sure you want to cancel this order?')) {
       return;
     }
@@ -43,7 +49,7 @@ const OrderDetails = () => {
       setOrder({...order, status: 'CANCELLED'});
       showToast('Order cancelled successfully', 'success');
     } catch (err) {
-      console.error('Error cancelling order', err);
+      console.error('Error cancelling order:', err);
       showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setCancelling(false);
@@ -70,11 +76,9 @@ const OrderDetails = () => {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           <LoadingSpinner />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -82,29 +86,26 @@ const OrderDetails = () => {
   if (error || !order) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             {error || 'Order not found'}
           </div>
           <div className="mt-6 text-center">
-            <Link to="/orders" className="text-blue-600 hover:underline">
+            <Link to="/order-history" className="text-blue-600 hover:underline">
               ← Back to Orders
             </Link>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link to="/orders" className="text-blue-600 hover:underline">
+          <Link to="/order-history" className="text-blue-600 hover:underline">
             ← Back to Orders
           </Link>
         </div>
@@ -197,21 +198,31 @@ const OrderDetails = () => {
             </table>
           </div>
           
-          {(order.status === 'PENDING' || order.status === 'PROCESSING') && (
-            <div className="text-center">
+          <div className="flex justify-end mt-8">
+            {order.status === 'PENDING' ? (
               <button
                 onClick={handleCancelOrder}
                 disabled={cancelling}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-md disabled:opacity-70"
+                className={`px-4 py-2 rounded-md ${
+                  cancelling
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
               >
                 {cancelling ? 'Cancelling...' : 'Cancel Order'}
               </button>
-            </div>
-          )}
+            ) : order.status !== 'CANCELLED' && order.status !== 'DELIVERED' ? (
+              <button
+                disabled={true}
+                className="px-4 py-2 rounded-md bg-gray-300 text-gray-500 cursor-not-allowed"
+                title="Only pending orders can be cancelled"
+              >
+                Cancel Order
+              </button>
+            ) : null}
+          </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

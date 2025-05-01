@@ -30,12 +30,23 @@ const OrderHistory = () => {
           params.status = filter;
         }
         
-        const data = await getUserOrders(user.id, params);
-        setOrders(data.content);
-        setTotalPages(data.totalPages);
+        const data = await getUserOrders(user.userId, params);
+        console.log("Orders data:", data);
+        
+        if (data.content) {
+          setOrders(data.content);
+          setTotalPages(data.totalPages);
+        } else if (Array.isArray(data)) {
+          setOrders(data);
+          setTotalPages(Math.ceil(data.length / 10));
+        } else {
+          setOrders([]);
+          setTotalPages(0);
+        }
+        
         setError(null);
       } catch (err) {
-        console.error('Error fetching orders', err);
+        console.error('Error fetching orders:', err);
         setError('Unable to load your orders. Please try again later.');
       } finally {
         setLoading(false);
@@ -57,6 +68,15 @@ const OrderHistory = () => {
   };
 
   const handleCancelOrder = async (orderId) => {
+    // Get the order to check its status
+    const orderToCancel = orders.find(order => order.orderId === orderId);
+    
+    // Only allow cancellation of pending orders
+    if (!orderToCancel || orderToCancel.status !== 'PENDING') {
+      showToast('Only pending orders can be cancelled', 'error');
+      return;
+    }
+    
     if (!window.confirm('Are you sure you want to cancel this order?')) {
       return;
     }
@@ -72,7 +92,7 @@ const OrderHistory = () => {
       
       showToast('Order cancelled successfully', 'success');
     } catch (err) {
-      console.error('Error cancelling order', err);
+      console.error('Error cancelling order:', err);
       showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setCancellingOrderId(null);
@@ -98,7 +118,6 @@ const OrderHistory = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">My Orders</h1>
@@ -178,13 +197,23 @@ const OrderHistory = () => {
                             Details
                           </Link>
                           
-                          {(order.status === 'PENDING' || order.status === 'PROCESSING') && (
+                          {order.status === 'PENDING' && (
                             <button
                               className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded text-sm"
                               disabled={cancellingOrderId === order.orderId}
                               onClick={() => handleCancelOrder(order.orderId)}
                             >
                               {cancellingOrderId === order.orderId ? 'Cancelling...' : 'Cancel'}
+                            </button>
+                          )}
+                          
+                          {order.status !== 'PENDING' && order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
+                            <button
+                              className="bg-gray-100 text-gray-500 px-3 py-1 rounded text-sm cursor-not-allowed"
+                              disabled={true}
+                              title="Only pending orders can be cancelled"
+                            >
+                              Cancel
                             </button>
                           )}
                         </div>
@@ -220,8 +249,6 @@ const OrderHistory = () => {
           </>
         )}
       </main>
-      
-      <Footer />
     </div>
   );
 };

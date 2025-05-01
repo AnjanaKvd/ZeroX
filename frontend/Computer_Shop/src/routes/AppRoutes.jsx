@@ -80,11 +80,11 @@ const AppRoutes = () => {
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route path="checkout" element={<Checkout />} />
-              <Route path="order-confirmation" element={<OrderConfirmation />} />
+              <Route path="order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="profile" element={<Profile />} />
               <Route path="saved-addresses" element={<SavedAddresses />} />
               <Route path="order-history" element={<OrderHistory />} />
-              <Route path="order/:id" element={<OrderDetails />} />
+              <Route path="orders/:orderId" element={<OrderDetails />} />
             </Route>
           </Route>
 

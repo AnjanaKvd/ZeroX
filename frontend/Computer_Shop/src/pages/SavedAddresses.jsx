@@ -144,7 +144,6 @@ const SavedAddresses = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -389,8 +388,6 @@ const SavedAddresses = () => {
           )}
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

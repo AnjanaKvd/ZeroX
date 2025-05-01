@@ -231,7 +231,7 @@ const Profile = () => {
                 <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="/orders" className="text-blue-600 hover:underline">
+                    <a href="/order-history" className="text-blue-600 hover:underline">
                       My Orders
                     </a>
                   </li>
