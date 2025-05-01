@@ -3,28 +3,8 @@ import { X, Upload } from 'lucide-react';
 import { getCategories } from '../../services/categoryService';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import api from '../../services/api';
-
-// Barcode scanner icon component
-const BarcodeIcon = () => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    className="h-5 w-5 mr-1" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-  >
-    <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-    <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-    <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-    <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-    <line x1="8" y1="7" x2="8" y2="17"></line>
-    <line x1="12" y1="7" x2="12" y2="17"></line>
-    <line x1="16" y1="7" x2="16" y2="17"></line>
-  </svg>
-);
+import BarcodeInput from './BarcodeInput';
+import EnhancedBarcodeInput from './EnhancedBarcodeInput';
 
 const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' }) => {
   const [formData, setFormData] = useState({
@@ -44,8 +24,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanError, setScanError] = useState(null);
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -182,44 +160,42 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
     onSubmit(submitFormData);
   };
 
-  // Handle barcode scanning
-  const handleScanBarcode = async () => {
+  // Handle barcode scanning - now just updates the form data with scanned code
+  const handleScanBarcode = (scannedCode) => {
+    console.log('ProductModal received barcode:', scannedCode);
+    
+    // Set the SKU field with the scanned barcode
+    if (scannedCode && scannedCode.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        sku: scannedCode
+      }));
+      
+      // Optionally, you can try to look up product info by SKU from your API
+      // This would be an enhancement for future implementation
+      // lookupProductBySku(scannedCode);
+    }
+  };
+
+  // Lookup product info by SKU - for future enhancement
+  const lookupProductBySku = async (sku) => {
     try {
-      setScanning(true);
-      setScanError(null);
+      const response = await api.get(`/api/products/lookup?sku=${sku}`);
       
-      // Call the specified API endpoint for barcode scanning
-      const response = await api.get('/api/products/scan');
-      
-      // Check if response contains valid SKU data
-      if (response.data && response.data.sku) {
-        // Set the SKU field with the scanned barcode
+      if (response.data) {
+        const productData = response.data;
         setFormData(prev => ({
           ...prev,
-          sku: response.data.sku
+          name: productData.name || prev.name,
+          brand: productData.brand || prev.brand,
+          price: productData.price || prev.price,
+          description: productData.description || prev.description,
+          stockQuantity: productData.stockQuantity || prev.stockQuantity,
         }));
-        
-        // Also set other fields if they're available in the response
-        const productData = response.data;
-        if (productData) {
-          setFormData(prev => ({
-            ...prev,
-            name: productData.name || prev.name,
-            brand: productData.brand || prev.brand,
-            price: productData.price || prev.price,
-            // Only update other fields if they exist in the response
-            description: productData.description || prev.description,
-            stockQuantity: productData.stockQuantity || prev.stockQuantity,
-          }));
-        }
-      } else {
-        setScanError('No valid barcode found');
       }
     } catch (error) {
-      console.error('Error scanning barcode:', error);
-      setScanError('Failed to scan barcode. Please try again.');
-    } finally {
-      setScanning(false);
+      console.error('Error looking up product:', error);
+      // Display error via toast or alert if needed
     }
   };
 
@@ -321,39 +297,38 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  SKU *
-                </label>
-                <div className="flex">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    SKU *
+                  </label>
+                  <EnhancedBarcodeInput
+                    value={formData.sku}
+                    onChange={(value) => {
+                      console.log('SKU input changed:', value);
+                      setFormData(prev => ({
+                        ...prev,
+                        sku: value
+                      }));
+                    }}
+                    label=""
+                    required={true}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Brand *
+                  </label>
                   <input
                     type="text"
-                    name="sku"
-                    value={formData.sku}
+                    name="brand"
+                    value={formData.brand}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-l-md px-3 py-2"
-                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
                   />
-                  <button
-                    type="button"
-                    onClick={handleScanBarcode}
-                    disabled={scanning}
-                    className="flex items-center justify-center px-3 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                  >
-                    {scanning ? (
-                      <span className="animate-pulse">Scanning...</span>
-                    ) : (
-                      <span className="flex items-center">
-                        <BarcodeIcon />
-                        Scan
-                      </span>
-                    )}
-                  </button>
                 </div>
-                {scanError && (
-                  <p className="text-red-500 text-xs mt-1">{scanError}</p>
-                )}
               </div>
               
               <div>
@@ -389,19 +364,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Brand
-                </label>
-                <input
-                  type="text"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-              </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Low Stock Threshold

@@ -13,6 +13,7 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    Optional<User> findById(UUID userId);
 
     // For finding users including deleted ones (not exposed to controllers)
     @Query("SELECT u FROM User u WHERE u.email = :email")

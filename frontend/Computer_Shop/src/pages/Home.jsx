@@ -7,6 +7,7 @@ import FilterPanel from '../components/common/FilterPanel';
 import Pagination from '../components/common/Pagination';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import DiscountedProducts from '../components/discount/DiscountedProducts';
 
 const Home = () => {
   const { theme } = useTheme();
@@ -493,7 +494,8 @@ const Home = () => {
         theme={theme}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        
         <FilterPanel
           filters={state.filters}
           onFilterChange={handleFilterChange}
@@ -511,6 +513,8 @@ const Home = () => {
           />
         )}
 
+        <DiscountedProducts />
+
         <section className="mb-8">
           <h2 className={`text-2xl font-bold mb-6 ${
             theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
@@ -519,15 +523,15 @@ const Home = () => {
           </h2>
           
           {state.loading ? (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex items-center justify-center h-64">
               <LoadingSpinner theme={theme} />
             </div>
           ) : (
             <>
               {state.sortedProducts && state.sortedProducts.length > 0 ? (
                 <>
-                  <div className="text-sm text-gray-500 mb-4">
-                    {state.sortedProducts.length} {state.filters.isSearchResults ? 'search results' : 'featured products'} 
+                  <div className="mb-4 text-sm text-gray-500">
+                    {state.sortedProducts.length} {state.filters.isSearchResults ? 'products found' : 'featured products'} 
                     {state.filters.minPrice || state.filters.maxPrice ? (
                       <span> (price range: ${state.filters.minPrice || '0'}-${state.filters.maxPrice || 'max'})</span>
                     ) : null}
@@ -543,7 +547,7 @@ const Home = () => {
                   />
                 </>
               ) : (
-                <div className="text-center py-10">
+                <div className="py-10 text-center">
                   <p className="text-lg text-gray-500">No products found matching your criteria.</p>
                 </div>
               )}

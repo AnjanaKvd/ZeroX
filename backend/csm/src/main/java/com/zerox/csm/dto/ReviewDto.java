@@ -8,34 +8,33 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ReviewDto {
-    
+
     public record ReviewCreateRequest(
-        @NotNull UUID productId,
-        @NotNull UUID userId,
-        @Min(1) @Max(5) int rating,
-        String comment
+            @NotNull UUID productId,
+            @Min(1) @Max(5) int rating,
+            String comment
     ) {}
-    
+
     public record ReviewUpdateRequest(
-        @Min(1) @Max(5) int rating,
-        String comment
+            @Min(1) @Max(5) int rating,
+            String comment
     ) {}
-    
+
     public record ReviewResponse(
-        UUID reviewId,
-        UUID productId,
-        String productName,
-        UUID userId,
-        String userName,
-        int rating,
-        String comment,
-        LocalDateTime createdAt
+            UUID reviewId,
+            UUID productId,
+            String productName,
+            UUID userId,
+            String userName,
+            int rating,
+            String comment,
+            LocalDateTime createdAt
     ) {}
-    
+
     public record ProductRatingResponse(
-        UUID productId,
-        String productName,
-        double averageRating,
-        int numberOfReviews
+            UUID productId,
+            String productName,
+            double averageRating,
+            int numberOfReviews
     ) {}
-} 
+}
