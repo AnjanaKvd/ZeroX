@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
+import { getCurrentCurrency, updateSetting } from '../services/settingsService';
+import { useToast } from '../context/ToastContext';
+import { useCurrency } from '../context/CurrencyContext';
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -16,6 +19,8 @@ const Settings = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
+  const { refreshCurrency } = useCurrency();
 
   useEffect(() => {
     fetchSettings();
@@ -24,11 +29,22 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/settings');
-      const data = await response.json();
-      setSettings(data);
+      // Get current currency from the backend
+      const currencyData = await getCurrentCurrency();
+      
+      // Update settings with the currency value
+      setSettings(prev => ({
+        ...prev,
+        currency: currencyData.currency || 'USD'
+      }));
+      
+      // In a real implementation, you would fetch all settings here
+      // const response = await fetch('/api/settings');
+      // const data = await response.json();
+      // setSettings(data);
     } catch (error) {
       console.error('Error fetching settings:', error);
+      showToast('Failed to load settings', 'error');
     } finally {
       setLoading(false);
     }
@@ -38,15 +54,21 @@ const Settings = () => {
     e.preventDefault();
     try {
       setSaving(true);
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+      
+      // Update currency setting
+      await updateSetting('currency', {
+        value: settings.currency,
+        description: 'Store currency',
+        isPublic: true
       });
-      // Show success message
+      
+      // Refresh the currency context to update the entire app
+      refreshCurrency();
+      
+      showToast('Settings saved successfully', 'success');
     } catch (error) {
       console.error('Error saving settings:', error);
-      // Show error message
+      showToast('Failed to save settings', 'error');
     } finally {
       setSaving(false);
     }
@@ -59,6 +81,14 @@ const Settings = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -135,9 +165,11 @@ const Settings = () => {
                 className="w-full border rounded-lg p-2"
               >
                 <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
+                <option value="LKR">LKR (Rs.)</option>
               </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Changing currency will affect how prices are displayed throughout the store.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -213,8 +245,17 @@ const Settings = () => {
             disabled={saving}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 disabled:opacity-50"
           >
-            <Save size={20} />
-            {saving ? 'Saving...' : 'Save Settings'}
+            {saving ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                Save Settings
+              </>
+            )}
           </button>
         </div>
       </form>

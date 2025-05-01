@@ -8,6 +8,7 @@ import { getProductImageUrl } from '../../utils/imageUtils';
 import { useTheme } from '../../context/ThemeContext';
 import { Spinner } from '../common/LoadingSpinner/Spinner';
 import { getProductById } from '../../services/productService';
+import PriceDisplay from '../common/PriceDisplay';
 
 const DiscountedProductCard = ({ discount }) => {
   const { addToCart } = useCart();
@@ -128,10 +129,10 @@ const DiscountedProductCard = ({ discount }) => {
           <div className="flex flex-col mb-3">
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold text-primary">
-                ${Number(discount.discountPrice).toFixed(2)}
+              <PriceDisplay amount={Number(discount.discountPrice).toFixed(2)} />
               </span>
               <span className="text-sm line-through text-text-secondary">
-                ${Number(discount.originalPrice).toFixed(2)}
+                <PriceDisplay amount={Number(discount.originalPrice).toFixed(2)} />
               </span>
             </div>
             
@@ -145,7 +146,7 @@ const DiscountedProductCard = ({ discount }) => {
 
           <div className="flex items-center justify-between">
             <span className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'} font-medium`}>
-              Save ${discount.savingsAmount.toFixed(2)}
+              Save <PriceDisplay amount={Number(discount.savingsAmount).toFixed(2)} />
             </span>
             
             <button

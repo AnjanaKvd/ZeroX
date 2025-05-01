@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getOrderById, updateOrderStatus } from '../services/orderService';
-import Header from '../components/common/Header/Header';
-import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
@@ -204,7 +203,7 @@ const OrderConfirmation = () => {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {paymentProcessing ? 'Processing...' : `Pay $${order.totalAmount.toFixed(2)}`}
+                {paymentProcessing ? 'Processing...' : `Pay `} <PriceDisplay amount={order.totalAmount} />
               </button>
             </div>
           </div>
@@ -222,7 +221,9 @@ const OrderConfirmation = () => {
               </div>
               <div>
                 <p className="text-gray-700">Your order will be delivered soon. Please have the payment amount ready when the courier arrives.</p>
-                <p className="text-gray-700 mt-1">Amount to pay: <span className="font-bold">${order.totalAmount.toFixed(2)}</span></p>
+                <p className="text-gray-700 mt-1">Amount to pay: <span className="font-bold">
+  <PriceDisplay amount={order.totalAmount} />
+</span></p>
               </div>
             </div>
             <button
@@ -317,12 +318,16 @@ const OrderConfirmation = () => {
                     <tr key={index} className="border-t border-gray-200">
                       <td className="p-4">{item.productName}</td>
                       <td className="text-center p-4">{item.quantity}</td>
-                      <td className="text-right p-4">${item.subtotal.toFixed(2)}</td>
+                      <td className="text-right p-4">
+  <PriceDisplay amount={item.subtotal} />
+</td>
                     </tr>
                   ))}
                   <tr className="border-t border-gray-200 bg-gray-50">
                     <td colSpan="2" className="text-right p-4 font-medium">Total</td>
-                    <td className="text-right p-4 font-bold">${order.totalAmount.toFixed(2)}</td>
+                    <td className="text-right p-4 font-bold">
+  <PriceDisplay amount={order.totalAmount} />
+</td>
                   </tr>
                 </tbody>
               </table>

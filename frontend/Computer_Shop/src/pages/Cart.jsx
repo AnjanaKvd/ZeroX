@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Minus, Trash2 } from 'lucide-react'; // or your icon library
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const Cart = () => {
   const { cartItems, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -124,7 +125,9 @@ const Cart = () => {
                       </div>
                     </div>
                     
-                    <div className="text-center">${itemPrice.toFixed(2)}</div>
+                    <div className="text-center">
+                      <PriceDisplay amount={itemPrice} />
+                    </div>
                     
                     <div className="flex items-center justify-center">
                       <div className="flex items-center border rounded">
@@ -156,7 +159,9 @@ const Cart = () => {
                     </div>
                     
                     <div className="flex items-center justify-end space-x-2">
-                      <span className="font-medium">${itemTotal.toFixed(2)}</span>
+                      <span className="font-medium">
+                        <PriceDisplay amount={itemTotal} />
+                      </span>
                       <button 
                         onClick={() => handleRemoveItem(itemId)}
                         className="text-red-500 hover:text-red-700 p-1"
@@ -195,7 +200,9 @@ const Cart = () => {
             <div className="space-y-4 mb-6">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                <span className="font-medium">
+                  <PriceDisplay amount={totalPrice} />
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
@@ -207,7 +214,9 @@ const Cart = () => {
               </div>
               <div className="border-t pt-4 flex justify-between font-bold">
                 <span>Total</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>
+                  <PriceDisplay amount={totalPrice} />
+                </span>
               </div>
             </div>
             
