@@ -37,6 +37,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
     stockQuantity: '',
     lowStockThreshold: '',
     warrantyPeriodMonths: '',
+    keywords: '',
     image: null
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -80,6 +81,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         stockQuantity: product.stockQuantity || '',
         lowStockThreshold: product.lowStockThreshold || '',
         warrantyPeriodMonths: product.warrantyPeriodMonths || '',
+        keywords: product.keywords || '',
         image: null
       });
       
@@ -103,6 +105,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         stockQuantity: '',
         lowStockThreshold: '',
         warrantyPeriodMonths: '',
+        keywords: '',
         image: null
       });
       setImagePreview(null);
@@ -152,6 +155,20 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
       if (key === 'image') {
         if (formData.image) {
           submitFormData.append('image', formData.image);
+        }
+      } else if (key === 'keywords') {
+        // Ensure keywords are properly formatted (trim spaces after commas)
+        if (formData.keywords) {
+          const formattedKeywords = formData.keywords
+            .split(',')
+            .map(keyword => keyword.trim())
+            .filter(keyword => keyword.length > 0)
+            .join(',');
+          
+          submitFormData.append('keywords', formattedKeywords);
+          
+          // For debugging
+          console.log('Submitting keywords:', formattedKeywords);
         }
       } else if (formData[key] !== '') {
         if (['price', 'stockQuantity', 'lowStockThreshold', 'warrantyPeriodMonths'].includes(key)) {
@@ -401,7 +418,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Warranty (Months)
@@ -414,6 +430,20 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   min="0"
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Keywords
+                </label>
+                <input
+                  type="text"
+                  name="keywords"
+                  value={formData.keywords}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                
               </div>
             </div>
             

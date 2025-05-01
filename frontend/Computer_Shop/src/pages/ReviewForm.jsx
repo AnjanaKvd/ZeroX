@@ -58,10 +58,10 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h3 className="mb-4 text-lg font-semibold">Write a Review</h3>
+      <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Your Rating
           </label>
           <div className="flex gap-1">
@@ -94,7 +94,7 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
         <div className="mb-4">
           <label
             htmlFor="comment"
-            className="block mb-2 text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Your Review
           </label>
@@ -185,11 +185,11 @@ export default ReviewForm;
 
 //   {
 //     isReviewFormOpen && (
-//       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-//         <div className="relative p-6 bg-white rounded-lg shadow-lg dark:bg-surface-dark">
+//       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+//         <div className="bg-white dark:bg-surface-dark p-6 rounded-lg shadow-lg relative">
 //           <button
 //             onClick={closeReviewForm}
-//             className="absolute text-gray-500 top-2 right-2 hover:text-gray-700 dark:text-gray-300"
+//             className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-300"
 //           >
 //             ✕
 //           </button>
@@ -201,10 +201,10 @@ export default ReviewForm;
 
 //   return (
 //     <div className="p-6 bg-white rounded-lg shadow-md">
-//       <h3 className="mb-4 text-lg font-semibold">Write a Review</h3>
+//       <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
 //       <form onSubmit={handleSubmit}>
 //         <div className="mb-4">
-//           <label className="block mb-2 text-sm font-medium text-gray-700">
+//           <label className="block text-sm font-medium text-gray-700 mb-2">
 //             Your Rating
 //           </label>
 //           <div className="flex gap-1">
@@ -237,7 +237,7 @@ export default ReviewForm;
 //         <div className="mb-4">
 //           <label
 //             htmlFor="comment"
-//             className="block mb-2 text-sm font-medium text-gray-700"
+//             className="block text-sm font-medium text-gray-700 mb-2"
 //           >
 //             Your Review
 //           </label>

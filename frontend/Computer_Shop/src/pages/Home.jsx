@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { getProducts, searchProducts, sortProducts } from '../services/productService';
 import HeroBanner from "../components/home/HeroBanner";
-import ProductGrid from "../components/product/ProductGrid";
-import FilterPanel from "../components/common/FilterPanel";
-import Pagination from "../components/common/Pagination";
-import ErrorDisplay from "../components/common/ErrorDisplay";
-import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
-import DiscountedProducts from "../components/discount/DiscountedProducts";
+import ProductGrid from '../components/product/ProductGrid';
+import FilterPanel from '../components/common/FilterPanel';
+import Pagination from '../components/common/Pagination';
+import ErrorDisplay from '../components/common/ErrorDisplay';
+import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import DiscountedProducts from '../components/discount/DiscountedProducts';
 
 const Home = () => {
   const { theme } = useTheme();
@@ -20,14 +20,14 @@ const Home = () => {
       page: 0,
       totalPages: 0,
       totalElements: 0,
-      size: 12,
+      size: 12
     },
     filters: {
-      searchQuery: "",
-      minPrice: "",
-      maxPrice: "",
-      sortBy: "name",
-      sortOrder: "asc",
+      searchQuery: '',
+      minPrice: '',
+      maxPrice: '',
+      sortBy: 'name',
+      sortOrder: 'asc',
       page: 1,
       pageSize: 12,
       isSearchResults: false
@@ -73,8 +73,8 @@ const Home = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      setState((prev) => ({ ...prev, loading: true }));
-
+      setState(prev => ({ ...prev, loading: true }));
+      
       const productsResponse = await getProducts();
       const products = productsResponse?.content || [];
 
@@ -103,13 +103,12 @@ const Home = () => {
         };
       });
     } catch (err) {
-      console.error("Data fetch error:", err);
-      setState((prev) => ({
+      console.error('Data fetch error:', err);
+      setState(prev => ({
         ...prev,
-        error: "Failed to load data. Please try again later.",
+        error: 'Failed to load data. Please try again later.',
+        loading: false
       }));
-    } finally {
-      setState((prev) => ({ ...prev, loading: false }));
     }
   }, []);
 
@@ -219,13 +218,13 @@ const Home = () => {
   }, [state.filteredProducts, state.filters.sortBy, state.filters.sortOrder]);
 
   const handleFilterChange = (name, value) => {
-    setState((prev) => ({
+    setState(prev => ({
       ...prev,
       filters: {
         ...prev.filters,
         [name]: value,
-        page: 1,
-      },
+        page: 1
+      }
     }));
     
     if (name === 'searchResults' && Array.isArray(value)) {
@@ -281,12 +280,12 @@ const Home = () => {
 
   const fetchProducts = async (page = 0, size = 12) => {
     try {
-      setState((prev) => ({ ...prev, loading: true }));
-
+      setState(prev => ({ ...prev, loading: true }));
+      
       const productsResponse = await getProducts({ page, size });
-
+      
       if (productsResponse?.content) {
-        setState((prev) => ({
+        setState(prev => ({
           ...prev,
           products: productsResponse.content,
           sortedProducts: productsResponse.content,
@@ -294,21 +293,21 @@ const Home = () => {
             page: productsResponse.pageable?.pageNumber || 0,
             totalPages: productsResponse.totalPages || 1,
             totalElements: productsResponse.totalElements || 0,
-            size: productsResponse.pageable?.pageSize || 12,
+            size: productsResponse.pageable?.pageSize || 12
           },
-          error: null,
+          error: null
         }));
       }
     } catch (err) {
-      console.error("Products fetch error:", err);
-      setState((prev) => ({
+      console.error('Products fetch error:', err);
+      setState(prev => ({
         ...prev,
         error: 'Failed to load products. Please try again later.',
         products: [],
         sortedProducts: []
       }));
     } finally {
-      setState((prev) => ({ ...prev, loading: false }));
+      setState(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -355,11 +354,7 @@ const Home = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen ${
-        theme === "dark" ? "bg-background-dark" : "bg-background-light"
-      }`}
-    >
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background-dark' : 'bg-background-light'}`}>
       <HeroBanner
         title="Custom Gaming PCs & Components"
         subtitle="Build Your Ultimate Gaming Rig"
@@ -369,6 +364,7 @@ const Home = () => {
       />
 
       <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        
         <FilterPanel
           filters={state.filters}
           onFilterChange={handleFilterChange}
@@ -378,7 +374,7 @@ const Home = () => {
         />
 
         {state.error && (
-          <ErrorDisplay
+          <ErrorDisplay 
             error={state.error}
             onRetry={fetchData}
             theme={theme}
@@ -394,7 +390,7 @@ const Home = () => {
           }`}>
             {getHeadingText()}
           </h2>
-
+          
           {state.loading ? (
             <div className="flex items-center justify-center h-64">
               <LoadingSpinner theme={theme} />

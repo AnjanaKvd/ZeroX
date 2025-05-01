@@ -10,6 +10,7 @@ import com.zerox.csm.repository.InventoryLogRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.StockAlertRepository;
 import com.zerox.csm.repository.UserRepository;
+import com.zerox.csm.repository.ProductDiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,7 @@ public class ProductService {
     private final StockAlertRepository stockAlertRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
+    private final ProductDiscountRepository productDiscountRepository;
 
     // Create a new product
     @Transactional
@@ -337,6 +339,13 @@ public class ProductService {
                 product.getCreatedAt(),
                 product.getKeywords()
         );
+    }
+
+    private ProductDiscountDto.ActiveDiscountResponse getActiveDiscountForProduct(UUID productId) {
+        LocalDateTime now = LocalDateTime.now();
+        return productDiscountRepository.findActiveDiscountForProduct(productId, now)
+            .map(this::mapToActiveDiscountResponse)
+            .orElse(null);
     }
 
     private ProductDiscountDto.ActiveDiscountResponse mapToActiveDiscountResponse(ProductDiscount discount) {

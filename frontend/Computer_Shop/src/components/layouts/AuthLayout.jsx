@@ -1,22 +1,22 @@
 // components/auth/AuthLayout.jsx
-import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import Header from "../common/Header/Header";
-import Footer from "../common/Footer/Footer";
+import React from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import Header from '../common/Header/Header';
+import Footer from '../common/Footer/Footer';
 
 export const AuthLayout = () => {
   const location = useLocation();
-
+  
   // Map paths to titles
   const pageTitles = {
-    "/login": "SIGN IN",
-    "/register": "SIGN UP",
-    "/logout": "Logging Out",
-    "/unauthorized": "Access Denied",
+    '/login': 'Login to Your Account',
+    '/register': 'Create an Account',
+    '/logout': 'Logging Out',
+    '/unauthorized': 'Access Denied'
   };
-
+  
   // Get the title based on the current path
-  const title = pageTitles[location.pathname] || "Account Access";
+  const title = pageTitles[location.pathname] || 'Account Access';
 
   return (
     <div className="flex flex-col min-h-screen">
