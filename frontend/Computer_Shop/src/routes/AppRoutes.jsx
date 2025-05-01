@@ -35,6 +35,7 @@ const DisplayRatingAndReviews = lazy(() =>
 );
 const ReviewForm = lazy(() => import("../pages/ReviewForm"));
 const ReviewItem = lazy(() => import("../pages/ReviewItem"));
+const AdminOrderDetails = lazy(() => import('../pages/AdminOrderDetails'));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -97,6 +98,7 @@ const AppRoutes = () => {
               <Route path="discounts" element={<DiscountManagement />} />
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="orders" element={<OrderManagement />} />
+              <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<Settings />} />
             </Route>
