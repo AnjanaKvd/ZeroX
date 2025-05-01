@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import AppRoutes from './routes/AppRoutes';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingOverlay from './components/common/LoadingOverlay';
@@ -41,24 +42,26 @@ const App = () => {
       <ThemeProvider>
         <AuthProvider>
           <ToastProvider>
-            <CartProvider>
-              <div className="flex flex-col min-h-screen">
-                {/* API Connection Warning */}
-                {!apiConnected && apiCheckComplete && (
-                  <div 
-                    role="alert"
-                    className="bg-error-light/10 dark:bg-error-dark/10 border border-error-light dark:border-error-dark text-error-light dark:text-error-dark px-4 py-3 text-center"
-                  >
-                    ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
-                  </div>
-                )}
+            <CurrencyProvider>
+              <CartProvider>
+                <div className="flex flex-col min-h-screen">
+                  {/* API Connection Warning */}
+                  {!apiConnected && apiCheckComplete && (
+                    <div 
+                      role="alert"
+                      className="bg-error-light/10 dark:bg-error-dark/10 border border-error-light dark:border-error-dark text-error-light dark:text-error-dark px-4 py-3 text-center"
+                    >
+                      ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
+                    </div>
+                  )}
 
-                {/* Main Application Routes */}
-                <Suspense fallback={<LoadingOverlay />}>
-                  <AppRoutes />
-                </Suspense>
-              </div>
-            </CartProvider>
+                  {/* Main Application Routes */}
+                  <Suspense fallback={<LoadingOverlay />}>
+                    <AppRoutes />
+                  </Suspense>
+                </div>
+              </CartProvider>
+            </CurrencyProvider>
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>

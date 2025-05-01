@@ -6,6 +6,7 @@ import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -181,7 +182,7 @@ const OrderHistory = () => {
                       </td>
                       <td className="text-center p-4">{order.items.length}</td>
                       <td className="text-center p-4 font-medium">
-                        ${order.totalAmount.toFixed(2)}
+                        <PriceDisplay amount={order.totalAmount} />
                       </td>
                       <td className="text-center p-4">
                         <span className={`${getStatusColor(order.status)} px-3 py-1 rounded-full text-xs`}>

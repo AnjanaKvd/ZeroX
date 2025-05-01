@@ -11,6 +11,7 @@ import { getProductImageUrl } from '../utils/imageUtils';
 import DisplayRatingAndReviews from './DisplayRatingAndReviews';
 import ReviewForm from './ReviewForm';
 import ReviewItem from './ReviewItem';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -217,10 +218,10 @@ const ProductDetails = () => {
               <div>
                 <div className="flex items-center gap-3">
                   <div className="text-2xl font-bold text-primary">
-                    ${Number(discount.discountPrice).toFixed(2)}
+                    <PriceDisplay amount={discount.discountPrice} />
                   </div>
                   <div className="text-lg line-through text-text-secondary">
-                    ${Number(discount.originalPrice).toFixed(2)}
+                    <PriceDisplay amount={discount.originalPrice} />
                   </div>
                   <span className="px-2 py-1 text-sm font-semibold text-white bg-red-500 rounded-md">
                     {discount.savingsPercentage.toFixed(0)}% OFF
@@ -228,7 +229,7 @@ const ProductDetails = () => {
                 </div>
                 <div className="mt-2 text-sm">
                   <span className={`font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                    You save: ${discount.savingsAmount.toFixed(2)}
+                    You save: <PriceDisplay amount={discount.savingsAmount} />
                   </span>
                 </div>
                 {timeLeft && (
@@ -241,7 +242,7 @@ const ProductDetails = () => {
               </div>
             ) : (
               <div className="text-2xl font-bold text-primary">
-                ${Number(product.price).toFixed(2)}
+                <PriceDisplay amount={product.price} />
               </div>
             )}
           </div>

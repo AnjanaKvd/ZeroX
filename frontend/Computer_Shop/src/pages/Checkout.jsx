@@ -7,6 +7,7 @@ import { createOrder } from '../services/orderService';
 import { getUserAddresses, createAddress } from '../services/addressService';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart, discountCode } = useContext(CartContext);
@@ -473,7 +474,9 @@ const Checkout = () => {
                 <div className="border-t border-gray-200 pt-4 mb-4">
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                    <span className="font-medium">
+                      <PriceDisplay amount={totalPrice} />
+                    </span>
                   </div>
                   
                   <div className="flex justify-between mb-2">
@@ -484,7 +487,7 @@ const Checkout = () => {
                   {discountCode && (
                     <div className="flex justify-between mb-2 text-green-600">
                       <span>Discount ({discountCode.code})</span>
-                      <span>-${((totalPrice * discountCode.percentage) / 100).toFixed(2)}</span>
+                      <span>-<PriceDisplay amount={(totalPrice * discountCode.percentage) / 100} /></span>
                     </div>
                   )}
                 </div>
@@ -493,9 +496,11 @@ const Checkout = () => {
                   <div className="flex justify-between mb-2">
                     <span className="text-lg font-semibold">Total</span>
                     <span className="text-lg font-semibold">
-                      ${discountCode
-                        ? (totalPrice - (totalPrice * discountCode.percentage) / 100).toFixed(2)
-                        : totalPrice.toFixed(2)}
+                      <PriceDisplay 
+                        amount={discountCode
+                          ? (totalPrice - (totalPrice * discountCode.percentage) / 100)
+                          : totalPrice} 
+                      />
                     </span>
                   </div>
                 </div>
