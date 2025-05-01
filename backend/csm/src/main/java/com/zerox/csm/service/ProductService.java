@@ -370,6 +370,4 @@ public class ProductService {
                 discount.getEndDate()
         );
     }
-
-
 }

@@ -1,6 +1,5 @@
 package com.zerox.csm.dto;
 
-import com.zerox.csm.model.Product;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -13,9 +12,6 @@ import java.util.UUID;
 
 // src/main/java/com/zerox/csm/dto/ProductDto.java
 public class ProductDto {
-
-
-
     public record ProductRequest(
             @NotBlank String name,
             @NotBlank String description,
