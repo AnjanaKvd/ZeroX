@@ -32,7 +32,7 @@ const Header = () => {
             to="/" 
             className="flex items-center text-2xl font-bold tracking-tight text-primary hover:text-primary-hover transition-colors"
           >
-            <img src={logoImage} alt="Taprodev Computers" className="h-9 w-auto mr-2" />
+            <img src={logoImage} alt="tarde Computers" className="h-9 w-auto mr-2" />
           </Link>
 
           {/* Primary Navigation */}
@@ -44,6 +44,13 @@ const Header = () => {
               Products
             </Link>
             
+            <Link 
+              to="/repairs" 
+              className="text-sm font-medium text-gray-700 hover:text-blue-600"
+            >
+              Repairs
+            </Link>
+
             {hasRole('ADMIN') && (
               <Link
                 to="/admin"

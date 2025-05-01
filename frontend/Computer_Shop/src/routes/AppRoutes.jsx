@@ -28,6 +28,7 @@ const Logout = lazy(() => import('../pages/Logout'));
 const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
 const Unauthorized = lazy(() => import('../pages/Unauthorized'));
 const ProductsListing = lazy(() => import('../pages/ProductsListing'));
+const RepairPage = lazy(() => import('../pages/RepairPage'));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -58,6 +59,7 @@ const AppRoutes = () => {
             <Route path="products" element={<ProductsListing />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
             <Route path="cart" element={<Cart />} />
+            <Route path="repairs" element={<RepairPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 
