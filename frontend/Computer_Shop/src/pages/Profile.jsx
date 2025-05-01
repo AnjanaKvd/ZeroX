@@ -1,4 +1,3 @@
-
 import { useContext, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AuthContext } from "../context/AuthContext";
@@ -237,7 +236,7 @@ const Profile = () => {
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-blue-600 hover:underline">
+                    <a href="/saved-addresses" className="text-blue-600 hover:underline">
                       Saved Addresses
                     </a>
                   </li>

@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { getUserOrders } from '../services/orderService';
+import { getUserOrders, cancelOrder } from '../services/orderService';
+import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
@@ -8,12 +10,18 @@ import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   
+  const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
+  
   useEffect(() => {
+    if (!user) return;
+    
     const fetchOrders = async () => {
       setLoading(true);
       try {
@@ -22,7 +30,7 @@ const OrderHistory = () => {
           params.status = filter;
         }
         
-        const data = await getUserOrders(params);
+        const data = await getUserOrders(user.id, params);
         setOrders(data.content);
         setTotalPages(data.totalPages);
         setError(null);
@@ -35,7 +43,7 @@ const OrderHistory = () => {
     };
     
     fetchOrders();
-  }, [page, filter]);
+  }, [page, filter, user]);
   
   const handleFilterChange = (e) => {
     setFilter(e.target.value);
@@ -45,6 +53,29 @@ const OrderHistory = () => {
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
       setPage(newPage);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) {
+      return;
+    }
+    
+    setCancellingOrderId(orderId);
+    try {
+      await cancelOrder(orderId);
+      
+      // Update the order status in UI
+      setOrders(orders.map(order => 
+        order.orderId === orderId ? { ...order, status: 'CANCELLED' } : order
+      ));
+      
+      showToast('Order cancelled successfully', 'success');
+    } catch (err) {
+      console.error('Error cancelling order', err);
+      showToast('Failed to cancel order. Please try again.', 'error');
+    } finally {
+      setCancellingOrderId(null);
     }
   };
   
@@ -129,7 +160,7 @@ const OrderHistory = () => {
                       <td className="text-center p-4">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="text-center p-4">{order.itemCount}</td>
+                      <td className="text-center p-4">{order.items.length}</td>
                       <td className="text-center p-4 font-medium">
                         ${order.totalAmount.toFixed(2)}
                       </td>
@@ -147,17 +178,13 @@ const OrderHistory = () => {
                             Details
                           </Link>
                           
-                          {order.status === 'PENDING' && (
+                          {(order.status === 'PENDING' || order.status === 'PROCESSING') && (
                             <button
                               className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded text-sm"
-                              onClick={() => {
-                                if (window.confirm('Are you sure you want to cancel this order?')) {
-                                  // Handle cancel order logic
-                                  console.log('Cancel order:', order.orderId);
-                                }
-                              }}
+                              disabled={cancellingOrderId === order.orderId}
+                              onClick={() => handleCancelOrder(order.orderId)}
                             >
-                              Cancel
+                              {cancellingOrderId === order.orderId ? 'Cancelling...' : 'Cancel'}
                             </button>
                           )}
                         </div>

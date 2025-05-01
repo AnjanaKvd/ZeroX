@@ -1,8 +1,66 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { getOrderById } from '../services/orderService';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
+import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 
 const OrderConfirmation = () => {
+  const { orderId } = useParams();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      try {
+        const data = await getOrderById(orderId);
+        setOrder(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching order details', err);
+        setError('Unable to load order details. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (orderId) {
+      fetchOrderDetails();
+    }
+  }, [orderId]);
+  
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <LoadingSpinner />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (error || !order) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error || 'Order not found'}
+          </div>
+          <div className="mt-6 text-center">
+            <Link to="/" className="text-blue-600 hover:underline">
+              Return to Home
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -35,7 +93,7 @@ const OrderConfirmation = () => {
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Payment Method</p>
-                  <p className="font-medium">{order.paymentMethod.replace('_', ' ')}</p>
+                  <p className="font-medium">{order.paymentMethod}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Order Status</p>
@@ -61,7 +119,7 @@ const OrderConfirmation = () => {
                     <tr key={index} className="border-t border-gray-200">
                       <td className="p-4">{item.productName}</td>
                       <td className="text-center p-4">{item.quantity}</td>
-                      <td className="text-right p-4">${item.totalPrice.toFixed(2)}</td>
+                      <td className="text-right p-4">${item.subtotal.toFixed(2)}</td>
                     </tr>
                   ))}
                   <tr className="border-t border-gray-200 bg-gray-50">

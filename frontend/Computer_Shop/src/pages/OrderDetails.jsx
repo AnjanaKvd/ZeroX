@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getOrderById, cancelOrder } from '../services/orderService';
+import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
+  const navigate = useNavigate();
+  const { showToast } = useContext(ToastContext);
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,11 +39,12 @@ const OrderDetails = () => {
     
     setCancelling(true);
     try {
-      const updatedOrder = await cancelOrder(orderId);
-      setOrder(updatedOrder);
+      await cancelOrder(orderId);
+      setOrder({...order, status: 'CANCELLED'});
+      showToast('Order cancelled successfully', 'success');
     } catch (err) {
       console.error('Error cancelling order', err);
-      setError('Failed to cancel order. Please try again later.');
+      showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setCancelling(false);
     }
@@ -126,8 +130,12 @@ const OrderDetails = () => {
                   <span className="ml-2 font-medium">{new Date(order.createdAt).toLocaleString()}</span>
                 </div>
                 <div className="mb-2">
+                  <span className="text-gray-600">Customer Email:</span>
+                  <span className="ml-2 font-medium">{order.customerEmail}</span>
+                </div>
+                <div className="mb-2">
                   <span className="text-gray-600">Payment Method:</span>
-                  <span className="ml-2 font-medium">{order.paymentMethod.replace('_', ' ')}</span>
+                  <span className="ml-2 font-medium">{order.paymentMethod}</span>
                 </div>
                 {order.paymentId && (
                   <div>
@@ -160,7 +168,7 @@ const OrderDetails = () => {
                   <th className="text-left p-4">Product</th>
                   <th className="text-center p-4">Price</th>
                   <th className="text-center p-4">Quantity</th>
-                  <th className="text-right p-4">Total</th>
+                  <th className="text-right p-4">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,25 +182,13 @@ const OrderDetails = () => {
                         <span>{item.productName}</span>
                       </div>
                     </td>
-                    <td className="text-center p-4">${item.unitPrice.toFixed(2)}</td>
+                    <td className="text-center p-4">${item.priceAtPurchase.toFixed(2)}</td>
                     <td className="text-center p-4">{item.quantity}</td>
-                    <td className="text-right p-4 font-medium">${item.totalPrice.toFixed(2)}</td>
+                    <td className="text-right p-4 font-medium">${item.subtotal.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="bg-gray-50">
-                <tr className="border-t border-gray-200">
-                  <td colSpan="3" className="text-right p-4 font-medium">Subtotal</td>
-                  <td className="text-right p-4 font-medium">${order.totalAmount.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td colSpan="3" className="text-right p-4 font-medium">Shipping</td>
-                  <td className="text-right p-4 font-medium">$0.00</td>
-                </tr>
-                <tr>
-                  <td colSpan="3" className="text-right p-4 font-medium">Tax</td>
-                  <td className="text-right p-4 font-medium">$0.00</td>
-                </tr>
                 <tr className="border-t border-gray-200">
                   <td colSpan="3" className="text-right p-4 font-bold">Total</td>
                   <td className="text-right p-4 font-bold">${order.totalAmount.toFixed(2)}</td>
@@ -201,7 +197,7 @@ const OrderDetails = () => {
             </table>
           </div>
           
-          {order.status === 'PENDING' && (
+          {(order.status === 'PENDING' || order.status === 'PROCESSING') && (
             <div className="text-center">
               <button
                 onClick={handleCancelOrder}

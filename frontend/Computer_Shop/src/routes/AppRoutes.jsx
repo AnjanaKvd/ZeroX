@@ -16,6 +16,7 @@ const Cart = lazy(() => import('../pages/Cart'));
 const Checkout = lazy(() => import('../pages/Checkout'));
 const OrderConfirmation = lazy(() => import('../pages/OrderConfirmation'));
 const Profile = lazy(() => import('../pages/Profile'));
+const SavedAddresses = lazy(() => import('../pages/SavedAddresses'));
 const OrderHistory = lazy(() => import('../pages/OrderHistory'));
 const OrderDetails = lazy(() => import('../pages/OrderDetails'));
 const NotFound = lazy(() => import('../pages/NotFound'));
@@ -81,6 +82,7 @@ const AppRoutes = () => {
               <Route path="checkout" element={<Checkout />} />
               <Route path="order-confirmation" element={<OrderConfirmation />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="saved-addresses" element={<SavedAddresses />} />
               <Route path="order-history" element={<OrderHistory />} />
               <Route path="order/:id" element={<OrderDetails />} />
             </Route>
