@@ -155,8 +155,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { createRepairRequest } from "../services/repairService";
-import Header from "../components/common/Header/Header";
-import Footer from "../components/common/Footer/Footer";
 import { useAuth } from "../context/AuthContext";
 
 const Repair = () => {
@@ -209,7 +207,6 @@ const Repair = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-grow container mx-auto px-4 py-8 max-w-3xl">
         <h1 className="text-3xl font-bold mb-6">Submit a Repair Request</h1>
 
@@ -337,7 +334,6 @@ const Repair = () => {
           </button>
         </form>
       </main>
-      <Footer />
     </div>
   );
 };
