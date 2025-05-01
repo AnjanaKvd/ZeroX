@@ -1,0 +1,78 @@
+package com.zerox.csm.dto;
+
+import com.zerox.csm.model.CartItem;
+
+import javax.net.ssl.SSLSession;
+
+public class CartItemDto {
+    private Long id;
+    private ProductDto product;
+    private int quantity;
+
+    // Default constructor for JSON deserialization
+    public CartItemDto() {
+    }
+
+    // Constructor for easy creation
+    public CartItemDto(Long id, ProductDto product, int quantity) {
+        this.id = id;
+        this.product = product;
+        this.quantity = quantity;
+    }
+
+    // Static factory method to create DTO from entity
+    public static CartItemDto fromEntity(CartItem item) {
+        CartItemDto dto = new CartItemDto();
+        dto.setId(item.getId());
+        dto.setProduct(ProductDto.fromEntity(item.getProduct()));
+        dto.setQuantity(item.getQuantity());
+        return dto;
+    }
+
+    private void setQuantity(int quantity) {
+    }
+
+    // Builder pattern for fluent creation
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public int getQuantity() {
+    }
+
+    public SSLSession getProduct() {
+    }
+
+    public static class Builder {
+        private Long id;
+        private ProductDto product;
+        private int quantity;
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder product(ProductDto product) {
+            this.product = product;
+            return this;
+        }
+
+        public Builder quantity(int quantity) {
+            this.quantity = quantity;
+            return this;
+        }
+
+        public CartItemDto build() {
+            return new CartItemDto(id, product, quantity);
+        }
+    }
+
+    // Additional helper methods if needed
+    public double getItemTotal() {
+        if (product != null) {
+            return product.getPrice() * quantity;
+        }
+        return 0.0;
+    }
+}

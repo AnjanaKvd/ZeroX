@@ -19,10 +19,17 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RepairRequest {
     
+//    public enum DeviceType {
+//        DESKTOP, LAPTOP, OTHER
+//    }
+//
+//    public enum Status {
+//        PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+//    }
     public enum DeviceType {
-        DESKTOP, LAPTOP, OTHER
+    DESKTOP, LAPTOP, TABLET, KEYBOARD, MOUSE, MONITOR, OTHER
     }
-    
+
     public enum Status {
         PENDING, IN_PROGRESS, COMPLETED, CANCELLED
     }
@@ -65,4 +72,7 @@ public class RepairRequest {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 } 
