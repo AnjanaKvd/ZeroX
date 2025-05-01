@@ -23,7 +23,7 @@ const ProductManagement = lazy(() => import("../pages/ProductManagement"));
 const CategoryManagement = lazy(() => import("../pages/CategoryManagement"));
 const OrderManagement = lazy(() => import("../pages/OrderManagement"));
 const UserManagement = lazy(() => import("../pages/UserManagement"));
-const DiscountManagement = lazy(() => import('../pages/DiscountManagement'));
+const DiscountManagement = lazy(() => import("../pages/DiscountManagement"));
 const Settings = lazy(() => import("../pages/Settings"));
 const Logout = lazy(() => import("../pages/Logout"));
 const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));

@@ -66,7 +66,7 @@ public class AuthService {
 
 //        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone());
+                user.getFullName(), user.getPhone(),user.getUserId());
     }
 
 
@@ -142,7 +142,7 @@ public class AuthService {
         );
 
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone());
+                user.getFullName(), user.getPhone(),user.getUserId());
     }
 
 
@@ -227,6 +227,11 @@ public class AuthService {
     // In AuthService
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    public User getUserById(UUID userId) {
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }
