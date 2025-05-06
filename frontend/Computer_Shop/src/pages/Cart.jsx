@@ -2,15 +2,29 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Minus, Trash2 } from 'lucide-react'; // or your icon library
+import { Plus, Minus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import PriceDisplay from '../components/common/PriceDisplay';
+import { validateCoupon } from '../services/couponService';
 
 const Cart = () => {
-  const { cartItems, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { 
+    cartItems, 
+    totalPrice, 
+    discountedTotal,
+    updateQuantity, 
+    removeFromCart, 
+    clearCart,
+    couponCode,
+    couponDiscount,
+    applyCoupon,
+    removeCoupon
+  } = useCart();
+  
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountMessage, setDiscountMessage] = useState(null);
+  const [inputCouponCode, setInputCouponCode] = useState('');
+  const [couponMessage, setCouponMessage] = useState(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
   
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity >= 1) {
@@ -34,19 +48,63 @@ const Cart = () => {
     }
   };
   
-  const handleApplyDiscount = async () => {
-    if (!discountCode.trim()) {
-      setDiscountMessage({ type: 'error', text: 'Please enter a discount code' });
+  const handleApplyCoupon = async () => {
+    if (!inputCouponCode.trim()) {
+      setCouponMessage({ type: 'error', text: 'Please enter a coupon code' });
       return;
     }
     
-    try {
-      // Here you would normally verify the discount code with your API
-      // For now, we'll just simulate a successful response
-      setDiscountMessage({ type: 'success', text: 'Discount code applied successfully!' });
-    } catch (error) {
-      setDiscountMessage({ type: 'error', text: 'Invalid discount code' });
+    // Check if user is logged in
+    if (!user) {
+      setCouponMessage({ 
+        type: 'error', 
+        text: 'Please log in to apply a coupon' 
+      });
+      return;
     }
+    
+    // Log user object to verify we have userId
+    console.log('User object for coupon validation:', user);
+    
+    setValidatingCoupon(true);
+    setCouponMessage(null);
+    
+    try {
+      // Include the user ID in the validation request
+      const result = await validateCoupon(
+        inputCouponCode,
+        totalPrice,
+        user.userId // Make sure we're using the correct property name
+      );
+      
+      if (result.valid) {
+        // Apply the coupon
+        applyCoupon(inputCouponCode, result.discountAmount);
+        setCouponMessage({ 
+          type: 'success', 
+          text: result.message || 'Coupon applied successfully!' 
+        });
+        setInputCouponCode(''); // Clear the input
+      } else {
+        setCouponMessage({ 
+          type: 'error', 
+          text: result.message || 'Invalid coupon code'
+        });
+      }
+    } catch (error) {
+      console.error('Error validating coupon:', error);
+      setCouponMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Error validating coupon'
+      });
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+  
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponMessage(null);
   };
   
   const handleCheckout = () => {
@@ -204,6 +262,20 @@ const Cart = () => {
                   <PriceDisplay amount={totalPrice} />
                 </span>
               </div>
+              
+              {/* Show coupon discount if applied */}
+              {couponCode && (
+                <div className="flex justify-between text-green-600">
+                  <span className="flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Coupon: {couponCode}
+                  </span>
+                  <span className="font-medium">
+                    -<PriceDisplay amount={couponDiscount} />
+                  </span>
+                </div>
+              )}
+              
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span className="font-medium">Calculated at checkout</span>
@@ -215,32 +287,56 @@ const Cart = () => {
               <div className="border-t pt-4 flex justify-between font-bold">
                 <span>Total</span>
                 <span>
-                  <PriceDisplay amount={totalPrice} />
+                  <PriceDisplay amount={couponCode ? discountedTotal : totalPrice} />
                 </span>
               </div>
             </div>
             
-            {/* Discount Code */}
+            {/* Coupon Section */}
             <div className="mb-6">
-              <div className="flex space-x-2">
-                <input 
-                  type="text"
-                  value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value)}
-                  placeholder="Discount code"
-                  className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button 
-                  onClick={handleApplyDiscount}
-                  className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded"
-                >
-                  Apply
-                </button>
-              </div>
-              {discountMessage && (
-                <p className={`mt-2 text-sm ${discountMessage.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
-                  {discountMessage.text}
-                </p>
+              {couponCode ? (
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
+                    <div>
+                      <p className="font-medium text-green-700">{couponCode} applied</p>
+                      <p className="text-sm text-green-600">
+                        You saved <PriceDisplay amount={couponDiscount} />
+                      </p>
+                    </div>
+                    <button 
+                      onClick={handleRemoveCoupon}
+                      className="text-red-500 hover:text-red-700"
+                      aria-label="Remove coupon"
+                    >
+                      <XCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex space-x-2">
+                    <input 
+                      type="text"
+                      value={inputCouponCode}
+                      onChange={(e) => setInputCouponCode(e.target.value)}
+                      placeholder="Enter coupon code"
+                      className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={validatingCoupon}
+                    />
+                    <button 
+                      onClick={handleApplyCoupon}
+                      className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded"
+                      disabled={validatingCoupon || !inputCouponCode.trim()}
+                    >
+                      {validatingCoupon ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponMessage && (
+                    <p className={`text-sm ${couponMessage.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+                      {couponMessage.text}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
             

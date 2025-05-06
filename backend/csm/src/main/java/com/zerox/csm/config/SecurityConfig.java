@@ -45,7 +45,8 @@ public class SecurityConfig {
                                 "/api/productssearch/**",
                                 "/api/orders/**",
                                 "/api/addresses/**",
-                                "/api/settings/**"
+                                "/api/settings/**",
+                                "/api/coupons/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
