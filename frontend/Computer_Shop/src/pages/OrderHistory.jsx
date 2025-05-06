@@ -182,7 +182,17 @@ const OrderHistory = () => {
                       </td>
                       <td className="text-center p-4">{order.items.length}</td>
                       <td className="text-center p-4 font-medium">
-                        <PriceDisplay amount={order.totalAmount} />
+                        <div className="flex justify-between text-sm text-gray-500 mt-2">
+                          <span>Order total:</span>
+                          <span className="font-semibold"><PriceDisplay amount={order.totalAmount} /></span>
+                        </div>
+                        
+                        {order.couponCode && (
+                          <div className="flex justify-between text-sm text-green-600 mt-1">
+                            <span>Coupon applied: {order.couponCode}</span>
+                            <span className="font-semibold">-<PriceDisplay amount={order.discountAmount || 0} /></span>
+                          </div>
+                        )}
                       </td>
                       <td className="text-center p-4">
                         <span className={`${getStatusColor(order.status)} px-3 py-1 rounded-full text-xs`}>

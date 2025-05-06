@@ -2,8 +2,14 @@ import api from './api';
 
 export const createOrder = async (orderData) => {
   try {
-    console.log('Sending order data to API:', orderData);
-    const response = await api.post('/orders', orderData);
+    console.log('Sending order data to API with coupon:', orderData);
+    
+    const orderPayload = {
+      ...orderData,
+      couponCode: orderData.couponCode || ""
+    };
+    
+    const response = await api.post('/orders', orderPayload);
     console.log('Order API response:', response.data);
     return response.data;
   } catch (error) {

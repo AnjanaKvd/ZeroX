@@ -8,9 +8,10 @@ import { getUserAddresses, createAddress } from '../services/addressService';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import PriceDisplay from '../components/common/PriceDisplay';
+import { CheckCircle } from 'lucide-react';
 
 const Checkout = () => {
-  const { cartItems, totalPrice, clearCart, discountCode } = useContext(CartContext);
+  const { cartItems, totalPrice, discountedTotal, couponCode, clearCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,8 @@ const Checkout = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [shippingCost, setShippingCost] = useState(null);
+  const [taxAmount, setTaxAmount] = useState(null);
   
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
     defaultValues: {
@@ -142,12 +145,12 @@ const Checkout = () => {
       const orderData = {
         userId: user.userId,
         items: cartItems.map(item => ({
-          productId: item.productId,
+          productId: item.productId || item.id,
           quantity: item.quantity
         })),
         addressId: newAddressId,
         paymentMethod,
-        discountCode: discountCode?.code || ""
+        couponCode: couponCode || ""  // Include coupon code if available
       };
       
       console.log("Submitting order:", orderData);
@@ -471,37 +474,47 @@ const Checkout = () => {
               <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
                 <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
                 
-                <div className="border-t border-gray-200 pt-4 mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">
-                      <PriceDisplay amount={totalPrice} />
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">Free</span>
-                  </div>
-                  
-                  {discountCode && (
-                    <div className="flex justify-between mb-2 text-green-600">
-                      <span>Discount ({discountCode.code})</span>
-                      <span>-<PriceDisplay amount={(totalPrice * discountCode.percentage) / 100} /></span>
+                <div className="border rounded-lg p-4 mb-8">
+                  <h3 className="text-lg font-semibold mb-3">Order Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span><PriceDisplay amount={totalPrice} /></span>
                     </div>
-                  )}
-                </div>
-                
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-lg font-semibold">Total</span>
-                    <span className="text-lg font-semibold">
-                      <PriceDisplay 
-                        amount={discountCode
-                          ? (totalPrice - (totalPrice * discountCode.percentage) / 100)
-                          : totalPrice} 
-                      />
-                    </span>
+                    
+                    {/* Show coupon discount if applied */}
+                    {couponCode && (
+                      <div className="flex justify-between text-green-600">
+                        <span className="flex items-center">
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Coupon: {couponCode}
+                        </span>
+                        <span>-<PriceDisplay amount={totalPrice - discountedTotal} /></span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between">
+                      <span>Shipping</span>
+                      <span>
+                        {shippingCost ? <PriceDisplay amount={shippingCost} /> : 'Calculated at checkout'}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span>Tax</span>
+                      <span>
+                        {taxAmount ? <PriceDisplay amount={taxAmount} /> : 'Calculated at checkout'}
+                      </span>
+                    </div>
+                    
+                    <div className="pt-2 border-t mt-2">
+                      <div className="flex justify-between font-semibold">
+                        <span>Total</span>
+                        <span>
+                          <PriceDisplay amount={couponCode ? discountedTotal : totalPrice} />
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
