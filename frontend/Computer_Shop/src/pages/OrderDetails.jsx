@@ -5,6 +5,7 @@ import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import PriceDisplay from '../components/common/PriceDisplay/PriceDisplay';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
@@ -196,6 +197,35 @@ const OrderDetails = () => {
                 </tr>
               </tfoot>
             </table>
+          </div>
+          
+          <div className="space-y-2 mt-4">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span><PriceDisplay amount={order.subtotal} /></span>
+            </div>
+            
+            {order.couponCode && (
+              <div className="flex justify-between text-green-600">
+                <span>Coupon ({order.couponCode}):</span>
+                <span>-<PriceDisplay amount={order.discountAmount || 0} /></span>
+              </div>
+            )}
+            
+            <div className="flex justify-between">
+              <span>Shipping:</span>
+              <span><PriceDisplay amount={order.shippingCost} /></span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span>Tax:</span>
+              <span><PriceDisplay amount={order.taxAmount} /></span>
+            </div>
+            
+            <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200">
+              <span>Total:</span>
+              <span><PriceDisplay amount={order.totalAmount} /></span>
+            </div>
           </div>
           
           <div className="flex justify-end mt-8">

@@ -6,6 +6,7 @@ import AuthLayout from '../components/layouts/AuthLayout';
 import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
+import CouponManagement from '../pages/CouponManagement';
 
 // Lazy-loaded pages
 const Home = lazy(() => import('../pages/Home'));
@@ -101,6 +102,7 @@ const AppRoutes = () => {
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="coupons" element={<CouponManagement />} />
             </Route>
           </Route>
         </Routes>

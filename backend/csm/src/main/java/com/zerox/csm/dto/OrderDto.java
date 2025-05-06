@@ -18,7 +18,7 @@ public class OrderDto {
             UUID addressId,
             @Valid CustomerAddressDto.AddressRequest shippingAddress,
             String paymentMethod,
-            String discountCode
+            String couponCode
     ) {}
 
     public record OrderItemRequest(
@@ -31,6 +31,9 @@ public class OrderDto {
             String customerEmail,
             List<OrderItemResponse> items,
             BigDecimal totalAmount,
+            BigDecimal discountAmount,
+            BigDecimal finalAmount,
+            String couponCode,
             OrderStatus status,
             String paymentMethod,
             String paymentId,
