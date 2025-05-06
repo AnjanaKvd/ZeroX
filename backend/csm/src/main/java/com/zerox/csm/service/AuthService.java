@@ -66,7 +66,7 @@ public class AuthService {
 
 //        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone());
+                user.getFullName(), user.getPhone(),user.getUserId());
     }
 
 
@@ -126,10 +126,13 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        return generateAuthorResponse(user);
+        return generateAuthorResponseWithoutToken(user);
     }
 
-
+    private AuthResponse generateAuthorResponseWithoutToken(User user) {
+        return new AuthResponse(null, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone(),user.getUserId());
+    }
 
 
     private AuthResponse generateAuthorResponse(User user) {
@@ -142,7 +145,7 @@ public class AuthService {
         );
 
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone());
+                user.getFullName(), user.getPhone(),user.getUserId());
     }
 
 
