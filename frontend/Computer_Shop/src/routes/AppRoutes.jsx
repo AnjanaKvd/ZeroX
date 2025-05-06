@@ -7,6 +7,7 @@ import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
 import CouponManagement from '../pages/CouponManagement';
+import Repair from '../pages/Repair';
 
 // Lazy-loaded pages
 const Home = lazy(() => import('../pages/Home'));
@@ -67,6 +68,7 @@ const AppRoutes = () => {
             <Route path="products" element={<ProductsListing />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
             <Route path="cart" element={<Cart />} />
+            <Route path="repair" element={<Repair />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 
