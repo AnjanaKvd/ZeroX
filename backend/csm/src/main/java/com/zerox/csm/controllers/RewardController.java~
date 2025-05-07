@@ -1,0 +1,27 @@
+package com.zerox.csm.controllers;
+
+import com.zerox.csm.dto.RewardDto.*;
+import com.zerox.csm.service.RewardService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/rewards")
+@RequiredArgsConstructor
+public class RewardController {
+
+    private final RewardService rewardService;
+
+    @PostMapping("/earn")
+    public ResponseEntity<RewardResponse> earnPoints(@Valid @RequestBody RewardCreateRequest request) {
+        return ResponseEntity.ok(rewardService.createOrUpdateReward(request));
+    }
+
+    @PostMapping("/redeem")
+    public ResponseEntity<RewardResponse> redeemPoints(@Valid @RequestBody RewardRedeemRequest request) {
+        return ResponseEntity.ok(rewardService.redeemPoints(request));
+    }
+}
