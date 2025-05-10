@@ -105,7 +105,7 @@ public class RewardService {
         }
 
         reward.setRedeemedPoints(reward.getRedeemedPoints() + request.pointsToRedeem());
-        reward.setAvailablePoints(available - request.pointsToRedeem());
+        
 
         rewardRepository.save(reward);
 

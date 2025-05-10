@@ -66,9 +66,7 @@ public class Reward {
         Gold
     }
 
-    //Added a column for available points
-    @Column(name = "available_points")
-    private int availablePoints;
+    
 
     // method to get available points
     @JsonProperty("available_points")
