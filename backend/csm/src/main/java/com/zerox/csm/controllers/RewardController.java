@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/rewards")
 @RequiredArgsConstructor
@@ -27,5 +29,11 @@ public class RewardController {
     @PostMapping("/redeem")
     public ResponseEntity<RewardResponse> redeemPoints(@Valid @RequestBody RewardRedeemRequest request) {
         return ResponseEntity.ok(rewardService.redeemPoints(request));
+    }
+
+    // GET localhost:8080/api/rewards/summary/{userId}
+    @GetMapping("/summary/{userId}")
+    public ResponseEntity<RewardSummaryResponse> getRewardSummary(@PathVariable UUID userId) {
+        return ResponseEntity.ok(rewardService.getRewardSummaryByUserId(userId));
     }
 }

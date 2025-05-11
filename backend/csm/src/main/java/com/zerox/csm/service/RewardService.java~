@@ -10,7 +10,10 @@ import com.zerox.csm.repository.RewardRepository;
 import com.zerox.csm.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -76,8 +79,13 @@ public class RewardService {
             bonusPercent = BigDecimal.valueOf(5);
         }
 
-        reward.setBonusPoints(bonusPoints);
-        reward.setBonusPercent(bonusPercent);
+//        reward.setBonusPoints(bonusPoints);
+//        reward.setBonusPercent(bonusPercent);
+        if (status != reward.getLoyaltyStatus()) {
+            reward.setBonusPoints(bonusPoints);
+            reward.setBonusPercent(bonusPercent);
+            reward.setLoyaltyStatus(status);
+        }
         reward.setLoyaltyStatus(status);
 
         int bonusFromPercent = reward.getMainPoints() * bonusPercent.intValue() / 100;
@@ -105,7 +113,7 @@ public class RewardService {
         }
 
         reward.setRedeemedPoints(reward.getRedeemedPoints() + request.pointsToRedeem());
-        
+        reward.setAvailablePoints(available - request.pointsToRedeem());
 
         rewardRepository.save(reward);
 
@@ -130,4 +138,28 @@ public class RewardService {
                 reward.getAvailablePoints()
         );
     }
+
+    public RewardSummaryResponse getRewardSummaryByUserId(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        int currentYear = LocalDate.now().getYear();
+
+        Reward reward = rewardRepository.findByUserAndYear(user, currentYear)
+                .orElseThrow(() -> new IllegalArgumentException("No reward data found for this year."));
+
+        return new RewardSummaryResponse(
+                user.getUserId(),
+                reward.getTotalPoints(),
+                reward.getAvailablePoints(),
+                reward.getLoyaltyStatus().name()
+        );
+    }
+
+    // GET localhost:8080/api/rewards/summary/{userId}
+    @GetMapping("/summary/{userId}")
+    public ResponseEntity<RewardSummaryResponse> getRewardSummary(@PathVariable UUID userId) {
+        return ResponseEntity.ok(rewardService.getRewardSummaryByUserId(userId));
+    }
+
 }

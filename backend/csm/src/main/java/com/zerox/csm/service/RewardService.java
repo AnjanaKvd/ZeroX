@@ -76,8 +76,13 @@ public class RewardService {
             bonusPercent = BigDecimal.valueOf(5);
         }
 
-        reward.setBonusPoints(bonusPoints);
-        reward.setBonusPercent(bonusPercent);
+//        reward.setBonusPoints(bonusPoints);
+//        reward.setBonusPercent(bonusPercent);
+        if (status != reward.getLoyaltyStatus()) {
+            reward.setBonusPoints(bonusPoints);
+            reward.setBonusPercent(bonusPercent);
+            reward.setLoyaltyStatus(status);
+        }
         reward.setLoyaltyStatus(status);
 
         int bonusFromPercent = reward.getMainPoints() * bonusPercent.intValue() / 100;
@@ -130,4 +135,24 @@ public class RewardService {
                 reward.getAvailablePoints()
         );
     }
+
+    public RewardSummaryResponse getRewardSummaryByUserId(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        int currentYear = LocalDate.now().getYear();
+
+        Reward reward = rewardRepository.findByUserAndYear(user, currentYear)
+                .orElseThrow(() -> new IllegalArgumentException("No reward data found for this year."));
+
+        return new RewardSummaryResponse(
+                user.getUserId(),
+                reward.getTotalPoints(),
+                reward.getAvailablePoints(),
+                reward.getLoyaltyStatus().name()
+        );
+    }
+
+
+
 }

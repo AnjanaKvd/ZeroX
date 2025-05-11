@@ -33,4 +33,13 @@ public class RewardDto {
             BigDecimal redeemedValue,
             int availablePoints
     ) {}
+
+    public record RewardSummaryResponse(
+            UUID userId,
+            int totalPoints,
+            int availablePoints,
+            String loyaltyStatus
+    ) {}
+
+
 }
