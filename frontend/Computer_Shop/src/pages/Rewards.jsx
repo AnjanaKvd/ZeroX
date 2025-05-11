@@ -74,11 +74,11 @@ const Rewards = () => {
                 className="absolute -top-2 w-5 h-5 bg-blue-500 rounded-full border-2 border-white shadow"
                 style={{
                   left: `${
-                    rewardSummary.totalEarnedPoints >= 1000
-                      ? 100
-                      : rewardSummary.totalEarnedPoints >= 500
+                    rewardSummary.totalPoints >= 1500 
+                      ? 84
+                      : rewardSummary.totalPoints >= 500
                       ? 50
-                      : 0
+                      : 18
                   }%`,
                   transform: "translateX(-50%)",
                   transition: "left 0.3s ease",
@@ -94,6 +94,7 @@ const Rewards = () => {
               </span>
             </p>
           </div>
+
 
           {/* <div className="mt-8">
             <h2 className="text-lg font-semibold mb-4">Delivered Items</h2>
