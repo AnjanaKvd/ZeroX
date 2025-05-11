@@ -26,7 +26,6 @@ public class RewardDto {
             BigDecimal totalSpent,
             int mainPoints,
             int bonusPoints,
-            BigDecimal bonusPercent,
             int totalPoints,
             String loyaltyStatus,
             LocalDateTime createdAt,

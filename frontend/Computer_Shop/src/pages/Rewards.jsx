@@ -74,7 +74,7 @@ const Rewards = () => {
                 className="absolute -top-2 w-5 h-5 bg-blue-500 rounded-full border-2 border-white shadow"
                 style={{
                   left: `${
-                    rewardSummary.totalPoints >= 1500 
+                    rewardSummary.totalPoints >= 1300 
                       ? 84
                       : rewardSummary.totalPoints >= 500
                       ? 50

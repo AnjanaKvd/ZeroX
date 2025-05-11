@@ -50,7 +50,6 @@ public class RewardService {
                         .totalSpent(BigDecimal.ZERO)
                         .mainPoints(0)
                         .bonusPoints(0)
-                        .bonusPercent(BigDecimal.ZERO)
                         .totalPoints(0)
                         .redeemedPoints(0)
                         .loyaltyStatus(Reward.LoyaltyStatus.Bronze)
@@ -62,31 +61,24 @@ public class RewardService {
 
         // Determine loyalty status and bonus
         BigDecimal totalYearSpent = reward.getTotalSpent();
-        BigDecimal bonusPercent = BigDecimal.ZERO;
         int bonusPoints = 0;
         Reward.LoyaltyStatus status = Reward.LoyaltyStatus.Bronze;
 
         if (totalYearSpent.compareTo(BigDecimal.valueOf(500_000)) >= 0) {
             status = Reward.LoyaltyStatus.Gold;
             bonusPoints = 750;
-            bonusPercent = BigDecimal.valueOf(12);
         } else if (totalYearSpent.compareTo(BigDecimal.valueOf(250_000)) >= 0) {
             status = Reward.LoyaltyStatus.Silver;
             bonusPoints = 300;
-            bonusPercent = BigDecimal.valueOf(5);
         }
 
-//        reward.setBonusPoints(bonusPoints);
-//        reward.setBonusPercent(bonusPercent);
         if (status != reward.getLoyaltyStatus()) {
             reward.setBonusPoints(bonusPoints);
-            reward.setBonusPercent(bonusPercent);
             reward.setLoyaltyStatus(status);
         }
         reward.setLoyaltyStatus(status);
 
-        int bonusFromPercent = reward.getMainPoints() * bonusPercent.intValue() / 100;
-        reward.setTotalPoints(reward.getMainPoints() + bonusPoints + bonusFromPercent);
+        reward.setTotalPoints(reward.getMainPoints() + reward.getBonusPoints());
         reward.setAvailablePoints(reward.getTotalPoints());
 
         rewardRepository.save(reward);
@@ -127,7 +119,6 @@ public class RewardService {
                 reward.getTotalSpent(),
                 reward.getMainPoints(),
                 reward.getBonusPoints(),
-                reward.getBonusPercent(),
                 reward.getTotalPoints(),
                 reward.getLoyaltyStatus().name(),
                 reward.getCreatedAt(),

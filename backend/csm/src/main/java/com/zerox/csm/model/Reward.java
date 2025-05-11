@@ -43,9 +43,6 @@ public class Reward {
     @Column(name = "bonus_points", nullable = false)
     private int bonusPoints;
 
-    @Column(name = "bonus_percent", nullable = false, precision = 5, scale = 2)
-    private BigDecimal bonusPercent;
-
     @Column(name = "total_points", nullable = false)
     private int totalPoints;
 
