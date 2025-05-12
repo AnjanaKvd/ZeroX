@@ -18,6 +18,7 @@ public class RepairRequestDto {
         @NotBlank String deviceModel,
         @NotBlank String issueDetails
     ) {}
+
     
     public record RepairRequestUpdateRequest(
         @NotNull Status status,
@@ -41,4 +42,4 @@ public class RepairRequestDto {
         LocalDateTime createdAt,
         LocalDateTime updatedAt
     ) {}
-} 
+}

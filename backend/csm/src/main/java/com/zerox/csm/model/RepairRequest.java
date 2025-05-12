@@ -41,17 +41,17 @@ public class RepairRequest {
     private UUID repairId;
     
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "device_type", nullable = false)
     private DeviceType deviceType;
     
-    @Column(name = "device_brand")
+    @Column(name = "device_brand", nullable = false)
     private String deviceBrand;
     
-    @Column(name = "device_model")
+    @Column(name = "device_model", nullable = false)
     private String deviceModel;
     
     @Column(name = "issue_details", nullable = false, columnDefinition = "TEXT")
@@ -70,7 +70,7 @@ public class RepairRequest {
     @Column(name = "service_fee")
     private BigDecimal serviceFee;
     
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")

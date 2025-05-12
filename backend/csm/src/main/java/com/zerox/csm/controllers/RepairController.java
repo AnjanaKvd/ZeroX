@@ -25,6 +25,8 @@ import java.util.UUID;
 public class RepairController {
 
     private final RepairService repairService;
+
+    
     
     @PostMapping
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
@@ -36,18 +38,6 @@ public class RepairController {
         // You would need a method to extract userId from UserDetails
         return ResponseEntity.ok(repairService.createRepairRequest(request));
     }
-//@PostMapping
-//@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-//public ResponseEntity<RepairRequestResponse> createRepairRequest(
-//        @Valid @RequestBody RepairRequestCreateRequest request,
-//        @AuthenticationPrincipal UserDetails userDetails
-//) {
-//    // Extract user ID from authentication
-//    UUID userId = extractUserIdFromUserDetails(userDetails);
-//    request.setUserId(userId); // Set the user ID
-//
-//    return ResponseEntity.ok(repairService.createRepairRequest(request));
-//}
 
 
     @GetMapping("/{repairId}")
@@ -90,5 +80,5 @@ public class RepairController {
     ) {
         return ResponseEntity.ok(repairService.updateRepairRequest(repairId, request));
     }
-    
+
 } 

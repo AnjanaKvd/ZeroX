@@ -1,39 +1,3 @@
-// import api from './api';
-
-
-// export const getRepairRequests = async (userId = null) => {  
-//     const endpoint = userId ? `/repairs/user/${userId}` : '/repairs'; 
-//     const response = await api.get(endpoint);  
-//      return response.data;
-//     };
-     
-// export const updateRepairRequest = async (repairId, updateData) => { 
-//         const response = await api.put(`/repairs/${repairId}`, updateData); 
-//          return response.data;
-//     };
-
-// // export const createRepairRequest = async (repairData) => {
-// //   try {
-// //     const response = await api.post("/api/repairs", repairData); // Ensure this endpoint is correct
-// //     return response.data;
-// //   } catch (error) {
-// //     console.error("Error creating repair request:", error);
-// //     throw error; // Ensure the error is properly logged
-// //   }
-// // };
-// export const createRepairRequest = async (repairData) => {
-//     try {
-//       const response = await api.post("/repairs", repairData, {
-//         headers: {
-//           'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token
-//         }
-//       });
-//       return response.data;
-//     } catch (error) {
-//       console.error("Error creating repair request:", error);
-//       throw error;
-//     }
-//   };
 import api from "./api"; // Assuming you have an API utility for making HTTP requests
 
 /**
@@ -43,7 +7,11 @@ import api from "./api"; // Assuming you have an API utility for making HTTP req
  */
 export const createRepairRequest = async (repairData) => {
   try {
-    const response = await api.post("/repairs", repairData); // Backend endpoint for creating repair requests
+    const response = await api.post("/repairs", repairData, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // Ensure the token is valid
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error creating repair request:", error);

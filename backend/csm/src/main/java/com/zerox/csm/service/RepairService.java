@@ -32,7 +32,7 @@ public class RepairService {
     public RepairRequestResponse createRepairRequest(RepairRequestCreateRequest request) {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
+
         RepairRequest repairRequest = RepairRequest.builder()
                 .user(user)
                 .deviceType(request.deviceType())
@@ -42,10 +42,12 @@ public class RepairService {
                 .status(Status.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
-        
+
         return mapToRepairResponse(repairRequestRepository.save(repairRequest));
     }
+
     
+
     public RepairRequestResponse getRepairRequest(UUID repairId) {
         RepairRequest repairRequest = repairRequestRepository.findById(repairId)
                 .orElseThrow(() -> new ResourceNotFoundException("Repair request not found"));
