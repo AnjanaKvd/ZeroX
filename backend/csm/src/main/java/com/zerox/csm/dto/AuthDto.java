@@ -28,6 +28,7 @@ public class AuthDto {
             String email,
             String role,
             String fullName,
-            String phone
+            String phone,
+            UUID id
     ) {}
 }
