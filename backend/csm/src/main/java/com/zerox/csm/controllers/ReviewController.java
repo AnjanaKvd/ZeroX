@@ -1,9 +1,7 @@
 package com.zerox.csm.controllers;
 
-import com.zerox.csm.dto.ReviewDto.ProductRatingResponse;
-import com.zerox.csm.dto.ReviewDto.ReviewCreateRequest;
-import com.zerox.csm.dto.ReviewDto.ReviewResponse;
-import com.zerox.csm.dto.ReviewDto.ReviewUpdateRequest;
+import com.zerox.csm.dto.ReviewDto;
+import com.zerox.csm.dto.ReviewDto.*;
 import com.zerox.csm.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +22,18 @@ import java.util.UUID;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    
+
+
+    //localhost:8080/api/reviews
     @PostMapping
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<ReviewResponse> createReview(
             @Valid @RequestBody ReviewCreateRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // Authorization logic: ensure users can only create reviews as themselves
-        return ResponseEntity.ok(reviewService.createReview(request));
+        return ResponseEntity.ok(reviewService.createReview(request, userDetails.getUsername()));
     }
-    
+
     @GetMapping("/product/{productId}")
     public ResponseEntity<Page<ReviewResponse>> getProductReviews(
             @PathVariable UUID productId,
@@ -45,50 +44,47 @@ public class ReviewController {
                 reviewService.getProductReviews(productId, PageRequest.of(page, size))
         );
     }
-    
+
+
+//    localhost:8080/api/reviews/product/{productId}/rating
     @GetMapping("/product/{productId}/rating")
     public ResponseEntity<ProductRatingResponse> getProductRating(
             @PathVariable UUID productId
     ) {
         return ResponseEntity.ok(reviewService.getProductRating(productId));
     }
-    
+
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<List<ReviewResponse>> getUserReviews(
-            @PathVariable UUID userId,
-            @AuthenticationPrincipal UserDetails userDetails
+            @PathVariable UUID userId
     ) {
-        // Authorization logic: ensure users can only view their own reviews
         return ResponseEntity.ok(reviewService.getUserReviews(userId));
     }
-    
+
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> getReview(
             @PathVariable UUID reviewId
     ) {
         return ResponseEntity.ok(reviewService.getReview(reviewId));
     }
-    
+
     @PutMapping("/{reviewId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<ReviewResponse> updateReview(
             @PathVariable UUID reviewId,
-            @Valid @RequestBody ReviewUpdateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
+            @Valid @RequestBody ReviewUpdateRequest request
     ) {
-        // Authorization logic: ensure users can only update their own reviews
         return ResponseEntity.ok(reviewService.updateReview(reviewId, request));
     }
-    
+
     @DeleteMapping("/{reviewId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Void> deleteReview(
-            @PathVariable UUID reviewId,
-            @AuthenticationPrincipal UserDetails userDetails
+            @PathVariable UUID reviewId
     ) {
-        // Authorization logic: ensure users can only delete their own reviews
         reviewService.deleteReview(reviewId);
         return ResponseEntity.noContent().build();
     }
-} 
+}
+

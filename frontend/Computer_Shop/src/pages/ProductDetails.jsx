@@ -8,8 +8,9 @@ import LoadingOverlay from '../components/common/LoadingOverlay';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
 import { getProductImageUrl } from '../utils/imageUtils';
-import DisplayRatingAndReviews from '../pages/DisplayRatingAndReviews';
-import ReviewForm from '../pages/ReviewForm';
+import DisplayRatingAndReviews from './DisplayRatingAndReviews';
+import ReviewForm from './ReviewForm';
+import ReviewItem from './ReviewItem';
 import PriceDisplay from '../components/common/PriceDisplay';
 
 const ProductDetails = () => {
@@ -24,6 +25,22 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [timeLeft, setTimeLeft] = useState('');
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
+  const [refreshRatings, setRefreshRatings] = useState(false);
+  const [isReviewItemOpen, setIsReviewItemOpen] = useState(false);
+  const [showReviews, setShowReviews] = useState(false);
+
+  const openReviewForm = () => setIsReviewFormOpen(true);
+  const closeReviewForm = () => setIsReviewFormOpen(false);
+  const closeReviewItem = () => setIsReviewItemOpen(false);
+  
+  const toggleReviews = () => {
+    setShowReviews((prevState) => !prevState);
+  };
+
+  const handleReviewSubmit = () => {
+    closeReviewForm();
+    setRefreshRatings(prev => !prev);
+  };
 
   useEffect(() => {
     const fetchProductAndDiscount = async () => {
@@ -115,9 +132,6 @@ const ProductDetails = () => {
     }
   };
 
-  const openReviewForm = () => setIsReviewFormOpen(true);
-  const closeReviewForm = () => setIsReviewFormOpen(false);
-
   if (loading) return <LoadingOverlay />;
   if (error) return <ErrorDisplay message={error} />;
   if (!product) return <ErrorDisplay message="Product not found" />;
@@ -142,18 +156,49 @@ const ProductDetails = () => {
               </span>
             )}
           </div>
-
-          {/* Reviews Section */}
-          <div className="p-4 mt-6 bg-white border rounded-lg shadow-sm dark:bg-surface-dark">
-            <h3 className={`text-xl font-semibold mb-4 text-center cursor-pointer ${
-              theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
-            }`}
-              onClick={openReviewForm}>
-              Rate this Item
+          {/* Display Rating & Reviews Section */}
+          <div className="mt-6 p-4 border rounded-lg shadow-sm bg-white dark:bg-surface-dark">
+          
+            <h3
+              className="text-xl font-semibold mb-4 text-center text-blue-400 underline cursor-pointer"
+              onClick={openReviewForm}
+            >
+              Rate this product 
             </h3>
+            {/* The reviews section */}
             <div className="flex justify-center">
               <div className="w-full md:w-4/5 lg:w-3/4 xl:w-2/3">
-                <DisplayRatingAndReviews />
+                <DisplayRatingAndReviews
+                  productId={id}
+                  refresh={refreshRatings}
+                />
+                {/* Show Reviews on button click */}
+                {showReviews ? (
+                  <>
+                    {/* Show all reviews */}
+                    {product.reviews && product.reviews.length > 0 ? (
+                      <ReviewItem productId={id} />
+                    ) : (
+                      <br />
+                    )}
+                  </>
+                ) : null}
+
+                {/* Hide reviews by default and show a "See All Reviews" link */}
+                {!showReviews && (
+                  <div
+                    className={`text-center cursor-pointer text-blue-500 underline mt-4`}
+                    onClick={toggleReviews}
+                  >
+                    See All Reviews
+                  </div>
+                )}
+
+                {showReviews && (
+                  <div className="mt-6">
+                    <ReviewItem productId={id} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -328,8 +373,8 @@ const ProductDetails = () => {
               ✕
             </button>
             <ReviewForm
-              productId={product.id}
-              onReviewSubmit={closeReviewForm}
+              productId={id}
+              onReviewSubmit={handleReviewSubmit}
             />
           </div>
         </div>
@@ -339,3 +384,4 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+

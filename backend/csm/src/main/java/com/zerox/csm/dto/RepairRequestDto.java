@@ -14,8 +14,8 @@ public class RepairRequestDto {
     public record RepairRequestCreateRequest(
         @NotNull UUID userId,
         @NotNull DeviceType deviceType,
-        String deviceBrand,
-        String deviceModel,
+        @NotBlank String deviceBrand,
+        @NotBlank String deviceModel,
         @NotBlank String issueDetails
     ) {}
     
@@ -38,6 +38,7 @@ public class RepairRequestDto {
         String technicianNotes,
         BigDecimal estimatedCost,
         BigDecimal serviceFee,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
     ) {}
 } 
