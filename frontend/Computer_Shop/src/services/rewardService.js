@@ -1,11 +1,9 @@
 import api from "./api";
 
 // Get reward summary for the user
-export const getRewardSummary = async(userId) => {
+export const getRewardSummary = async () => {
     try {
-        console.log(`Fetching reward summary for user ID: ${userId}`);
-        const response = await api.get(`/rewards/summary/${userId}`);
-        console.log("Reward summary response:", response.data);
+        const response = await api.get('/rewards/summary');
         return response.data;
     } catch (error) {
         console.error("Error fetching reward summary:", error);
@@ -38,6 +36,39 @@ export const earnReward = async(userId, orderId) => {
         return response.data;
     } catch (error) {
         console.error("Error earning reward:", error);
+        throw error;
+    }
+};
+
+// Claim available rewards
+export const claimRewards = async () => {
+    try {
+        const response = await api.post('/rewards/claim');
+        return response.data;
+    } catch (error) {
+        console.error("Error claiming rewards:", error);
+        throw error;
+    }
+};
+
+// Redeem points
+export const redeemPoints = async (pointsToRedeem) => {
+    try {
+        const response = await api.post('/rewards/redeem', { pointsToRedeem });
+        return response.data;
+    } catch (error) {
+        console.error("Error redeeming points:", error);
+        throw error;
+    }
+};
+
+// Process order rewards (typically called by system after delivery)
+export const processOrderRewards = async (orderId) => {
+    try {
+        const response = await api.post('/rewards/process', { orderId });
+        return response.data;
+    } catch (error) {
+        console.error("Error processing order rewards:", error);
         throw error;
     }
 };
