@@ -1,11 +1,11 @@
 package com.zerox.csm.service;
 
 import com.zerox.csm.dto.ReviewDto;
-import com.zerox.csm.dto.ReviewDto.ReviewCreateRequest;
-import com.zerox.csm.dto.ReviewDto.ReviewResponse;
-import com.zerox.csm.dto.ReviewDto.ReviewUpdateRequest;
+import com.zerox.csm.dto.ReviewDto.*;
 import com.zerox.csm.exception.ResourceNotFoundException;
-import com.zerox.csm.model.*;
+import com.zerox.csm.model.Product;
+import com.zerox.csm.model.Review;
+import com.zerox.csm.model.User;
 import com.zerox.csm.repository.OrderRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.ReviewRepository;
@@ -31,12 +31,17 @@ public class ReviewService {
     private final OrderRepository orderRepository;
 
     @Transactional
-    public ReviewResponse createReview(ReviewCreateRequest request) {
+    public ReviewResponse createReview(ReviewCreateRequest request, String userEmail) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        boolean exists = reviewRepository.existsByUserAndProduct(user, product);
+        if (exists) {
+            throw new IllegalStateException("You have already reviewed this product.");
+        }
 
         Review review = Review.builder()
                 .product(product)
@@ -48,21 +53,21 @@ public class ReviewService {
 
         return mapToReviewResponse(reviewRepository.save(review));
     }
-    
+
     public Page<ReviewResponse> getProductReviews(UUID productId, Pageable pageable) {
         if (!productRepository.existsById(productId)) {
             throw new ResourceNotFoundException("Product not found");
         }
-        
+
         return reviewRepository.findByProductProductId(productId, pageable)
                 .map(this::mapToReviewResponse);
     }
-    
+
     public List<ReviewResponse> getUserReviews(UUID userId) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("User not found");
         }
-        
+
         return reviewRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToReviewResponse)
@@ -75,41 +80,42 @@ public class ReviewService {
 
         return mapToReviewResponse(review);
     }
-    
+
     @Transactional
     public ReviewResponse updateReview(UUID reviewId, ReviewUpdateRequest request) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
-        
+
         review.setRating(request.rating());
         review.setComment(request.comment());
-        
+
         return mapToReviewResponse(reviewRepository.save(review));
     }
-    
+
     @Transactional
     public void deleteReview(UUID reviewId) {
         if (!reviewRepository.existsById(reviewId)) {
             throw new ResourceNotFoundException("Review not found");
         }
-        
+
         reviewRepository.deleteById(reviewId);
     }
-    
-    public ReviewDto.ProductRatingResponse getProductRating(UUID productId) {
+
+    public ProductRatingResponse getProductRating(UUID productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        
-        Double avgRating = reviewRepository.findAverageRatingByProductProductId(productId);
-        Page<Review> reviews = reviewRepository.findByProductProductId(productId, Pageable.unpaged());
-        
-        return new ReviewDto.ProductRatingResponse(
+
+        Double average = reviewRepository.getAverageRating(productId);
+        int count = reviewRepository.getReviewCount(productId);
+
+        return new ProductRatingResponse(
                 product.getProductId(),
                 product.getName(),
-                avgRating != null ? avgRating : 0.0,
-                (int) reviews.getTotalElements()
+                average != null ? average : 0.0,
+                count
         );
     }
+
 
     private ReviewResponse mapToReviewResponse(Review review) {
         return new ReviewResponse(
@@ -123,4 +129,7 @@ public class ReviewService {
                 review.getCreatedAt()
         );
     }
-} 
+}
+
+
+
