@@ -37,8 +37,8 @@ public class RewardController {
     }
 
     // GET localhost:8080/api/rewards/summary/{userId}
-    @GetMapping("/summary")
-    public ResponseEntity<RewardSummaryResponse> getRewardSummary(@AuthenticationPrincipal UUID userId) {
+    @GetMapping("/summary/{userId}")
+    public ResponseEntity<RewardSummaryResponse> getRewardSummary(@PathVariable UUID userId) {
         return ResponseEntity.ok(rewardService.getRewardSummaryByUserId(userId));
     }
 }
