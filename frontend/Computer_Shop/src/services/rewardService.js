@@ -27,3 +27,17 @@ export const getDeliveredItems = async(userId) => {
         throw error;
     }
 };
+
+// Earn reward for a specific order
+export const earnReward = async(userId, orderId) => {
+    try {
+        const response = await api.post(`/rewards/earn`, {
+            userId,
+            orderId,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error earning reward:", error);
+        throw error;
+    }
+};

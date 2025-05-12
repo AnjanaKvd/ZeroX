@@ -1,6 +1,10 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { getRewardSummary, getDeliveredItems } from "../services/rewardService";
+import {
+  getRewardSummary,
+  getDeliveredItems,
+  earnReward,
+} from "../services/rewardService";
 
 const Rewards = () => {
   const { user } = useContext(AuthContext);
@@ -39,12 +43,27 @@ const Rewards = () => {
     }
   }, [user?.userId]);
 
+  const handleEarnReward = async (orderId) => {
+    try {
+      const response = await earnReward(user.userId, orderId);
+      alert(`🎉 Reward claimed! Points earned: ${response.pointsEarned}`);
+      const [summary, delivered] = await Promise.all([
+        getRewardSummary(user.userId),
+        getDeliveredItems(user.userId),
+      ]);
+      setRewardSummary(summary);
+      setDeliveredItems(delivered);
+    } catch (error) {
+      console.error("Failed to earn reward:", error);
+      alert("❌ Failed to earn reward.");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-gray-800">My Rewards</h1>
-
           {/* Summary Points Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow flex justify-between items-center">
             <p className="text-lg text-gray-700">
@@ -55,12 +74,10 @@ const Rewards = () => {
               <strong>{rewardSummary.availablePoints}</strong>
             </p>
           </div>
-
           {/* Loyalty Status Section */}
           <h2 className="text-xl font-semibold mb-2 text-gray-700">
             Loyalty Status
           </h2>
-
           <div className="my-6">
             <div className="bg-slate-200 grid grid-cols-3 text-center py-4 rounded-t-lg">
               <div className="text-sm font-medium text-red-400">🥉 Bronze</div>
@@ -74,7 +91,7 @@ const Rewards = () => {
                 className="absolute -top-2 w-5 h-5 bg-blue-500 rounded-full border-2 border-white shadow"
                 style={{
                   left: `${
-                    rewardSummary.totalPoints >= 1300 
+                    rewardSummary.totalPoints >= 1300
                       ? 84
                       : rewardSummary.totalPoints >= 500
                       ? 50
@@ -95,7 +112,7 @@ const Rewards = () => {
             </p>
           </div>
 
-
+          {/*Delivered Items*/}
           {/* <div className="mt-8">
             <h2 className="text-lg font-semibold mb-4">Delivered Items</h2>
             {deliveredItems.length === 0 ? (
@@ -114,10 +131,18 @@ const Rewards = () => {
                       <p className="text-sm text-gray-500">
                         Qty: {item.quantity}
                       </p>
+                      <p className="text-sm text-gray-500">
+                        Delivered on:{" "}
+                        {new Date(item.deliveredAt).toLocaleDateString()}
+                      </p>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      Delivered on:{" "}
-                      {new Date(item.deliveredAt).toLocaleDateString()}
+                    <div className="text-sm text-gray-600 flex gap-2 items-center">
+                      <button
+                        onClick={() => handleEarnReward(item.orderId)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Claim Reward
+                      </button>
                     </div>
                   </li>
                 ))}
