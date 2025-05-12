@@ -1,12 +1,12 @@
 import api from "./api";
 
-// Get reward summary for the user
-export const getRewardSummary = async () => {
+// Get rewards summary for a user
+export const getUserRewards = async (userId) => {
     try {
-        const response = await api.get('/rewards/summary');
+        const response = await api.get(`/rewards/user/${userId}`);
         return response.data;
     } catch (error) {
-        console.error("Error fetching reward summary:", error);
+        console.error("Error fetching user rewards:", error);
         throw error;
     }
 };
@@ -40,10 +40,13 @@ export const earnReward = async(userId, orderId) => {
     }
 };
 
-// Claim available rewards
-export const claimRewards = async () => {
+// Claim selected reward points
+export const claimRewards = async (userId, rewardIds) => {
     try {
-        const response = await api.post('/rewards/claim');
+        const response = await api.post('/rewards/claim', {
+            userId,
+            rewardIds
+        });
         return response.data;
     } catch (error) {
         console.error("Error claiming rewards:", error);
@@ -62,13 +65,24 @@ export const redeemPoints = async (pointsToRedeem) => {
     }
 };
 
-// Process order rewards (typically called by system after delivery)
-export const processOrderRewards = async (orderId) => {
+// Process all eligible orders for a user
+export const processUserOrders = async (userId) => {
     try {
-        const response = await api.post('/rewards/process', { orderId });
+        const response = await api.post(`/rewards/process/${userId}`);
         return response.data;
     } catch (error) {
-        console.error("Error processing order rewards:", error);
+        console.error("Error processing user orders:", error);
+        throw error;
+    }
+};
+
+// Admin endpoint to manually generate points for a specific order
+export const generatePointsForOrder = async (orderId) => {
+    try {
+        const response = await api.post(`/rewards/orders/${orderId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error generating points for order:", error);
         throw error;
     }
 };
