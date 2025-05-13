@@ -1,15 +1,11 @@
 package com.zerox.csm.controllers;
 
-import com.zerox.csm.dto.RepairRequestDto.RepairRequestCreateRequest;
-import com.zerox.csm.dto.RepairRequestDto.RepairRequestResponse;
-import com.zerox.csm.dto.RepairRequestDto.RepairRequestUpdateRequest;
-import com.zerox.csm.model.RepairRequest.Status;
+import com.zerox.csm.dto.RepairDto;
+import com.zerox.csm.model.RepairStatus;
+import com.zerox.csm.model.UserRole;
 import com.zerox.csm.service.RepairService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,64 +17,111 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/repairs")
-@RequiredArgsConstructor
 public class RepairController {
 
     private final RepairService repairService;
 
-    
-    
+    @Autowired
+    public RepairController(RepairService repairService) {
+        this.repairService = repairService;
+    }
+
     @PostMapping
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<RepairRequestResponse> createRepairRequest(
-            @Valid @RequestBody RepairRequestCreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        // If request is made by customer, ensure they are creating a repair for themselves
-        // You would need a method to extract userId from UserDetails
-        return ResponseEntity.ok(repairService.createRepairRequest(request));
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<RepairDto> createRepairRequest(
+            @RequestBody RepairDto repairDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Extract user email from userDetails
+        String userEmail = userDetails.getUsername();
+        RepairDto createdRepair = repairService.createRepairRequest(repairDto, userEmail);
+        return new ResponseEntity<>(createdRepair, HttpStatus.CREATED);
     }
 
+    @GetMapping("/user")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<RepairDto>> getUserRepairs(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Extract user email from userDetails
+        String userEmail = userDetails.getUsername();
+        List<RepairDto> repairs = repairService.getUserRepairsByEmail(userEmail);
+        return ResponseEntity.ok(repairs);
+    }
 
-    @GetMapping("/{repairId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'TECHNICIAN')")
-    public ResponseEntity<RepairRequestResponse> getRepairRequest(
-            @PathVariable UUID repairId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        // Additional authorization logic can be added here
-        return ResponseEntity.ok(repairService.getRepairRequest(repairId));
-    }
-    
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<List<RepairRequestResponse>> getUserRepairRequests(
-            @PathVariable UUID userId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        // Ensure users can only see their own repairs unless they're admin
-        return ResponseEntity.ok(repairService.getUserRepairRequests(userId));
-    }
-    
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
-    public ResponseEntity<Page<RepairRequestResponse>> getRepairRequestsByStatus(
-            @RequestParam(required = false) Status status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(
-                repairService.getRepairRequestsByStatus(status, PageRequest.of(page, size))
-        );
-    }
-    
-    @PutMapping("/{repairId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
-    public ResponseEntity<RepairRequestResponse> updateRepairRequest(
-            @PathVariable UUID repairId,
-            @Valid @RequestBody RepairRequestUpdateRequest request
-    ) {
-        return ResponseEntity.ok(repairService.updateRepairRequest(repairId, request));
+    public ResponseEntity<List<RepairDto>> getAllRepairs() {
+        List<RepairDto> repairs = repairService.getAllRepairs();
+        return ResponseEntity.ok(repairs);
     }
 
+    @GetMapping("/status/{status}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<List<RepairDto>> getRepairsByStatus(@PathVariable RepairStatus status) {
+        List<RepairDto> repairs = repairService.getRepairsByStatus(status);
+        return ResponseEntity.ok(repairs);
+    }
+
+    @GetMapping("/technician")
+    @PreAuthorize("hasRole('TECHNICIAN')")
+    public ResponseEntity<List<RepairDto>> getTechnicianRepairs(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Extract user email from userDetails
+        String technicianEmail = userDetails.getUsername();
+        List<RepairDto> repairs = repairService.getTechnicianRepairsByEmail(technicianEmail);
+        return ResponseEntity.ok(repairs);
+    }
+
+    @GetMapping("/{repairId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN', 'CUSTOMER')")
+    public ResponseEntity<RepairDto> getRepairById(
+            @PathVariable UUID repairId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        RepairDto repair = repairService.getRepairById(repairId);
+        
+        // Check if user can access this repair
+        boolean isAuthorized = repairService.canUserAccessRepair(repair, userDetails.getUsername());
+        if (!isAuthorized) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        
+        return ResponseEntity.ok(repair);
+    }
+
+    @PatchMapping("/{repairId}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<RepairDto> updateRepairStatus(
+            @PathVariable UUID repairId,
+            @RequestParam RepairStatus status,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Extract user email from userDetails
+        String userEmail = userDetails.getUsername();
+        RepairDto updatedRepair = repairService.updateRepairStatus(repairId, status, userEmail);
+        return ResponseEntity.ok(updatedRepair);
+    }
+
+    @PutMapping("/{repairId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<RepairDto> updateRepairDetails(
+            @PathVariable UUID repairId,
+            @RequestBody RepairDto repairDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Extract user email from userDetails
+        String userEmail = userDetails.getUsername();
+        RepairDto updatedRepair = repairService.updateRepairDetails(repairId, repairDto, userEmail);
+        return ResponseEntity.ok(updatedRepair);
+    }
+
+    @DeleteMapping("/{repairId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteRepair(@PathVariable UUID repairId) {
+        repairService.deleteRepair(repairId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/count/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<List<RepairDto>> getRepairCountByStatus() {
+        List<RepairDto> repairs = repairService.getAllRepairs();
+        return ResponseEntity.ok(repairs);
+    }
 } 
