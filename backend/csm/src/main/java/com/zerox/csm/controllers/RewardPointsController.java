@@ -20,7 +20,7 @@ public class RewardPointsController {
     private final RewardPointsService rewardPointsService;
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<UserRewardsResponse> getUserRewards(
             @PathVariable UUID userId,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -30,7 +30,7 @@ public class RewardPointsController {
     }
 
     @PostMapping("/claim")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ClaimPointsResponse> claimPoints(
             @RequestBody ClaimPointsRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -40,7 +40,7 @@ public class RewardPointsController {
     }
 
     @PostMapping("/process/{userId}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<List<RewardPointsResponse>> processUserOrders(
             @PathVariable UUID userId,
             @AuthenticationPrincipal UserDetails userDetails) {
