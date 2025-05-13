@@ -5,7 +5,7 @@ import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
-import PriceDisplay from '../components/common/PriceDisplay/PriceDisplay';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
