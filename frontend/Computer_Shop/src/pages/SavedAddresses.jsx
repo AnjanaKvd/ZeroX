@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   getUserAddresses, 
   createAddress, 
@@ -12,7 +12,7 @@ import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 
 const SavedAddresses = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,13 +30,20 @@ const SavedAddresses = () => {
   // Load addresses when component mounts
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (!user?.userId) return;
-      
       try {
         setIsLoading(true);
-        const addressData = await getUserAddresses(user.userId);
-        setAddresses(addressData);
         setError(null);
+        
+        // Check if user exists and has id (not userId)
+        if (!user?.id) {
+          console.log('User ID not available yet:', user);
+          return;
+        }
+        
+        console.log('Fetching addresses for user:', user.id);
+        const addressData = await getUserAddresses(user.id);
+        console.log('Addresses fetched:', addressData);
+        setAddresses(addressData);
       } catch (err) {
         console.error('Error fetching addresses:', err);
         setError(err.message || 'Failed to load addresses. Please try again.');
@@ -46,7 +53,7 @@ const SavedAddresses = () => {
     };
 
     fetchAddresses();
-  }, [user?.userId]);
+  }, [user]);
 
   // Handle form submission for adding/editing address
   const onSubmit = async (data) => {
@@ -59,8 +66,8 @@ const SavedAddresses = () => {
         ));
         setActionSuccess('Address updated successfully');
       } else {
-        // Add new address
-        const newAddress = await createAddress(user.userId, data);
+        // Add new address - use user.id instead of user.userId
+        const newAddress = await createAddress(user.id, data);
         setAddresses([...addresses, newAddress]);
         setActionSuccess('Address added successfully');
       }
@@ -81,7 +88,7 @@ const SavedAddresses = () => {
   // Handle setting default address
   const handleSetDefault = async (addressId) => {
     try {
-      await setDefaultAddress(user.userId, addressId);
+      await setDefaultAddress(user.id, addressId); // Use user.id instead of user.userId
       
       // Update local state
       setAddresses(addresses.map(addr => ({

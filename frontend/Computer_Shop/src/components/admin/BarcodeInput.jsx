@@ -1,185 +1,242 @@
-import React, { useState } from 'react';
-import BarcodeScanner from './BarcodeScanner';
-import QuaggaScanner from './QuaggaScanner';
-import { normalizeBarcode } from '../../utils/barcodeUtils';
+import { useState, useEffect, useRef } from 'react';
+import { Barcode, X, AlertCircle, Loader } from 'lucide-react';
+import { BrowserMultiFormatReader } from '@zxing/library';
 
-const BarcodeInput = ({ 
-  value, 
-  onChange, 
-  label = "SKU", 
-  placeholder = "Enter or scan SKU/Barcode",
-  className = "", 
-  required = false,
-  disabled = false 
-}) => {
-  const [isScanning, setIsScanning] = useState(false);
-  const [scannerType, setScannerType] = useState('react-qr-scanner'); // or 'quagga'
-  const [scannedResult, setScannedResult] = useState(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+const BarcodeInput = ({ value, onChange, required = false }) => {
+  const [showScanner, setShowScanner] = useState(false);
+  const [error, setError] = useState(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const videoRef = useRef(null);
+  const codeReaderRef = useRef(null);
 
-  const handleScan = (scannedCode) => {
-    if (scannedCode && scannedCode.trim()) {
-      console.log('BarcodeInput received code:', scannedCode);
-      const formattedCode = normalizeBarcode(scannedCode.trim());
-      
-      // Instead of immediately applying the code, store it and show confirmation
-      setScannedResult(formattedCode);
-      setShowConfirmation(true);
-      setIsScanning(false); // Close the scanner
-    }
-  };
-
-  // Confirm and apply the scanned code
-  const confirmScan = () => {
-    onChange(scannedResult);
-    setShowConfirmation(false);
-    setScannedResult(null);
-  };
-
-  // Cancel the scan result
-  const cancelScan = () => {
-    setShowConfirmation(false);
-    setScannedResult(null);
-  };
-
-  // Start scanning again
-  const rescan = () => {
-    setShowConfirmation(false);
-    setScannedResult(null);
-    startScanning(null);
-  };
-
-  const handleInputChange = (e) => {
-    onChange(e.target.value);
-  };
-
-  const startScanning = (e, type = 'react-qr-scanner') => {
-    // Prevent default behavior for button click
-    if (e) e.preventDefault();
+  // Start the barcode scanner
+  const startScanner = async () => {
+    setError(null);
+    setCameraReady(false);
+    setShowScanner(true);
     
-    if (disabled) return;
-    setScannerType(type);
-    setIsScanning(true);
+    // Initialize the scanner when the modal is opened
+    if (!codeReaderRef.current) {
+      codeReaderRef.current = new BrowserMultiFormatReader();
+    }
+    
+    setTimeout(async () => {
+      try {
+        if (videoRef.current) {
+          console.log('Starting video stream...');
+          
+          // Get device ID for back camera if available
+          let selectedDeviceId = undefined; // Use default device
+          
+          try {
+            const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
+            console.log('Available devices:', videoInputDevices);
+            
+            // Try to find back camera
+            const backCamera = videoInputDevices.find(device => 
+              /back|rear|environment|back camera/i.test(device.label)
+            );
+            
+            if (backCamera) {
+              console.log('Found back camera:', backCamera.label);
+              selectedDeviceId = backCamera.deviceId;
+            } else if (videoInputDevices.length > 0) {
+              // Just use the first device
+              selectedDeviceId = videoInputDevices[0].deviceId;
+            }
+          } catch (deviceErr) {
+            console.warn('Error listing devices, using default camera:', deviceErr);
+            // Continue with default camera
+          }
+          
+          // Start continuous scanning with the chosen camera
+          await codeReaderRef.current.decodeFromVideoDevice(
+            selectedDeviceId,
+            videoRef.current,
+            (result, err) => {
+              // When camera feed is active, set ready state
+              if (!cameraReady) {
+                console.log('Camera is now ready');
+                setCameraReady(true);
+              }
+              
+              if (result) {
+                console.log('Barcode detected:', result.getText());
+                // Play beep sound for feedback
+                try {
+                  const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+                  beep.play().catch(e => console.error('Could not play sound', e));
+                } catch (e) {
+                  // Ignore audio errors
+                }
+                
+                // Update input value
+                onChange(result.getText());
+                
+                // Close scanner
+                stopScanner();
+              }
+              
+              // Only log errors that aren't expected during normal scanning
+              if (err && err.name !== 'NotFoundException') {
+                console.error('Scanner error:', err);
+              }
+            }
+          );
+          
+        }
+      } catch (err) {
+        console.error('Failed to start scanner:', err);
+        setError(`Camera error: ${err.message || 'Could not access camera'}`);
+        setCameraReady(false);
+      }
+    }, 300);
   };
-
-  const switchScannerType = () => {
-    setScannerType(scannerType === 'react-qr-scanner' ? 'quagga' : 'react-qr-scanner');
+  
+  // Stop the scanner and clean up
+  const stopScanner = () => {
+    if (codeReaderRef.current) {
+      console.log('Stopping scanner...');
+      try {
+        codeReaderRef.current.reset();
+      } catch (err) {
+        console.error('Error resetting scanner:', err);
+      }
+    }
+    setShowScanner(false);
+    setCameraReady(false);
   };
-
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (codeReaderRef.current) {
+        try {
+          codeReaderRef.current.reset();
+        } catch (err) {
+          console.error('Error cleaning up scanner:', err);
+        }
+      }
+    };
+  }, []);
+  
   return (
-    <div className={`relative ${className}`}>
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-
+    <div className="w-full">
       <div className="flex">
         <input
           type="text"
           value={value}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
-          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full border border-gray-300 rounded-l-md px-3 py-2"
+          placeholder="Enter SKU..."
           required={required}
-          // Open scanner when the input field is clicked if empty
-          onClick={() => {
-            if (!value && !disabled) {
-              startScanning(null);
+        />
+        <button
+          type="button"
+          className="flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-r-md"
+          onClick={(e) => {
+            e.preventDefault();
+            if (!showScanner) {
+              startScanner();
+            } else {
+              stopScanner();
             }
           }}
-        />
-        <div className="flex">
-          <button
-            type="button"
-            onClick={(e) => startScanning(e, 'react-qr-scanner')}
-            disabled={disabled}
-            className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-200 disabled:text-gray-400"
-            title="Scan barcode with primary scanner"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
-              <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h2a1 1 0 110 2h-3a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM7 11a1 1 0 100-2H4a1 1 0 100 2h3zM17 13a1 1 0 01-1 1h-2a1 1 0 110-2h2a1 1 0 011 1zM16 17a1 1 0 100-2h-3a1 1 0 100 2h3z" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => startScanning(e, 'quagga')}
-            disabled={disabled}
-            className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-200 disabled:text-gray-400"
-            title="Scan barcode with fallback scanner"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2m0 0H8m4 1v3m-4 0h8" />
-            </svg>
-          </button>
-        </div>
+        >
+          <Barcode size={18} />
+          <span className="sr-only">Scan Barcode</span>
+        </button>
       </div>
-
-      {/* Confirmation dialog for scanned result */}
-      {showConfirmation && scannedResult && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Confirm Scanned Barcode</h3>
-              <button 
-                onClick={cancelScan}
+      
+      {error && (
+        <div className="mt-1 text-sm text-red-600 flex items-center gap-1">
+          <AlertCircle size={14} />
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {showScanner && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-medium">Scan Barcode</h3>
+              <button
+                onClick={stopScanner}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X size={20} />
               </button>
             </div>
             
-            <div className="mb-4">
-              <p className="mb-2">Please confirm that this is the correct barcode:</p>
-              <div className="p-4 bg-gray-100 rounded-md text-center">
-                <span className="text-xl font-bold">{scannedResult}</span>
+            <div className="p-4">
+              <div className="relative w-full h-64 bg-black rounded overflow-hidden">
+                {error ? (
+                  <div className="absolute inset-0 flex items-center justify-center flex-col p-4">
+                    <AlertCircle size={40} className="text-red-500 mb-2" />
+                    <p className="text-white text-center">{error}</p>
+                  </div>
+                ) : (
+                  <>
+                    <video
+                      ref={videoRef}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    {cameraReady && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        {/* Animated scanning line */}
+                        <div className="absolute w-full h-2 bg-green-500 opacity-70 animate-[scanline_2s_ease-in-out_infinite]"></div>
+                        
+                        {/* Scanning target */}
+                        <div className="w-56 h-56 border-2 border-white rounded-lg flex items-center justify-center">
+                          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white"></div>
+                          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white"></div>
+                          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white"></div>
+                          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white"></div>
+                        </div>
+                      </div>
+                    )}
+                    {!cameraReady && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader className="w-8 h-8 text-white animate-spin" />
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <p className="mt-2 text-sm text-gray-500">
-                Verify that this matches the barcode on the product before using it.
+              
+              <p className="mt-2 text-sm text-center">
+                {error ? (
+                  <span className="text-red-600">{error}</span>
+                ) : !cameraReady ? (
+                  <span className="text-yellow-600">Initializing camera...</span>
+                ) : (
+                  <span className="text-green-600">Camera ready! Position barcode in the box</span>
+                )}
               </p>
             </div>
             
-            <div className="flex space-x-2">
+            <div className="flex justify-end p-4 border-t">
               <button
-                onClick={rescan}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 rounded-md"
+                type="button"
+                onClick={stopScanner}
+                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
               >
-                Scan Again
-              </button>
-              <button
-                onClick={confirmScan}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Use This Code
+                Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {isScanning && (
-        <>
-          {scannerType === 'react-qr-scanner' ? (
-            <BarcodeScanner 
-              onScan={handleScan} 
-              onClose={() => setIsScanning(false)}
-              onSwitch={switchScannerType}
-            />
-          ) : (
-            <QuaggaScanner 
-              onScan={handleScan} 
-              onClose={() => setIsScanning(false)} 
-            />
-          )}
-        </>
-      )}
+      
+      <style jsx="true">{`
+        @keyframes scanline {
+          0% { transform: translateY(-100%); }
+          50% { transform: translateY(100%); }
+          100% { transform: translateY(-100%); }
+        }
+      `}</style>
     </div>
   );
 };
 
-export default BarcodeInput; 
+export default BarcodeInput;
