@@ -27,19 +27,19 @@ export const AuthProvider = ({ children }) => {
 
   // Format user data to ensure roles are consistent
   const formatUserData = (userData) => {
-    // Check if we have a role property but empty roles array
-    if (userData.role && (!userData.roles || userData.roles.length === 0)) {
-      return {
-        ...userData,
-        roles: [userData.role]
-      };
-    }
-    
-    // Otherwise just ensure roles exists as an array
-    return {
+    // Make sure ID fields are consistent (both id and userId should work)
+    const formattedData = {
       ...userData,
-      roles: userData.roles || []
+      // Ensure both id and userId are present and have the same value
+      id: userData.id || userData.userId,
+      userId: userData.userId || userData.id,
+      // Check if we have a role property but empty roles array
+      roles: userData.roles && userData.roles.length > 0 
+        ? userData.roles 
+        : (userData.role ? [userData.role] : [])
     };
+    
+    return formattedData;
   };
 
   const handleAuthError = useCallback((error) => {
@@ -164,10 +164,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       
       const formattedUserData = formatUserData(userData);
-      
+
       // Store user data in localStorage for persistence
       localStorage.setItem('userData', JSON.stringify(formattedUserData));
-      
       setUser(formattedUserData);
       console.log('User logged in with roles:', formattedUserData.roles);
       
@@ -191,7 +190,6 @@ export const AuthProvider = ({ children }) => {
       
       // Store user data in localStorage for persistence
       localStorage.setItem('userData', JSON.stringify(formattedUserData));
-      
       setUser(formattedUserData);
       handleRoleRedirection(formattedUserData.roles);
       return { success: true };
