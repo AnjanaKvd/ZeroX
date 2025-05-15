@@ -1,5 +1,6 @@
 import api from './api';
 import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 /**
  * Fetches sales report data
@@ -123,6 +124,173 @@ export const getCustomerReport = async (params = {}) => {
 };
 
 /**
+ * Fetches sales data directly from the orders API
+ * @param {Object} params - Parameters for filtering orders
+ * @returns {Promise<Object>} - Processed sales data
+ */
+export const fetchSalesDataFromOrders = async (params = {}) => {
+  try {
+    // Prepare query parameters for orders API
+    const queryParams = { 
+      status: 'DELIVERED', // Only fetch delivered orders
+      size: 100, // Get more orders at once
+      ...params
+    };
+    
+    // Fetch orders from API
+    const response = await api.get('/orders', { params: queryParams });
+    const orders = response.data.content || [];
+    
+    // Process orders into different sales data formats
+    const summaryData = processSalesDataSummary(orders, params);
+    const detailedData = processSalesDataDetailed(orders, params);
+    
+    return {
+      summary: summaryData,
+      detailed: detailedData,
+      rawOrders: orders
+    };
+  } catch (error) {
+    console.error('Error fetching sales data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Process orders into summary sales data
+ */
+const processSalesDataSummary = (orders, filters) => {
+  // Helper function to convert string dates to Date objects for comparison
+  const parseDateString = (dateStr) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // Month is 0-indexed in JS Date
+  };
+  
+  // Helper function to check if a date is within a range (inclusive)
+  const isDateInRange = (dateStr, startDateStr, endDateStr) => {
+    if (!dateStr) return false;
+    
+    const date = parseDateString(dateStr);
+    const startDate = startDateStr ? parseDateString(startDateStr) : null;
+    const endDate = endDateStr ? parseDateString(endDateStr) : null;
+    
+    // Remove time portion for accurate date comparison
+    date.setHours(0, 0, 0, 0);
+    
+    if (startDate) startDate.setHours(0, 0, 0, 0);
+    if (endDate) endDate.setHours(0, 0, 0, 0);
+    
+    // Check if date is within range
+    return (!startDate || date >= startDate) && (!endDate || date <= endDate);
+  };
+  
+  // Group orders by date
+  const salesByDate = orders.reduce((acc, order) => {
+    // Format date to YYYY-MM-DD for grouping
+    const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+    
+    // Verify that this date is within our filter range
+    if (filters.startDate || filters.endDate) {
+      if (!isDateInRange(orderDate, filters.startDate, filters.endDate)) {
+        return acc; // Skip this order if outside date range
+      }
+    }
+    
+    if (!acc[orderDate]) {
+      acc[orderDate] = {
+        date: orderDate,
+        orderCount: 0,
+        sales: 0,
+        itemsSold: 0,
+      };
+    }
+    
+    // Only include DELIVERED orders
+    if (order.status === 'DELIVERED') {
+      // Add current order to group
+      acc[orderDate].orderCount += 1;
+      acc[orderDate].sales += parseFloat(order.finalAmount || 0);
+      
+      // Count items sold from order items
+      const itemCount = order.items ? order.items.reduce((sum, item) => 
+        sum + (item.quantity || 0), 0) : 0;
+      acc[orderDate].itemsSold += itemCount;
+    }
+    
+    return acc;
+  }, {});
+  
+  // Convert to array and calculate average order value
+  const salesData = Object.values(salesByDate).map(day => ({
+    ...day,
+    avgOrderValue: day.orderCount > 0 ? day.sales / day.orderCount : 0
+  }));
+  
+  // Sort by date descending
+  return salesData.sort((a, b) => new Date(b.date) - new Date(a.date));
+};
+
+/**
+ * Process orders into detailed sales data
+ */
+const processSalesDataDetailed = (orders, filters) => {
+  const detailedSalesData = [];
+  
+  // Helper function to convert string dates to Date objects for comparison
+  const parseDateString = (dateStr) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // Month is 0-indexed in JS Date
+  };
+  
+  // Helper function to check if a date is within a range (inclusive)
+  const isDateInRange = (dateStr, startDateStr, endDateStr) => {
+    if (!dateStr) return false;
+    
+    const date = parseDateString(dateStr);
+    const startDate = startDateStr ? parseDateString(startDateStr) : null;
+    const endDate = endDateStr ? parseDateString(endDateStr) : null;
+    
+    // Remove time portion for accurate date comparison
+    date.setHours(0, 0, 0, 0);
+    
+    if (startDate) startDate.setHours(0, 0, 0, 0);
+    if (endDate) endDate.setHours(0, 0, 0, 0);
+    
+    // Check if date is within range
+    return (!startDate || date >= startDate) && (!endDate || date <= endDate);
+  };
+  
+  orders.forEach(order => {
+    if (order.status === 'DELIVERED' && order.items && order.items.length > 0) {
+      const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+      
+      // Verify that this date is within our filter range
+      if (filters.startDate || filters.endDate) {
+        if (!isDateInRange(orderDate, filters.startDate, filters.endDate)) {
+          return; // Skip this order if outside date range
+        }
+      }
+      
+      order.items.forEach(item => {
+        detailedSalesData.push({
+          id: `${order.orderId}-${item.productName}`,
+          date: orderDate,
+          orderId: order.orderId,
+          orderReference: order.orderReference || order.orderId,
+          itemName: item.productName,
+          quantity: item.quantity,
+          price: item.priceAtPurchase,
+          total: item.subtotal
+        });
+      });
+    }
+  });
+  
+  // Sort by date descending
+  return detailedSalesData.sort((a, b) => new Date(b.date) - new Date(a.date));
+};
+
+/**
  * Exports a report to PDF format
  * @param {string} reportType - Type of report (sales, inventory, customers)
  * @param {Object} params - Parameters for filtering the report
@@ -130,6 +298,8 @@ export const getCustomerReport = async (params = {}) => {
  */
 export const exportReportToPdf = async (reportType, params = {}) => {
   try {
+    console.log(`Exporting ${reportType} report to PDF with params:`, params);
+    
     // Special handling for inventory report - generate PDF from product data
     if (reportType === 'inventory') {
       // Get the inventory data first
@@ -247,12 +417,149 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       return doc.output('blob');
     }
     
-    // Default behavior for other report types
-    const response = await api.get(`/reports/${reportType}/export/pdf`, {
-      params,
-      responseType: 'blob' // Important: this tells axios to handle response as binary data
-    });
-    return response.data;
+    // Special handling for sales report
+    if (reportType === 'sales') {
+      console.log('Generating sales PDF report...');
+      
+      // Fetch sales data from orders
+      const salesData = await fetchSalesDataFromOrders(params);
+      console.log('Sales data fetched for PDF:', salesData);
+      
+      // Create a PDF using jsPDF library with autotable plugin
+      const doc = new jsPDF();
+      
+      // Add title and date
+      const title = 'Sales Report';
+      const date = new Date().toLocaleDateString();
+      doc.setFontSize(18);
+      doc.text(title, 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${date}`, 14, 30);
+      
+      // Add filter information
+      let yPos = 38;
+      if (params.startDate) {
+        doc.text(`Start Date: ${params.startDate}`, 14, yPos);
+        yPos += 7;
+      }
+      if (params.endDate) {
+        doc.text(`End Date: ${params.endDate}`, 14, yPos);
+        yPos += 7;
+      }
+      
+      // Add summary information
+      const summaryData = salesData.summary;
+      const totalSales = summaryData.reduce((sum, item) => sum + Number(item.sales || 0), 0);
+      const totalOrders = summaryData.reduce((sum, item) => sum + Number(item.orderCount || 0), 0);
+      const totalItems = summaryData.reduce((sum, item) => sum + Number(item.itemsSold || 0), 0);
+      const avgOrderValue = totalOrders ? totalSales / totalOrders : 0;
+      
+      doc.setFontSize(14);
+      doc.text('Sales Summary', 14, yPos);
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.text(`Total Sales: Rs ${totalSales.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Total Orders: ${totalOrders}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Items Sold: ${totalItems}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Average Order Value: Rs ${avgOrderValue.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, 14, yPos);
+      yPos += 12;
+      
+      // Add daily sales summary table
+      doc.setFontSize(14);
+      doc.text('Daily Sales Summary', 14, yPos);
+      yPos += 10;
+      
+      // Create summary table
+      doc.autoTable({
+        startY: yPos,
+        head: [['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)']],
+        body: summaryData.map(item => [
+          new Date(item.date).toLocaleDateString(),
+          item.orderCount,
+          Number(item.sales).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }),
+          item.itemsSold,
+          Number(item.avgOrderValue).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
+      
+      // Add a new page for detailed sales
+      doc.addPage();
+      
+      // Add title and date for detailed page
+      doc.setFontSize(16);
+      doc.text('Sales Report - Detailed Items', 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${date}`, 14, 30);
+      yPos = 40;
+      
+      // Create detailed items table
+      doc.autoTable({
+        startY: yPos,
+        head: [['Date', 'Order ID', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)']],
+        body: salesData.detailed.map(item => [
+          new Date(item.date).toLocaleDateString(),
+          item.orderReference || item.orderId,
+          item.itemName,
+          item.quantity,
+          Number(item.price).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }),
+          Number(item.total).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
+      
+      console.log('PDF generation completed');
+      
+      // Return as a blob
+      return doc.output('blob');
+    }
+    
+    // If we get here, the report type isn't supported
+    console.error(`PDF export not implemented for report type: ${reportType}`);
+    throw new Error(`PDF export not implemented for report type: ${reportType}`);
   } catch (error) {
     console.error(`Error exporting ${reportType} report to PDF:`, error);
     throw error;
@@ -267,6 +574,8 @@ export const exportReportToPdf = async (reportType, params = {}) => {
  */
 export const exportReportToCsv = async (reportType, params = {}) => {
   try {
+    console.log(`Exporting ${reportType} report to CSV with params:`, params);
+    
     // Special handling for inventory report - generate CSV from product data
     if (reportType === 'inventory') {
       // Get the inventory data first
@@ -309,12 +618,76 @@ export const exportReportToCsv = async (reportType, params = {}) => {
       return blob;
     }
     
-    // Default behavior for other report types
-    const response = await api.get(`/reports/${reportType}/export/csv`, {
-      params,
-      responseType: 'blob' // Important: this tells axios to handle response as binary data
-    });
-    return response.data;
+    // Special handling for sales report
+    if (reportType === 'sales') {
+      console.log('Generating sales CSV report...');
+      
+      // Fetch sales data from orders
+      const salesData = await fetchSalesDataFromOrders(params);
+      console.log('Sales data fetched for CSV:', salesData);
+      
+      // Properly escape CSV values to handle commas, quotes, etc.
+      const escapeCSV = (value) => {
+        value = String(value || '');
+        // If the value contains commas, quotes, or newlines, wrap it in quotes
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+          // Double up any quotes within the value
+          value = value.replace(/"/g, '""');
+          // Wrap the value in quotes
+          value = `"${value}"`;
+        }
+        return value;
+      };
+      
+      // Create summary CSV content
+      const summaryHeaders = ['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)'];
+      const summaryRows = salesData.summary.map(item => [
+        new Date(item.date).toLocaleDateString(),
+        item.orderCount,
+        Number(item.sales).toFixed(2),
+        item.itemsSold,
+        Number(item.avgOrderValue).toFixed(2)
+      ]);
+      
+      const summaryCsv = [
+        ['SALES REPORT SUMMARY'],
+        [`Generated on: ${new Date().toLocaleDateString()}`],
+        [''],
+        summaryHeaders.map(escapeCSV).join(','),
+        ...summaryRows.map(row => row.map(escapeCSV).join(','))
+      ].join('\n');
+      
+      // Create detailed CSV content
+      const detailedHeaders = ['Date', 'Order ID', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)'];
+      const detailedRows = salesData.detailed.map(item => [
+        new Date(item.date).toLocaleDateString(),
+        item.orderReference || item.orderId,
+        item.itemName,
+        item.quantity,
+        Number(item.price).toFixed(2),
+        Number(item.total).toFixed(2)
+      ]);
+      
+      const detailedCsv = [
+        [''],
+        [''],
+        ['DETAILED SALES ITEMS'],
+        detailedHeaders.map(escapeCSV).join(','),
+        ...detailedRows.map(row => row.map(escapeCSV).join(','))
+      ].join('\n');
+      
+      // Combine both reports
+      const fullCsvContent = summaryCsv + '\n' + detailedCsv;
+      
+      console.log('CSV generation completed');
+      
+      const blob = new Blob([fullCsvContent], { type: 'text/csv;charset=utf-8;' });
+      return blob;
+    }
+    
+    // If we get here, the report type isn't supported
+    console.error(`CSV export not implemented for report type: ${reportType}`);
+    throw new Error(`CSV export not implemented for report type: ${reportType}`);
   } catch (error) {
     console.error(`Error exporting ${reportType} report to CSV:`, error);
     throw error;
@@ -327,12 +700,19 @@ export const exportReportToCsv = async (reportType, params = {}) => {
  * @param {string} fileName - Name for the downloaded file
  */
 export const downloadBlob = (blob, fileName) => {
-  const url = window.URL.createObjectURL(new Blob([blob]));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', fileName);
-  document.body.appendChild(link);
-  link.click();
-  link.parentNode.removeChild(link);
-  window.URL.revokeObjectURL(url);
+  try {
+    console.log(`Downloading blob as file: ${fileName}`);
+    const url = window.URL.createObjectURL(new Blob([blob]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    console.log('Download completed');
+  } catch (error) {
+    console.error('Error downloading blob as file:', error);
+    throw error;
+  }
 }; 
