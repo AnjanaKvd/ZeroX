@@ -87,7 +87,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         // Check if email has been used more than 3 times (including deleted accounts)
         int emailUsageCount = userRepository.countByEmail(request.email());
-        if (emailUsageCount >= 3) {
+        if (emailUsageCount >= 2) {
             throw new IllegalArgumentException("This email has reached maximum registration attempts");
         }
 
@@ -100,7 +100,7 @@ public class AuthService {
         // Check if deleted account exists
         Optional<User> deletedUser = userRepository.findByEmailIncludeDeleted(request.email());
         if (deletedUser.isPresent() && deletedUser.get().isDeleted()) {
-            // Reactivate the deleted account with new details
+
             User user = deletedUser.get();
             user.setDeleted(false);
             user.setPasswordHash(passwordEncoder.encode(request.password()));
@@ -121,7 +121,7 @@ public class AuthService {
                 .phone(request.phone())
                 .loyaltyPoints(0)
                 .createdAt(LocalDateTime.now())
-                .role(UserRole.CUSTOMER) // Changed from USER to CUSTOMER
+                .role(UserRole.CUSTOMER)
                 .isDeleted(false)
                 .build();
 
@@ -148,8 +148,6 @@ public class AuthService {
                 user.getFullName(), user.getPhone(),user.getUserId());
     }
 
-
-    //this is working but mail change a once is not working
     public UserDto.UserProfileResponse getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -214,20 +212,6 @@ public class AuthService {
         userRepository.save(user);
     }
 
-
-
-    private void validatePasswordStrength(String password) {
-        if (password.length() < 8) {
-            throw new PasswordChangeException("Password must be at least 8 characters");
-        }
-        // Add more complexity rules as needed
-    }
-
-    public boolean userExistsByEmail(String email) {
-        return userRepository.findByEmail(email).isPresent();
-    }
-
-    // In AuthService
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
