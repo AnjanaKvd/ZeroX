@@ -30,7 +30,7 @@ public class RewardPointsController {
     }
 
     @PostMapping("/claim")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<ClaimPointsResponse> claimPoints(
             @RequestBody ClaimPointsRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {

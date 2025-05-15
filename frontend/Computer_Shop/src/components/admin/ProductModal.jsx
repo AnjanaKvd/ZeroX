@@ -4,7 +4,6 @@ import { getCategories } from '../../services/categoryService';
 import { getFullImageUrl } from '../../utils/imageUtils';
 import api from '../../services/api';
 import BarcodeInput from './BarcodeInput';
-import EnhancedBarcodeInput from './EnhancedBarcodeInput';
 
 const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' }) => {
   const [formData, setFormData] = useState({
@@ -220,7 +219,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
   const categoryIdProperty = getCategoryIdProperty();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className={`fixed inset-0 z-50 ${isOpen ? 'flex' : 'hidden'} items-center justify-center p-4 bg-black bg-opacity-50`}>
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center px-6 py-4 border-b">
           <h2 className="text-xl font-semibold text-gray-800">
@@ -303,7 +302,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     SKU *
                   </label>
-                  <EnhancedBarcodeInput
+                  <BarcodeInput
                     value={formData.sku}
                     onChange={(value) => {
                       console.log('SKU input changed:', value);
@@ -312,7 +311,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                         sku: value
                       }));
                     }}
-                    label=""
                     required={true}
                   />
                 </div>
