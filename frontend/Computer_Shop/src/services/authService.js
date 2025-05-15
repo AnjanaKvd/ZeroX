@@ -40,4 +40,14 @@ export const logout = async () => {
     console.error('Logout error:', error);
     return { success: false, error };
   }
+};
+
+export const getUserCount = async () => {
+  try {
+    const response = await api.get('/auth/users/count');
+    return response.data.count;
+  } catch (error) {
+    console.error('Error fetching user count:', error);
+    return 0; // Return 0 as a fallback
+  }
 }; 

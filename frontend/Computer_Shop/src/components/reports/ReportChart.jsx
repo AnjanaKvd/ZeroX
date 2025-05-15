@@ -37,7 +37,7 @@ const ReportChart = ({
     const themeColors = getThemeColors();
     
     // Apply theme to chart options
-    const chartOptions = {
+    const defaultOptions = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -78,9 +78,49 @@ const ReportChart = ({
             maxTicksLimit: 8
           }
         }
-      },
-      ...options
+      }
     };
+    
+    // Deep merge the default options with custom options
+    const mergeOptions = (defaultOpts, customOpts) => {
+      const result = { ...defaultOpts };
+      
+      Object.keys(customOpts).forEach(key => {
+        if (
+          typeof customOpts[key] === 'object' && 
+          customOpts[key] !== null && 
+          !Array.isArray(customOpts[key]) && 
+          defaultOpts[key]
+        ) {
+          result[key] = mergeOptions(defaultOpts[key], customOpts[key]);
+        } else {
+          result[key] = customOpts[key];
+        }
+      });
+      
+      return result;
+    };
+    
+    // Merge the custom options with default options
+    const chartOptions = mergeOptions(defaultOptions, options);
+    
+    // Apply theme colors to any y-axes titles that might exist
+    if (chartOptions.scales) {
+      Object.keys(chartOptions.scales).forEach(axisKey => {
+        const axis = chartOptions.scales[axisKey];
+        if (axis.title && axis.title.display) {
+          axis.title.color = themeColors.textColor;
+        }
+        // Apply theme colors to any additional axes
+        if (axis.ticks && !axis.ticks.color) {
+          axis.ticks.color = themeColors.textColor;
+        }
+        if (axis.grid && !axis.grid.color) {
+          axis.grid.color = themeColors.gridColor;
+          axis.grid.borderColor = themeColors.gridColor;
+        }
+      });
+    }
     
     // Clean up any existing chart
     if (chartInstance.current) {

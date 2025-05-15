@@ -3,53 +3,270 @@ import { DollarSign, TrendingUp, ShoppingBag, Calendar } from 'lucide-react';
 import ReportFilters from './ReportFilters';
 import ReportTable from './ReportTable';
 import ReportChart from './ReportChart';
-import { getSalesReport, exportReportToPdf, exportReportToCsv, downloadBlob } from '../../services/reportService';
+import api from '../../services/api';
+import { getProductStats } from '../../services/productService';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
-const SalesReport = ({ theme, categories = [] }) => {
+const SalesReport = ({ theme, categories: propCategories = [] }) => {
   const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState([]);
   const [reportData, setReportData] = useState([]);
-  const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
-    category: ''
+  const [dashboardStats, setDashboardStats] = useState({
+    totalSales: 0,
+    revenue: 0
   });
+  
+  // Initialize with default date range (last 30 days)
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  
+  const [filters, setFilters] = useState({
+    startDate: thirtyDaysAgo.toISOString().split('T')[0],
+    endDate: today.toISOString().split('T')[0],
+  });
+  
+  // Track if filters have been applied
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  
   const [sortConfig, setSortConfig] = useState({
     key: 'date',
     direction: 'desc'
   });
   
-  // Prepare table columns for sales report
-  const columns = [
+  // State for table view mode
+  const [viewMode, setViewMode] = useState('summary'); // 'summary' or 'detailed'
+  
+  // Prepare table columns based on view mode
+  const getSummaryColumns = () => [
     { key: 'date', label: 'Date', sortable: true, 
       format: (value) => new Date(value).toLocaleDateString() },
     { key: 'orderCount', label: 'Orders', sortable: true },
     { key: 'sales', label: 'Sales Amount', sortable: true, 
-      format: (value) => `$${parseFloat(value).toFixed(2)}` },
+      format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
     { key: 'itemsSold', label: 'Items Sold', sortable: true },
     { key: 'avgOrderValue', label: 'Avg Order Value', sortable: true,
-      format: (value) => `$${parseFloat(value).toFixed(2)}` },
+      format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
   ];
   
-  // Load report data when filters change
+  const getDetailedColumns = () => [
+    { key: 'date', label: 'Sales Date', sortable: true, 
+      format: (value) => new Date(value).toLocaleDateString() },
+    { key: 'itemName', label: 'Item Name', sortable: true },
+    { key: 'quantity', label: 'Quantity', sortable: true },
+    { key: 'price', label: 'Price', sortable: true,
+      format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
+    { key: 'total', label: 'Total Price', sortable: true,
+      format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
+  ];
+  
+  // Determine active columns based on view mode
+  const columns = viewMode === 'summary' ? getSummaryColumns() : getDetailedColumns();
+  
+  // Fetch dashboard stats to ensure matching values
   useEffect(() => {
-    const fetchReportData = async () => {
+    const fetchDashboardStats = async () => {
       try {
-        setLoading(true);
-        const response = await getSalesReport(filters);
-        setReportData(response);
+        const stats = await getProductStats();
+        setDashboardStats({
+          totalSales: stats.totalSales || 0,
+          revenue: stats.revenue || 0
+        });
       } catch (error) {
-        console.error('Failed to fetch sales report:', error);
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch dashboard stats:', error);
       }
     };
     
-    fetchReportData();
-  }, [filters]);
+    fetchDashboardStats();
+  }, []);
+  
+  // Helper function to convert string dates to Date objects for comparison
+  const parseDateString = (dateStr) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // Month is 0-indexed in JS Date
+  };
+  
+  // Helper function to check if a date is within a range (inclusive)
+  const isDateInRange = (dateStr, startDateStr, endDateStr) => {
+    if (!dateStr) return false;
+    
+    const date = parseDateString(dateStr);
+    const startDate = startDateStr ? parseDateString(startDateStr) : null;
+    const endDate = endDateStr ? parseDateString(endDateStr) : null;
+    
+    // Remove time portion for accurate date comparison
+    date.setHours(0, 0, 0, 0);
+    
+    if (startDate) startDate.setHours(0, 0, 0, 0);
+    if (endDate) endDate.setHours(0, 0, 0, 0);
+    
+    // Check if date is within range
+    return (!startDate || date >= startDate) && (!endDate || date <= endDate);
+  };
+  
+  // Fetch orders from API
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      // Prepare query parameters
+      const params = { 
+        status: 'DELIVERED', // Only fetch delivered orders
+        size: 100 // Get more orders at once
+      };
+      
+      // Format dates for API if provided
+      if (filters.startDate) {
+        // Make sure date is in the correct format YYYY-MM-DD
+        const startDate = new Date(filters.startDate);
+        params.startDate = startDate.toISOString().split('T')[0];
+      }
+      
+      if (filters.endDate) {
+        // Make sure date is in the correct format YYYY-MM-DD
+        const endDate = new Date(filters.endDate);
+        params.endDate = endDate.toISOString().split('T')[0];
+      }
+      
+      console.log('Fetching orders with params:', params);
+      
+      // Fetch orders from API
+      const response = await api.get('/orders', { params });
+      
+      // Extract orders from paginated response
+      let ordersData = response.data.content || [];
+      console.log('Received orders before filtering:', ordersData.length);
+      
+      // Apply date filter on client side to ensure strict date range compliance
+      if (filters.startDate || filters.endDate) {
+        ordersData = ordersData.filter(order => {
+          // Extract date from order.createdAt (assuming ISO format)
+          const orderDate = order.createdAt.split('T')[0];
+          return isDateInRange(orderDate, filters.startDate, filters.endDate);
+        });
+        console.log('Orders after client-side date filtering:', ordersData.length);
+      }
+      
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Fetch orders when component mounts or filters are applied
+  useEffect(() => {
+    if (filtersApplied) {
+      fetchOrders();
+      setFiltersApplied(false); // Reset flag after fetch
+    }
+  }, [filtersApplied]);
+  
+  // Load initial data when component mounts
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // Process orders into sales report data
+  useEffect(() => {
+    if (!orders || orders.length === 0) {
+      setReportData([]);
+      return;
+    }
+    
+    if (viewMode === 'summary') {
+      // Group orders by date for summary view
+      const salesByDate = orders.reduce((acc, order) => {
+        // Format date to YYYY-MM-DD for grouping
+        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+        
+        // Verify that this date is within our filter range
+        if (filters.startDate || filters.endDate) {
+          if (!isDateInRange(orderDate, filters.startDate, filters.endDate)) {
+            return acc; // Skip this order if outside date range
+          }
+        }
+        
+        if (!acc[orderDate]) {
+          acc[orderDate] = {
+            date: orderDate,
+            orderCount: 0,
+            sales: 0,
+            itemsSold: 0,
+          };
+        }
+        
+        // Only include DELIVERED orders
+        if (order.status === 'DELIVERED') {
+          // Add current order to group
+          acc[orderDate].orderCount += 1;
+          acc[orderDate].sales += parseFloat(order.finalAmount || 0);
+          
+          // Count items sold from order items
+          const itemCount = order.items ? order.items.reduce((sum, item) => 
+            sum + (item.quantity || 0), 0) : 0;
+          acc[orderDate].itemsSold += itemCount;
+        }
+        
+        return acc;
+      }, {});
+      
+      // Convert to array and calculate average order value
+      const salesData = Object.values(salesByDate).map(day => ({
+        ...day,
+        avgOrderValue: day.orderCount > 0 ? day.sales / day.orderCount : 0
+      }));
+      
+      setReportData(salesData);
+    } else {
+      // Create detailed sales data with individual items
+      const detailedSalesData = [];
+      
+      orders.forEach(order => {
+        if (order.status === 'DELIVERED' && order.items && order.items.length > 0) {
+          const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+          
+          // Verify that this date is within our filter range
+          if (filters.startDate || filters.endDate) {
+            if (!isDateInRange(orderDate, filters.startDate, filters.endDate)) {
+              return; // Skip this order if outside date range
+            }
+          }
+          
+          order.items.forEach(item => {
+            detailedSalesData.push({
+              id: `${order.orderId}-${item.productName}`,
+              date: orderDate,
+              itemName: item.productName,
+              quantity: item.quantity,
+              price: item.priceAtPurchase,
+              total: item.subtotal
+            });
+          });
+        }
+      });
+      
+      setReportData(detailedSalesData);
+    }
+  }, [orders, viewMode, filters.startDate, filters.endDate]);
   
   // Handle filter changes
   const handleFilterChange = (name, value) => {
+    console.log(`Filter changed: ${name} = ${value}`);
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Handle Apply Filters button click
+  const handleApplyFilters = () => {
+    console.log('Applying filters:', filters);
+    setFiltersApplied(true); // Set flag to trigger fetch in useEffect
+  };
+  
+  // Toggle between summary and detailed view
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'summary' ? 'detailed' : 'summary');
   };
   
   // Apply sorting
@@ -74,7 +291,7 @@ const SalesReport = ({ theme, categories = [] }) => {
   
   // Prepare chart data
   const chartData = React.useMemo(() => {
-    if (!sortedData || sortedData.length === 0) return {};
+    if (!sortedData || sortedData.length === 0 || viewMode !== 'summary') return {};
     
     // Slice to get the last 30 days (most recent first)
     const slicedData = [...sortedData].sort((a, b) => 
@@ -85,39 +302,81 @@ const SalesReport = ({ theme, categories = [] }) => {
       labels: slicedData.map(item => new Date(item.date).toLocaleDateString()),
       datasets: [
         {
-          label: 'Sales ($)',
+          label: 'Sales (Rs)',
           data: slicedData.map(item => item.sales),
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.2)',
-          fill: true
+          fill: true,
+          yAxisID: 'y'
         },
         {
           label: 'Orders',
           data: slicedData.map(item => item.orderCount),
           borderColor: '#10b981',
           backgroundColor: 'rgba(16, 185, 129, 0.2)',
-          fill: true
+          fill: true,
+          yAxisID: 'y1'
         }
       ]
     };
-  }, [sortedData]);
+  }, [sortedData, viewMode]);
+  
+  // Custom chart options to display both sales and orders properly
+  const chartOptions = {
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: {
+          display: true,
+          text: 'Sales Amount (Rs)'
+        }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        grid: {
+          drawOnChartArea: false // only show grid for the left y-axis
+        },
+        title: {
+          display: true,
+          text: 'Orders'
+        }
+      }
+    }
+  };
   
   // Calculate summary metrics
   const getSummaryMetrics = () => {
-    if (!reportData || reportData.length === 0) return {
-      totalSales: 0,
-      totalOrders: 0,
-      totalItems: 0,
-      avgOrderValue: 0
-    };
+    // Calculate from detailed data if in detailed view
+    if (viewMode === 'detailed') {
+      const totalSales = reportData.reduce((sum, item) => sum + Number(item.total), 0);
+      const totalItems = reportData.reduce((sum, item) => sum + Number(item.quantity), 0);
+      const uniqueOrders = new Set(reportData.map(item => item.id.split('-')[0])).size;
+      
+      return {
+        totalSales: dashboardStats.totalSales > 0 ? 
+          dashboardStats.totalSales.toFixed(2) : 
+          totalSales.toFixed(2),
+        totalOrders: uniqueOrders,
+        totalItems,
+        avgOrderValue: uniqueOrders ? (totalSales / uniqueOrders).toFixed(2) : '0.00'
+      };
+    }
     
-    const totalSales = reportData.reduce((sum, item) => sum + Number(item.sales), 0);
+    // Use dashboard stats for total sales to ensure consistency
+    const calculatedTotalSales = reportData.reduce((sum, item) => sum + Number(item.sales), 0);
     const totalOrders = reportData.reduce((sum, item) => sum + Number(item.orderCount), 0);
     const totalItems = reportData.reduce((sum, item) => sum + Number(item.itemsSold), 0);
-    const avgOrderValue = totalOrders ? totalSales / totalOrders : 0;
+    const avgOrderValue = totalOrders ? calculatedTotalSales / totalOrders : 0;
     
+    // If dashboard stats has a value, use it for totalSales
     return {
-      totalSales: totalSales.toFixed(2),
+      totalSales: dashboardStats.totalSales > 0 ? 
+        dashboardStats.totalSales.toFixed(2) : 
+        calculatedTotalSales.toFixed(2),
       totalOrders,
       totalItems,
       avgOrderValue: avgOrderValue.toFixed(2)
@@ -127,11 +386,266 @@ const SalesReport = ({ theme, categories = [] }) => {
   // Handle export to PDF
   const handleExportPdf = async () => {
     try {
+      console.log('Exporting sales report to PDF');
       setLoading(true);
-      const blob = await exportReportToPdf('sales', filters);
-      downloadBlob(blob, `sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      // Create a PDF using jsPDF library
+      const doc = new jsPDF();
+      
+      // Add title and date
+      const title = 'Sales Report';
+      const date = new Date().toLocaleDateString();
+      doc.setFontSize(18);
+      doc.text(title, 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${date}`, 14, 30);
+      
+      // Add filter information
+      let yPos = 38;
+      if (filters.startDate) {
+        doc.text(`Start Date: ${filters.startDate}`, 14, yPos);
+        yPos += 7;
+      }
+      if (filters.endDate) {
+        doc.text(`End Date: ${filters.endDate}`, 14, yPos);
+        yPos += 7;
+      }
+      
+      // Add summary information
+      const metrics = getSummaryMetrics();
+      
+      doc.setFontSize(14);
+      doc.text('Sales Summary', 14, yPos);
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.text(`Total Sales: Rs ${parseFloat(metrics.totalSales).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Total Orders: ${metrics.totalOrders}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Items Sold: ${metrics.totalItems}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Average Order Value: Rs ${parseFloat(metrics.avgOrderValue).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, 14, yPos);
+      yPos += 12;
+      
+      // Add daily sales summary table
+      doc.setFontSize(14);
+      doc.text('Daily Sales Summary', 14, yPos);
+      yPos += 10;
+      
+      // Check if autoTable is available
+      if (typeof doc.autoTable === 'function') {
+        console.log('Using autoTable plugin for PDF generation');
+        // Create table with autotable
+        if (viewMode === 'summary') {
+          doc.autoTable({
+            startY: yPos,
+            head: [['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)']],
+            body: sortedData.map(item => [
+              new Date(item.date).toLocaleDateString(),
+              item.orderCount,
+              Number(item.sales).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }),
+              item.itemsSold,
+              Number(item.avgOrderValue).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })
+            ]),
+            theme: 'striped',
+            headStyles: {
+              fillColor: [41, 128, 185],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold'
+            },
+            styles: {
+              fontSize: 9,
+              cellPadding: 3
+            }
+          });
+        } else {
+          // For detailed view
+          doc.autoTable({
+            startY: yPos,
+            head: [['Date', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)']],
+            body: sortedData.map(item => [
+              new Date(item.date).toLocaleDateString(),
+              item.itemName,
+              item.quantity,
+              Number(item.price).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }),
+              Number(item.total).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })
+            ]),
+            theme: 'striped',
+            headStyles: {
+              fillColor: [41, 128, 185],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold'
+            },
+            styles: {
+              fontSize: 9,
+              cellPadding: 3
+            }
+          });
+        }
+      } else {
+        console.log('autoTable plugin not available, using manual table drawing');
+        // Fallback to manual table drawing if autoTable is not available
+        // Manual table header
+        doc.setFillColor(41, 128, 185);
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        
+        if (viewMode === 'summary') {
+          // Summary table
+          const colWidths = [30, 20, 40, 30, 40];
+          const headers = ['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)'];
+          
+          // Draw header background
+          doc.rect(14, yPos, 160, 8, 'F');
+          
+          // Draw header text
+          let xPos = 16;
+          headers.forEach((header, index) => {
+            doc.text(header, xPos, yPos + 5);
+            xPos += colWidths[index];
+          });
+          
+          yPos += 8;
+          
+          // Reset text color for data rows
+          doc.setTextColor(0, 0, 0);
+          
+          // Manually draw rows
+          let rowCount = 0;
+          for (const item of sortedData) {
+            // Alternate row colors
+            if (rowCount % 2 === 0) {
+              doc.setFillColor(240, 240, 240);
+              doc.rect(14, yPos, 160, 7, 'F');
+            }
+            
+            xPos = 16;
+            
+            // Date
+            doc.text(new Date(item.date).toLocaleDateString(), xPos, yPos + 5);
+            xPos += colWidths[0];
+            
+            // Orders
+            doc.text(String(item.orderCount), xPos, yPos + 5);
+            xPos += colWidths[1];
+            
+            // Sales Amount
+            doc.text(`Rs ${Number(item.sales).toFixed(2)}`, xPos, yPos + 5);
+            xPos += colWidths[2];
+            
+            // Items Sold
+            doc.text(String(item.itemsSold), xPos, yPos + 5);
+            xPos += colWidths[3];
+            
+            // Avg Order Value
+            doc.text(`Rs ${Number(item.avgOrderValue).toFixed(2)}`, xPos, yPos + 5);
+            
+            yPos += 7;
+            rowCount++;
+            
+            // Add a new page if needed
+            if (yPos > 280) {
+              doc.addPage();
+              yPos = 20;
+              rowCount = 0;
+            }
+          }
+        } else {
+          // Detailed view table
+          const colWidths = [30, 60, 20, 25, 25];
+          const headers = ['Date', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)'];
+          
+          // Draw header background
+          doc.rect(14, yPos, 160, 8, 'F');
+          
+          // Draw header text
+          let xPos = 16;
+          headers.forEach((header, index) => {
+            doc.text(header, xPos, yPos + 5);
+            xPos += colWidths[index];
+          });
+          
+          yPos += 8;
+          
+          // Reset text color for data rows
+          doc.setTextColor(0, 0, 0);
+          
+          // Manually draw rows
+          let rowCount = 0;
+          for (const item of sortedData) {
+            // Alternate row colors
+            if (rowCount % 2 === 0) {
+              doc.setFillColor(240, 240, 240);
+              doc.rect(14, yPos, 160, 7, 'F');
+            }
+            
+            xPos = 16;
+            
+            // Date
+            doc.text(new Date(item.date).toLocaleDateString(), xPos, yPos + 5);
+            xPos += colWidths[0];
+            
+            // Item Name (truncate if too long)
+            let itemName = item.itemName || 'N/A';
+            if (itemName.length > 30) {
+              itemName = itemName.substring(0, 27) + '...';
+            }
+            doc.text(itemName, xPos, yPos + 5);
+            xPos += colWidths[1];
+            
+            // Quantity
+            doc.text(String(item.quantity), xPos, yPos + 5);
+            xPos += colWidths[2];
+            
+            // Price
+            doc.text(`Rs ${Number(item.price).toFixed(2)}`, xPos, yPos + 5);
+            xPos += colWidths[3];
+            
+            // Total
+            doc.text(`Rs ${Number(item.total).toFixed(2)}`, xPos, yPos + 5);
+            
+            yPos += 7;
+            rowCount++;
+            
+            // Add a new page if needed
+            if (yPos > 280) {
+              doc.addPage();
+              yPos = 20;
+              rowCount = 0;
+            }
+          }
+        }
+      }
+      
+      // Save the PDF directly
+      console.log('PDF generation completed, saving file...');
+      doc.save(`sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      console.log('PDF export completed successfully');
     } catch (error) {
       console.error('Failed to export PDF:', error);
+      alert('Failed to generate PDF report. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -140,11 +654,82 @@ const SalesReport = ({ theme, categories = [] }) => {
   // Handle export to CSV
   const handleExportCsv = async () => {
     try {
+      console.log('Exporting sales report to CSV');
       setLoading(true);
-      const blob = await exportReportToCsv('sales', filters);
-      downloadBlob(blob, `sales-report-${new Date().toISOString().split('T')[0]}.csv`);
+      
+      // Properly escape CSV values to handle commas, quotes, etc.
+      const escapeCSV = (value) => {
+        value = String(value || '');
+        // If the value contains commas, quotes, or newlines, wrap it in quotes
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+          // Double up any quotes within the value
+          value = value.replace(/"/g, '""');
+          // Wrap the value in quotes
+          value = `"${value}"`;
+        }
+        return value;
+      };
+      
+      let csvContent;
+      
+      if (viewMode === 'summary') {
+        // Create summary CSV content
+        const summaryHeaders = ['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)'];
+        const summaryRows = sortedData.map(item => [
+          new Date(item.date).toLocaleDateString(),
+          item.orderCount,
+          Number(item.sales).toFixed(2),
+          item.itemsSold,
+          Number(item.avgOrderValue).toFixed(2)
+        ]);
+        
+        csvContent = [
+          ['SALES REPORT SUMMARY'],
+          [`Generated on: ${new Date().toLocaleDateString()}`],
+          [''],
+          summaryHeaders.map(escapeCSV).join(','),
+          ...summaryRows.map(row => row.map(escapeCSV).join(','))
+        ].join('\n');
+      } else {
+        // Create detailed CSV content
+        const detailedHeaders = ['Date', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)'];
+        const detailedRows = sortedData.map(item => [
+          new Date(item.date).toLocaleDateString(),
+          item.itemName,
+          item.quantity,
+          Number(item.price).toFixed(2),
+          Number(item.total).toFixed(2)
+        ]);
+        
+        csvContent = [
+          ['SALES REPORT DETAILED ITEMS'],
+          [`Generated on: ${new Date().toLocaleDateString()}`],
+          [''],
+          detailedHeaders.map(escapeCSV).join(','),
+          ...detailedRows.map(row => row.map(escapeCSV).join(','))
+        ].join('\n');
+      }
+      
+      // Create blob and download it
+      console.log('CSV generation completed, creating download...');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `sales-report-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      console.log('CSV export completed successfully');
     } catch (error) {
       console.error('Failed to export CSV:', error);
+      alert('Failed to generate CSV report. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -152,18 +737,25 @@ const SalesReport = ({ theme, categories = [] }) => {
   
   const metrics = getSummaryMetrics();
   
+  // Format total sales to match the dashboard format (with proper thousand separators)
+  const formatTotalSales = (value) => {
+    return `Rs ${parseFloat(value).toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
+  
   return (
     <div>
       <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-        Sales Report
+        Sales Report (Delivered Orders)
       </h2>
       
       <ReportFilters
         reportType="sales"
         filters={filters}
-        categories={categories}
         onFilterChange={handleFilterChange}
-        onApplyFilters={() => {}} // Automatic
+        onApplyFilters={handleApplyFilters}
         onExportPdf={handleExportPdf}
         onExportCsv={handleExportCsv}
         theme={theme}
@@ -178,7 +770,7 @@ const SalesReport = ({ theme, categories = [] }) => {
             </div>
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Total Sales</p>
-              <p className="text-2xl font-semibold">${metrics.totalSales}</p>
+              <p className="text-2xl font-semibold">{formatTotalSales(metrics.totalSales)}</p>
             </div>
           </div>
         </div>
@@ -202,7 +794,7 @@ const SalesReport = ({ theme, categories = [] }) => {
             </div>
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Avg Order Value</p>
-              <p className="text-2xl font-semibold">${metrics.avgOrderValue}</p>
+              <p className="text-2xl font-semibold">Rs {metrics.avgOrderValue}</p>
             </div>
           </div>
         </div>
@@ -220,23 +812,41 @@ const SalesReport = ({ theme, categories = [] }) => {
         </div>
       </div>
       
-      {/* Chart */}
-      <div className="mb-6">
-        <h3 className={`text-lg font-medium mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-          Sales Trend
+      {/* Chart - only show in summary view */}
+      {viewMode === 'summary' && (
+        <div className="mb-6">
+          <h3 className={`text-lg font-medium mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+            Sales Trend
+          </h3>
+          <ReportChart 
+            type="line"
+            data={chartData}
+            options={chartOptions}
+            theme={theme}
+            height={300}
+          />
+        </div>
+      )}
+      
+      {/* View mode toggle */}
+      <div className="flex justify-between items-center mb-4">
+        <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+          {viewMode === 'summary' ? 'Sales Details' : 'Sales Items Detail'}
         </h3>
-        <ReportChart 
-          type="line"
-          data={chartData}
-          theme={theme}
-          height={300}
-        />
+        
+        <button
+          onClick={toggleViewMode}
+          className={`px-4 py-2 rounded-md text-sm ${
+            theme === 'dark' 
+              ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+          }`}
+        >
+          Switch to {viewMode === 'summary' ? 'Detailed' : 'Summary'} View
+        </button>
       </div>
       
       {/* Table */}
-      <h3 className={`text-lg font-medium mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-        Sales Details
-      </h3>
       <ReportTable
         data={sortedData}
         columns={columns}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownTray } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 /**
  * ReportFilters component for filtering reports by date, category, etc.
@@ -8,6 +8,7 @@ const ReportFilters = ({
   reportType,
   filters,
   categories = [],
+  statusOptions = [],
   onFilterChange,
   onApplyFilters,
   onExportPdf,
@@ -40,6 +41,87 @@ const ReportFilters = ({
         buttonSecondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800'
       };
 
+  // Simplified layout for inventory report
+  if (reportType === 'inventory') {
+    return (
+      <div className="mb-6">
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Category Filter */}
+          <div>
+            <label htmlFor="category" className={`block text-sm font-medium mb-2 ${colors.text}`}>
+              Category
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={filters.category || ''}
+              onChange={handleChange}
+              className={`w-full rounded-md border px-3 py-2 ${colors.select} h-11`}
+            >
+              <option value="">All Categories</option>
+              {categories.map(category => (
+                <option key={category.id || category.categoryId} value={category.id || category.categoryId}>
+                  {category.name || category.categoryName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Stock Level Filter */}
+          <div>
+            <label htmlFor="lowStock" className={`block text-sm font-medium mb-2 ${colors.text}`}>
+              Stock Level
+            </label>
+            <select
+              id="lowStock"
+              name="lowStock"
+              value={String(filters.lowStock)}
+              onChange={(e) => {
+                // Convert to boolean
+                const value = e.target.value === 'true';
+                handleChange({
+                  target: { name: 'lowStock', value }
+                });
+              }}
+              className={`w-full rounded-md border px-3 py-2 ${colors.select} h-11`}
+            >
+              <option value="false">All Items</option>
+              <option value="true">Low Stock Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onApplyFilters}
+            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-5 rounded"
+          >
+            Apply Filters
+          </button>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={onExportPdf}
+              className="flex items-center justify-center space-x-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded"
+            >
+              <Download size={16} />
+              <span>PDF</span>
+            </button>
+            
+            <button
+              onClick={onExportCsv}
+              className="flex items-center justify-center space-x-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded"
+            >
+              <Download size={16} />
+              <span>CSV</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original layout for other report types
   return (
     <div className={`${colors.bg} ${colors.border} border rounded-lg p-4 mb-6`}>
       <div className="mb-4">
@@ -50,8 +132,8 @@ const ReportFilters = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Date Range Filters - For Sales and Customer Reports */}
-        {(reportType === 'sales' || reportType === 'customers') && (
+        {/* Date Range Filters - For Sales, Customer, and Order Reports */}
+        {(reportType === 'sales' || reportType === 'customers' || reportType === 'orders') && (
           <>
             <div>
               <label htmlFor="startDate" className={`block text-sm font-medium mb-1 ${colors.text}`}>
@@ -83,61 +165,69 @@ const ReportFilters = ({
           </>
         )}
         
-        {/* Category Filter - For All Reports */}
-        <div>
-          <label htmlFor="category" className={`block text-sm font-medium mb-1 ${colors.text}`}>
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={filters.category || ''}
-            onChange={handleChange}
-            className={`w-full rounded-md border px-3 py-2 ${colors.select}`}
-          >
-            <option value="">All Categories</option>
-            {categories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Low Stock Filter - For Inventory Report */}
-        {reportType === 'inventory' && (
+        {/* Category Filter - For Sales and Customer Reports */}
+        {(reportType === 'sales' || reportType === 'customers') && (
           <div>
-            <label htmlFor="lowStock" className={`block text-sm font-medium mb-1 ${colors.text}`}>
-              Stock Level
+            <label htmlFor="category" className={`block text-sm font-medium mb-1 ${colors.text}`}>
+              Category
             </label>
             <select
-              id="lowStock"
-              name="lowStock"
-              value={filters.lowStock || ''}
+              id="category"
+              name="category"
+              value={filters.category || ''}
               onChange={handleChange}
               className={`w-full rounded-md border px-3 py-2 ${colors.select}`}
             >
-              <option value="">All Items</option>
-              <option value="true">Low Stock Only</option>
+              <option value="">All Categories</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Status Filter - For Order and Sales Reports */}
+        {(reportType === 'orders' || reportType === 'sales') && statusOptions.length > 0 && (
+          <div>
+            <label htmlFor="status" className={`block text-sm font-medium mb-1 ${colors.text}`}>
+              {reportType === 'orders' ? 'Order Status' : 'Sales Filter'}
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={filters.status || ''}
+              onChange={handleChange}
+              className={`w-full rounded-md border px-3 py-2 ${colors.select}`}
+              disabled={reportType === 'sales' && statusOptions.length === 1}
+            >
+              {statusOptions.map((option, index) => (
+                <option key={index} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         )}
       </div>
 
       <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={onApplyFilters}
-          className={`px-4 py-2 text-white rounded-md ${colors.buttonPrimary}`}
-        >
-          Apply Filters
-        </button>
+        {onApplyFilters && (
+          <button
+            onClick={onApplyFilters}
+            className={`px-4 py-2 text-white rounded-md ${colors.buttonPrimary}`}
+          >
+            Apply Filters
+          </button>
+        )}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 ml-auto">
           <button
             onClick={onExportPdf}
             className={`flex items-center px-3 py-2 rounded-md ${colors.buttonSecondary}`}
           >
-            <ArrowDownTray size={16} className="mr-1" />
+            <Download size={16} className="mr-1" />
             Export PDF
           </button>
           
@@ -145,7 +235,7 @@ const ReportFilters = ({
             onClick={onExportCsv}
             className={`flex items-center px-3 py-2 rounded-md ${colors.buttonSecondary}`}
           >
-            <ArrowDownTray size={16} className="mr-1" />
+            <Download size={16} className="mr-1" />
             Export CSV
           </button>
         </div>

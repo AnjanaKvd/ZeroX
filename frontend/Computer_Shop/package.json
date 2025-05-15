@@ -18,6 +18,8 @@
     "bootstrap": "^5.3.3",
     "chart.js": "^4.4.9",
     "jsbarcode": "^3.11.6",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.484.0",
     "prop-types": "^15.8.1",

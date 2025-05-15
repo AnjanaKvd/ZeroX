@@ -10,7 +10,11 @@ const InventoryReport = ({ theme, categories = [] }) => {
   const [reportData, setReportData] = useState([]);
   const [filters, setFilters] = useState({
     category: '',
-    lowStock: ''
+    lowStock: false
+  });
+  const [activeFilters, setActiveFilters] = useState({
+    category: '',
+    lowStock: false
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'stock',
@@ -21,10 +25,13 @@ const InventoryReport = ({ theme, categories = [] }) => {
   const columns = [
     { key: 'sku', label: 'SKU', sortable: true },
     { key: 'name', label: 'Product Name', sortable: true },
+    { key: 'brand', label: 'Brand', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
+    { key: 'price', label: 'Price', sortable: true,
+      format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
     { key: 'stock', label: 'Stock Level', sortable: true },
     { key: 'stockValue', label: 'Stock Value', sortable: true, 
-      format: (value) => `$${parseFloat(value).toFixed(2)}` },
+      format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
     { key: 'reorderLevel', label: 'Reorder Level', sortable: true },
     { key: 'status', label: 'Status', sortable: true,
       format: (value) => {
@@ -34,9 +41,9 @@ const InventoryReport = ({ theme, categories = [] }) => {
         if (value === 'In Stock') {
           color = theme === 'dark' ? 'text-green-400' : 'text-green-600';
         } else if (value === 'Low Stock') {
-          color = theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600';
+          color = theme === 'dark' ? 'text-red-400 font-semibold' : 'text-red-600 font-semibold';
         } else {
-          color = theme === 'dark' ? 'text-red-400' : 'text-red-600';
+          color = theme === 'dark' ? 'text-red-500 font-bold' : 'text-red-700 font-bold';
         }
         
         return <span className={color}>{text}</span>;
@@ -44,26 +51,36 @@ const InventoryReport = ({ theme, categories = [] }) => {
     }
   ];
   
-  // Load report data when filters change
+  // Load report data when filters change or on initial render
   useEffect(() => {
-    const fetchReportData = async () => {
-      try {
-        setLoading(true);
-        const response = await getInventoryReport(filters);
-        setReportData(response);
-      } catch (error) {
-        console.error('Failed to fetch inventory report:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchReportData();
-  }, [filters]);
+  }, [activeFilters]);
   
-  // Handle filter changes
+  // Also fetch on component mount
+  useEffect(() => {
+    fetchReportData();
+  }, []);
+  
+  const fetchReportData = async () => {
+    try {
+      setLoading(true);
+      const response = await getInventoryReport(activeFilters);
+      setReportData(response);
+    } catch (error) {
+      console.error('Failed to fetch inventory report:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle filter changes (doesn't trigger API call)
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Apply filters (triggers API call)
+  const handleApplyFilters = () => {
+    setActiveFilters({...filters});
   };
   
   // Apply sorting
@@ -117,7 +134,7 @@ const InventoryReport = ({ theme, categories = [] }) => {
       labels: categories,
       datasets: [
         {
-          label: 'Stock Value ($)',
+          label: 'Stock Value (Rs)',
           data: categories.map(cat => categoryData[cat].totalValue),
           backgroundColor: 'rgba(59, 130, 246, 0.6)',
           borderColor: '#3b82f6',
@@ -126,8 +143,8 @@ const InventoryReport = ({ theme, categories = [] }) => {
         {
           label: 'Low Stock Items',
           data: categories.map(cat => categoryData[cat].lowStockItems),
-          backgroundColor: 'rgba(239, 68, 68, 0.6)',
-          borderColor: '#ef4444',
+          backgroundColor: 'rgba(255, 0, 0, 0.8)',  // Bright red color
+          borderColor: '#ff0000',
           borderWidth: 1
         }
       ]
@@ -160,7 +177,7 @@ const InventoryReport = ({ theme, categories = [] }) => {
   const handleExportPdf = async () => {
     try {
       setLoading(true);
-      const blob = await exportReportToPdf('inventory', filters);
+      const blob = await exportReportToPdf('inventory', activeFilters);
       downloadBlob(blob, `inventory-report-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error('Failed to export PDF:', error);
@@ -173,7 +190,7 @@ const InventoryReport = ({ theme, categories = [] }) => {
   const handleExportCsv = async () => {
     try {
       setLoading(true);
-      const blob = await exportReportToCsv('inventory', filters);
+      const blob = await exportReportToCsv('inventory', activeFilters);
       downloadBlob(blob, `inventory-report-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
       console.error('Failed to export CSV:', error);
@@ -195,7 +212,7 @@ const InventoryReport = ({ theme, categories = [] }) => {
         filters={filters}
         categories={categories}
         onFilterChange={handleFilterChange}
-        onApplyFilters={() => {}} // Automatic
+        onApplyFilters={handleApplyFilters}
         onExportPdf={handleExportPdf}
         onExportCsv={handleExportCsv}
         theme={theme}
@@ -222,7 +239,7 @@ const InventoryReport = ({ theme, categories = [] }) => {
             </div>
             <div>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Stock Value</p>
-              <p className="text-2xl font-semibold">${metrics.totalStockValue}</p>
+              <p className="text-2xl font-semibold">Rs {metrics.totalStockValue}</p>
             </div>
           </div>
         </div>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, FileText, Users, Package } from 'lucide-react';
+import { BarChart3, FileText, Users, Package, ShoppingBag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { getCategories } from '../services/categoryService';
 import ReportCard from '../components/reports/ReportCard';
 import SalesReport from '../components/reports/SalesReport';
 import InventoryReport from '../components/reports/InventoryReport';
 import CustomerReport from '../components/reports/CustomerReport';
+import OrderReport from '../components/reports/OrderReport';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { exportReportToPdf, exportReportToCsv, downloadBlob } from '../services/reportService';
 
@@ -67,6 +68,13 @@ const ReportManagement = () => {
       description: 'Analyze sales performance, revenue trends, and order metrics over time',
       icon: 'chart',
       component: <SalesReport theme={theme} categories={categories} />
+    },
+    {
+      id: 'orders',
+      title: 'Order Detail Report',
+      description: 'Generate detailed reports on orders with comprehensive order information',
+      icon: 'file',
+      component: <OrderReport theme={theme} />
     },
     {
       id: 'inventory',

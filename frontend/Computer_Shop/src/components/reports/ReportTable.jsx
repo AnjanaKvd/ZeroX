@@ -10,7 +10,9 @@ const ReportTable = ({
   loading, 
   sortConfig, 
   onSort,
-  theme 
+  theme,
+  expandedRowId = null,
+  renderExpandedRow = null
 }) => {
   // Determine colors based on theme
   const colors = theme === 'dark' 
@@ -22,7 +24,8 @@ const ReportTable = ({
         text: 'text-gray-300',
         rowHover: 'hover:bg-gray-700',
         rowEven: 'bg-gray-800',
-        rowOdd: 'bg-gray-850'
+        rowOdd: 'bg-gray-850',
+        expandedBg: 'bg-gray-750'
       }
     : {
         bg: 'bg-white',
@@ -32,7 +35,8 @@ const ReportTable = ({
         text: 'text-gray-800',
         rowHover: 'hover:bg-gray-50',
         rowEven: 'bg-white',
-        rowOdd: 'bg-gray-50'
+        rowOdd: 'bg-gray-50',
+        expandedBg: 'bg-gray-100'
       };
   
   const handleSort = (columnKey) => {
@@ -95,19 +99,28 @@ const ReportTable = ({
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {data.map((row, rowIndex) => (
-                  <tr 
-                    key={row.id || rowIndex}
-                    className={`${rowIndex % 2 === 0 ? colors.rowEven : colors.rowOdd} ${colors.rowHover}`}
-                  >
-                    {columns.map((column) => (
-                      <td 
-                        key={`${row.id || rowIndex}-${column.key}`}
-                        className={`px-6 py-4 whitespace-nowrap text-sm ${colors.text}`}
-                      >
-                        {column.format ? column.format(row[column.key], row) : row[column.key]}
-                      </td>
-                    ))}
-                  </tr>
+                  <React.Fragment key={row.id || `row-${rowIndex}`}>
+                    <tr 
+                      className={`${rowIndex % 2 === 0 ? colors.rowEven : colors.rowOdd} ${colors.rowHover} ${expandedRowId === row.id || expandedRowId === row.orderId ? 'border-b-0' : ''}`}
+                    >
+                      {columns.map((column) => (
+                        <td 
+                          key={`${row.id || rowIndex}-${column.key}`}
+                          className={`px-6 py-4 whitespace-nowrap text-sm ${colors.text}`}
+                        >
+                          {column.format ? column.format(row[column.key], row) : row[column.key]}
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Expanded Row for Details */}
+                    {(expandedRowId === row.id || expandedRowId === row.orderId) && renderExpandedRow && (
+                      <tr>
+                        <td colSpan={columns.length} className="p-0">
+                          {renderExpandedRow(row)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

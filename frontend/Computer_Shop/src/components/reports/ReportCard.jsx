@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownTray, FileText, BarChart } from 'lucide-react';
+import { Download, FileText, BarChart } from 'lucide-react';
 
 /**
  * ReportCard component displays a report type with title, description, and actions
@@ -61,7 +61,7 @@ const ReportCard = ({
               className={`flex items-center justify-center px-3 py-2 rounded ${colors.buttonSecondary} transition-colors`}
               title="Export as PDF"
             >
-              <ArrowDownTray size={16} className="mr-1" />
+              <Download size={16} className="mr-1" />
               PDF
             </button>
             
@@ -70,7 +70,7 @@ const ReportCard = ({
               className={`flex items-center justify-center px-3 py-2 rounded ${colors.buttonSecondary} transition-colors`}
               title="Export as CSV"
             >
-              <ArrowDownTray size={16} className="mr-1" />
+              <Download size={16} className="mr-1" />
               CSV
             </button>
           </div>
