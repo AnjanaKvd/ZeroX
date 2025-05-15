@@ -24,6 +24,7 @@ const CategoryManagement = lazy(() => import('../pages/CategoryManagement'));
 const OrderManagement = lazy(() => import('../pages/OrderManagement'));
 const UserManagement = lazy(() => import('../pages/UserManagement'));
 const DiscountManagement = lazy(() => import('../pages/DiscountManagement'));
+const ReportManagement = lazy(() => import('../pages/ReportManagement'));
 const Settings = lazy(() => import("../pages/Settings"));
 const Logout = lazy(() => import("../pages/Logout"));
 const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));
@@ -96,6 +97,7 @@ const AppRoutes = () => {
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="orders" element={<OrderManagement />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="reports" element={<ReportManagement />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Route>

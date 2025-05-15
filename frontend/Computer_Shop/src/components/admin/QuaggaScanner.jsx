@@ -2,23 +2,26 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat } from '@zxing/library';
 import { 
-  findMostFrequentCode, 
   playSuccessBeep, 
-  normalizeBarcode, 
-  areBarcodesEquivalent,
-  isEAN13
+  normalizeBarcode
 } from '../../utils/barcodeUtils';
 
-const QuaggaScanner = ({ onScan, onClose }) => {
+const QuaggaScanner = ({ onScan, onClose, onError }) => {
   const videoRef = useRef(null);
   const readerRef = useRef(null);
-  const [scannedCodes, setScannedCodes] = useState([]);
   const [scanning, setScanning] = useState(false);
-  const [lastDetection, setLastDetection] = useState(null);
-  const [originalDetection, setOriginalDetection] = useState(null);
   const [error, setError] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
   const [stream, setStream] = useState(null);
+  // Track last scan to prevent duplicates
+  const lastScanRef = useRef(null);
+
+  // Handle errors and pass them to the parent component
+  useEffect(() => {
+    if (error && onError) {
+      onError(error);
+    }
+  }, [error, onError]);
 
   // Handle proper cleanup and initialization
   useEffect(() => {
@@ -27,19 +30,18 @@ const QuaggaScanner = ({ onScan, onClose }) => {
     // Initialize camera and request permissions
     const setupCamera = async () => {
       try {
-        // Request camera access first
+        // Request camera access with optimized settings
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            aspectRatio: { ideal: 16/9 }
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 30 }
           },
           audio: false
         });
         
         if (!mounted) {
-          // If component unmounted during permission request, clean up
           mediaStream.getTracks().forEach(track => track.stop());
           return;
         }
@@ -56,10 +58,16 @@ const QuaggaScanner = ({ onScan, onClose }) => {
             setError("Could not start video stream. Please try again.");
           });
           
-          // Wait for video to be ready before starting scanner
-          videoRef.current.onloadedmetadata = () => {
-            initializeScanner();
-          };
+          // Use requestAnimationFrame for smoother initialization
+          requestAnimationFrame(() => {
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              initializeScanner();
+            } else {
+              videoRef.current.onloadeddata = () => {
+                initializeScanner();
+              };
+            }
+          });
         }
       } catch (err) {
         console.error('Camera access error:', err);
@@ -92,15 +100,15 @@ const QuaggaScanner = ({ onScan, onClose }) => {
         const hints = new Map();
         hints.set(2, true); // Enable try harder mode
         
-        const reader = new BrowserMultiFormatReader(hints);
+        const reader = new BrowserMultiFormatReader(hints, 500); // Reduce scan interval to 500ms
+        
+        // Focus on the most common barcode formats
         reader.setFormats([
           BarcodeFormat.EAN_13,
           BarcodeFormat.EAN_8,
           BarcodeFormat.UPC_A,
           BarcodeFormat.UPC_E,
-          BarcodeFormat.CODE_39,
-          BarcodeFormat.CODE_128,
-          BarcodeFormat.QR_CODE
+          BarcodeFormat.CODE_128
         ]);
         
         readerRef.current = reader;
@@ -112,10 +120,32 @@ const QuaggaScanner = ({ onScan, onClose }) => {
         console.log("Starting barcode scanning...");
         
         try {
-          // Use the existing stream instead of creating a new one
           await readerRef.current.decodeFromVideoElement(videoRef.current, (result, err) => {
             if (result) {
-              handleScanResult(result.getText());
+              const scannedCode = result.getText();
+              
+              // Don't process the same code scanned within 2 seconds
+              if (lastScanRef.current && lastScanRef.current.code === scannedCode && 
+                  (Date.now() - lastScanRef.current.timestamp < 2000)) {
+                return;
+              }
+              
+              console.log('Barcode scanned:', scannedCode);
+              
+              // Save scan with timestamp
+              lastScanRef.current = {
+                code: scannedCode,
+                timestamp: Date.now()
+              };
+              
+              // Immediate feedback
+              navigator.vibrate && navigator.vibrate(100);
+              playSuccessBeep();
+              
+              // Immediately accept the code - no multiple scan validation
+              stopMediaTracks();
+              onScan(normalizeBarcode(scannedCode));
+              onClose();
             }
             
             if (err && err.name !== 'NotFoundException') {
@@ -140,7 +170,6 @@ const QuaggaScanner = ({ onScan, onClose }) => {
   // Explicit scanner stop function
   const stopScanner = () => {
     try {
-      // Stop the ZXing reader
       if (readerRef.current) {
         readerRef.current.reset();
         readerRef.current = null;
@@ -177,120 +206,15 @@ const QuaggaScanner = ({ onScan, onClose }) => {
         });
         videoRef.current.srcObject = null;
       }
-      
-      // Safety check for any other video elements
-      const videoElements = document.querySelectorAll('video');
-      videoElements.forEach(video => {
-        if (video.srcObject) {
-          const tracks = video.srcObject.getTracks();
-          tracks.forEach(track => {
-            track.stop();
-            console.log('Media track stopped from video element:', track.kind);
-          });
-          video.srcObject = null;
-        }
-      });
     } catch (error) {
       console.error('Error stopping media tracks:', error);
     }
-  };
-
-  // Process detected barcodes
-  const handleScanResult = (code) => {
-    if (!code) return;
-    
-    // Save original code for display
-    setOriginalDetection(code);
-    
-    // Normalize the code immediately
-    const normalizedCode = normalizeBarcode(code);
-    console.log('Barcode detected:', code, '→ Normalized:', normalizedCode);
-    
-    // Special case for the target barcode
-    if (code === '6954851221574' || 
-        (code.includes('695485') && isEAN13(code))) {
-      playSuccessBeep();
-      setTimeout(() => {
-        stopMediaTracks();
-        onScan('6954851221574'); // Use the known full code
-        onClose();
-      }, 500);
-      return;
-    }
-    
-    // Add to scanned codes array
-    setScannedCodes(prevCodes => {
-      const newCodes = [...prevCodes, code];
-      
-      // Find the consistent code using our improved algorithm
-      const consistentCode = findConsistentBarcode(newCodes);
-      
-      // Set last detection for display
-      setLastDetection(normalizedCode);
-      
-      // If we found a consistent code
-      if (consistentCode) {
-        // Play a beep sound to indicate successful scan
-        playSuccessBeep();
-        
-        // Make sure to stop the scanner before closing
-        setTimeout(() => {
-          stopMediaTracks();
-          onScan(normalizeBarcode(consistentCode));
-          onClose();
-        }, 500); // Small delay to show the user it worked
-      }
-      
-      // Keep only the last 5 scans to avoid memory issues
-      return newCodes.slice(-5);
-    });
   };
 
   // Call this when closing the scanner manually
   const handleClose = () => {
     stopMediaTracks();
     onClose();
-  };
-
-  // Find consistent barcode from the scanned array 
-  const findConsistentBarcode = (codes) => {
-    // Special case for known EAN-13 code
-    const targetEAN = '6954851221574';
-    
-    // Check if any code matches or contains the target EAN prefix
-    for (const code of codes) {
-      if (code === targetEAN || (code.includes('695485') && code.length >= 6)) {
-        return targetEAN;
-      }
-    }
-    
-    // Try the standard frequency approach 
-    const frequentCode = findMostFrequentCode(codes);
-    if (frequentCode) return frequentCode;
-    
-    // If no exact match found after 3+ scans, try to find equivalent barcodes
-    if (codes.length >= 3) {
-      // Get unique normalized codes
-      const normalizedCodes = [...new Set(codes.map(code => normalizeBarcode(code)))];
-      
-      // If we have multiple normalized versions, they might be the same barcode
-      if (normalizedCodes.length < codes.length) {
-        // Return the most recent normalized version
-        return normalizedCodes[normalizedCodes.length - 1];
-      }
-      
-      // Check if any codes are equivalent using our custom logic
-      for (let i = 0; i < codes.length; i++) {
-        for (let j = i + 1; j < codes.length; j++) {
-          if (areBarcodesEquivalent(codes[i], codes[j])) {
-            // Return the shorter or more recent one
-            return codes[i].length <= codes[j].length ? codes[i] : codes[j];
-          }
-        }
-      }
-    }
-    
-    return null;
   };
 
   return (
@@ -317,26 +241,27 @@ const QuaggaScanner = ({ onScan, onClose }) => {
             <>
               <video 
                 ref={videoRef}
-                className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                className="absolute inset-0 w-full h-full object-cover"
                 playsInline
                 muted
                 autoPlay
               />
-              
-              <div className="absolute inset-0 border-2 border-red-500 pointer-events-none">
-                <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-red-500"></div>
-                <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-red-500"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-red-500"></div>
-                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-red-500"></div>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {/* Scan guide line for better UX */}
+                <div className="w-full h-2 bg-red-500 opacity-50"></div>
+              </div>
+              <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none">
+                <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-blue-500"></div>
+                <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-blue-500"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-blue-500"></div>
+                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-blue-500"></div>
               </div>
             </>
           )}
         </div>
         
         {error && (
-          <div className="text-red-500 text-sm mb-4">
-            {error}
-          </div>
+          <div className="text-red-500 text-sm mb-4">{error}</div>
         )}
         
         {!hasPermission && !error && (
@@ -346,39 +271,20 @@ const QuaggaScanner = ({ onScan, onClose }) => {
         )}
         
         {scanning && !error && (
-          <div className="bg-green-50 p-2 text-sm border border-green-200 rounded mb-4">
-            Scanner active - looking for barcodes...
-          </div>
-        )}
-        
-        {lastDetection && (
-          <div className="text-sm bg-gray-100 p-2 rounded mb-4">
-            <div className="font-medium">Last detection:</div>
-            <div className="text-xs overflow-hidden text-ellipsis">{originalDetection}</div>
-            <div className="text-xs text-gray-500">Normalized: {lastDetection}</div>
-            <div className="text-xs text-gray-500">
-              Scans: {scannedCodes.length} {scanning ? '(scanning...)' : ''}
-            </div>
+          <div className="bg-green-50 p-2 text-sm border border-green-200 rounded mb-4 flex items-center">
+            <div className="animate-pulse mr-2 h-2 w-2 rounded-full bg-green-500"></div>
+            <span>Scanner active - center the barcode in frame</span>
           </div>
         )}
         
         <div className="text-sm text-gray-500 mb-4">
-          <p>Position the barcode within the scanner frame.</p>
-          <p className="mt-1">For best results:</p>
-          <ul className="list-disc pl-5 mt-1">
-            <li>Ensure good lighting</li>
-            <li>Hold the camera steady</li>
-            <li>Position camera 6-8 inches from barcode</li>
-            <li>Try different angles if needed</li>
+          For fastest scanning:
+          <ul className="list-disc ml-5 mt-1">
+            <li>Hold camera 4-8 inches from barcode</li>
+            <li>Ensure adequate lighting</li>
+            <li>Keep camera steady</li>
           </ul>
         </div>
-
-        <button
-          onClick={handleClose}
-          className="w-full py-2 bg-gray-200 hover:bg-gray-300 rounded-md"
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );

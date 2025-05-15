@@ -385,3 +385,31 @@ export const sortProducts = (products, sortBy = 'name', order = 'asc') => {
   });
 };
 
+export const getProductStats = async () => {
+  try {
+    const response = await api.get('/products/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching product stats:', error);
+    
+    // Return mock data if the API doesn't have this endpoint yet
+    return {
+      activeCount: await getActiveProductCount(),
+      totalSales: 0,
+      customerCount: 0, 
+      revenue: 0
+    };
+  }
+};
+
+// Helper function to calculate active product count from existing endpoints
+const getActiveProductCount = async () => {
+  try {
+    const response = await getProducts({ page: 1, size: 1 });
+    return response.totalCount || 0;
+  } catch (error) {
+    console.error('Error calculating active product count:', error);
+    return 0;
+  }
+};
+

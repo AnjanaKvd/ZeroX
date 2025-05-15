@@ -2,13 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat } from '@zxing/library';
 
-const BarcodeScanner = ({ onScan, onClose }) => {
+const BarcodeScanner = ({ onScan, onClose, onSwitch, onError }) => {
   const [error, setError] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [stream, setStream] = useState(null);
   const videoRef = useRef(null);
   const readerRef = useRef(null);
+  // Track last scan to prevent duplicates in rapid succession
+  const lastScanRef = useRef(null);
+
+  // Handle errors and pass them to the parent component
+  useEffect(() => {
+    if (error && onError) {
+      onError(error);
+    }
+  }, [error, onError]);
 
   // Request camera permissions when component mounts
   useEffect(() => {
@@ -18,42 +27,47 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     const setupCamera = async () => {
       try {
         console.log("BarcodeScanner: Requesting camera access...");
-        // Request camera access first
+        
+        // Use lower resolution for faster processing
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 30 }
           },
           audio: false
         });
         
         if (!mounted) {
-          // If component unmounted during permission request, clean up
           mediaStream.getTracks().forEach(track => track.stop());
           return;
         }
         
         console.log("BarcodeScanner: Camera access granted");
-        // Save stream and update permission state
         setStream(mediaStream);
         setHasPermission(true);
         
-        // Assign stream to video element directly
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
           
-          // Play video and catch any errors
+          // Optimize video playing
           videoRef.current.play().catch(err => {
             console.error("Error playing video:", err);
             setError("Could not start video stream. Please try again.");
           });
           
-          // Wait for video to be ready before starting scanner
-          videoRef.current.onloadedmetadata = () => {
-            console.log("BarcodeScanner: Video metadata loaded, initializing scanner...");
-            initializeReader();
-          };
+          // Use requestAnimationFrame for smoother video loading
+          requestAnimationFrame(() => {
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              initializeReader();
+            } else {
+              videoRef.current.onloadeddata = () => {
+                console.log("BarcodeScanner: Video data loaded, initializing scanner...");
+                initializeReader();
+              };
+            }
+          });
         } else {
           console.error("Video reference not available");
           setError("Camera initialization failed: video element not available");
@@ -70,55 +84,68 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     setupCamera();
 
     return () => {
-      // Clean up on unmount
       mounted = false;
       stopMediaTracks();
     };
   }, []);
 
-  // Initialize ZXing barcode reader
+  // Initialize ZXing barcode reader with optimized settings
   const initializeReader = async () => {
     try {
-      // Don't proceed if we don't have camera permission or video element
       if (!hasPermission || !videoRef.current) {
         console.error("Cannot initialize reader: no permission or no video element");
         return;
       }
       
-      // Create a new reader instance if it doesn't exist
       if (!readerRef.current) {
         console.log("Creating new ZXing reader instance");
         const hints = new Map();
         hints.set(2, true); // Enable try harder mode
         
-        const reader = new BrowserMultiFormatReader(hints);
+        const reader = new BrowserMultiFormatReader(hints, 500); // Reduce scan interval to 500ms
+        
+        // Focus on the most common barcode formats for better performance
         reader.setFormats([
           BarcodeFormat.EAN_13,
           BarcodeFormat.EAN_8,
           BarcodeFormat.UPC_A,
           BarcodeFormat.UPC_E,
-          BarcodeFormat.CODE_39,
-          BarcodeFormat.CODE_128,
-          BarcodeFormat.QR_CODE
+          BarcodeFormat.CODE_128
         ]);
         
         readerRef.current = reader;
       }
       
-      // Start decoding from the video element
       if (videoRef.current && readerRef.current) {
         console.log("BarcodeScanner: Starting barcode scanning...");
         setScanning(true);
         
         try {
-          // Use the video element directly
           await readerRef.current.decodeFromVideoElement(videoRef.current, (result, error) => {
             if (result) {
               const scannedCode = result.getText();
+              
+              // Don't process the same code scanned within 2 seconds
+              if (lastScanRef.current === scannedCode && 
+                  (Date.now() - lastScanRef.current.timestamp < 2000)) {
+                return;
+              }
+              
               console.log('Barcode scanned:', scannedCode);
+              
+              // Save the scan with timestamp
+              lastScanRef.current = {
+                code: scannedCode,
+                timestamp: Date.now()
+              };
+              
+              // Immediate feedback
+              navigator.vibrate && navigator.vibrate(100);
+              
+              // Immediately accept the code - no multiple scan validation
               stopMediaTracks();
               onScan(scannedCode);
-              onClose(); // Close the scanner after successful scan
+              onClose();
             }
             
             if (error && error.name !== 'NotFoundException') {
@@ -143,14 +170,12 @@ const BarcodeScanner = ({ onScan, onClose }) => {
   // Function to properly stop all media tracks
   const stopMediaTracks = () => {
     try {
-      // Stop the ZXing reader
       if (readerRef.current) {
         readerRef.current.reset();
         readerRef.current = null;
         console.log('ZXing reader reset');
       }
       
-      // Stop the saved stream
       if (stream) {
         stream.getTracks().forEach(track => {
           track.stop();
@@ -159,7 +184,6 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         setStream(null);
       }
       
-      // Additionally, check video element
       if (videoRef.current && videoRef.current.srcObject) {
         const tracks = videoRef.current.srcObject.getTracks();
         tracks.forEach(track => {
@@ -168,19 +192,6 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         });
         videoRef.current.srcObject = null;
       }
-      
-      // Safety check for any other video elements
-      const videoElements = document.querySelectorAll('video');
-      videoElements.forEach(video => {
-        if (video.srcObject && video !== videoRef.current) {
-          const tracks = video.srcObject.getTracks();
-          tracks.forEach(track => {
-            track.stop();
-            console.log('Media track stopped from other video element:', track.kind);
-          });
-          video.srcObject = null;
-        }
-      });
       
       setScanning(false);
     } catch (error) {
@@ -222,6 +233,10 @@ const BarcodeScanner = ({ onScan, onClose }) => {
                 muted
                 autoPlay
               />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {/* Scan guide line for better UX */}
+                <div className="w-full h-2 bg-red-500 opacity-50"></div>
+              </div>
               <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none">
                 <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-blue-500"></div>
                 <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-blue-500"></div>
@@ -243,27 +258,20 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         )}
         
         {scanning && !error && (
-          <div className="bg-green-50 p-2 text-sm border border-green-200 rounded mb-4">
-            Scanner active - looking for barcodes...
+          <div className="bg-green-50 p-2 text-sm border border-green-200 rounded mb-4 flex items-center">
+            <div className="animate-pulse mr-2 h-2 w-2 rounded-full bg-green-500"></div>
+            <span>Scanner active - center the barcode in frame</span>
           </div>
         )}
         
         <div className="text-sm text-gray-500 mb-4">
-          <p>Position the barcode within the scanner frame.</p>
-          <p className="mt-1">For best results:</p>
-          <ul className="list-disc pl-5 mt-1">
-            <li>Ensure good lighting</li>
-            <li>Hold the camera steady</li>
-            <li>Position camera 6-8 inches from barcode</li>
+          For fastest scanning:
+          <ul className="list-disc ml-5 mt-1">
+            <li>Hold camera 4-8 inches from barcode</li>
+            <li>Ensure adequate lighting</li>
+            <li>Keep camera steady</li>
           </ul>
         </div>
-
-        <button
-          onClick={handleClose}
-          className="w-full py-2 bg-gray-200 hover:bg-gray-300 rounded-md"
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );

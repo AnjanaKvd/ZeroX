@@ -14,39 +14,34 @@ const BarcodeInput = ({
 }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scannerType, setScannerType] = useState('react-qr-scanner'); // or 'quagga'
-  const [scannedResult, setScannedResult] = useState(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [scanError, setScanError] = useState(null);
 
   const handleScan = (scannedCode) => {
     if (scannedCode && scannedCode.trim()) {
       console.log('BarcodeInput received code:', scannedCode);
-      const formattedCode = normalizeBarcode(scannedCode.trim());
       
-      // Instead of immediately applying the code, store it and show confirmation
-      setScannedResult(formattedCode);
-      setShowConfirmation(true);
-      setIsScanning(false); // Close the scanner
+      // Process and apply the barcode immediately
+      const formattedCode = normalizeBarcode(scannedCode.trim());
+      onChange(formattedCode);
+      
+      // Flash the input field to show success
+      const inputEl = document.querySelector('input[type="text"]');
+      if (inputEl) {
+        inputEl.classList.add('bg-green-100');
+        setTimeout(() => {
+          inputEl.classList.remove('bg-green-100');
+        }, 300);
+      }
+      
+      setIsScanning(false);
+      setScanError(null);
+    } else {
+      setScanError('Invalid barcode scanned. Please try again.');
     }
   };
 
-  // Confirm and apply the scanned code
-  const confirmScan = () => {
-    onChange(scannedResult);
-    setShowConfirmation(false);
-    setScannedResult(null);
-  };
-
-  // Cancel the scan result
-  const cancelScan = () => {
-    setShowConfirmation(false);
-    setScannedResult(null);
-  };
-
-  // Start scanning again
-  const rescan = () => {
-    setShowConfirmation(false);
-    setScannedResult(null);
-    startScanning(null);
+  const handleScanError = (errorMessage) => {
+    setScanError(errorMessage);
   };
 
   const handleInputChange = (e) => {
@@ -60,6 +55,7 @@ const BarcodeInput = ({
     if (disabled) return;
     setScannerType(type);
     setIsScanning(true);
+    setScanError(null);
   };
 
   const switchScannerType = () => {
@@ -81,7 +77,7 @@ const BarcodeInput = ({
           value={value}
           onChange={handleInputChange}
           placeholder={placeholder}
-          className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
+          className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500 transition-colors duration-200"
           disabled={disabled}
           required={required}
           // Open scanner when the input field is clicked if empty
@@ -117,49 +113,9 @@ const BarcodeInput = ({
           </button>
         </div>
       </div>
-
-      {/* Confirmation dialog for scanned result */}
-      {showConfirmation && scannedResult && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Confirm Scanned Barcode</h3>
-              <button 
-                onClick={cancelScan}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <p className="mb-2">Please confirm that this is the correct barcode:</p>
-              <div className="p-4 bg-gray-100 rounded-md text-center">
-                <span className="text-xl font-bold">{scannedResult}</span>
-              </div>
-              <p className="mt-2 text-sm text-gray-500">
-                Verify that this matches the barcode on the product before using it.
-              </p>
-            </div>
-            
-            <div className="flex space-x-2">
-              <button
-                onClick={rescan}
-                className="flex-1 py-2 bg-gray-200 hover:bg-gray-300 rounded-md"
-              >
-                Scan Again
-              </button>
-              <button
-                onClick={confirmScan}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Use This Code
-              </button>
-            </div>
-          </div>
-        </div>
+      
+      {scanError && (
+        <div className="mt-1 text-sm text-red-600">{scanError}</div>
       )}
 
       {isScanning && (
@@ -169,11 +125,13 @@ const BarcodeInput = ({
               onScan={handleScan} 
               onClose={() => setIsScanning(false)}
               onSwitch={switchScannerType}
+              onError={handleScanError}
             />
           ) : (
             <QuaggaScanner 
               onScan={handleScan} 
-              onClose={() => setIsScanning(false)} 
+              onClose={() => setIsScanning(false)}
+              onError={handleScanError}
             />
           )}
         </>

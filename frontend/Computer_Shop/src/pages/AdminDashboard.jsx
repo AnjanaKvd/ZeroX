@@ -4,10 +4,12 @@ import {
   getProducts, 
   deleteProduct,
   createProduct,
-  updateProduct
+  updateProduct,
+  getProductStats
 } from '../services/productService';
 import ProductModal from '../components/admin/ProductModal';
 import ConfirmModal from '../components/admin/ConfirmModal';
+import DashboardStats from '../components/admin/DashboardStats';
 import Pagination from '../components/common/Pagination';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { ErrorMessage} from '../components/auth/FormElements';
@@ -19,6 +21,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalItems, setTotalItems] = useState(0);
+  const [productStats, setProductStats] = useState({});
   const [modalState, setModalState] = useState({
     showAdd: false,
     showEdit: false,
@@ -53,13 +56,23 @@ const AdminDashboard = () => {
     }
   }, [filters]);
 
+  const fetchProductStats = useCallback(async () => {
+    try {
+      const stats = await getProductStats();
+      setProductStats(stats);
+    } catch (err) {
+      console.error("Error fetching product stats:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchProducts();
+      fetchProductStats();
     }, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [fetchProducts]);
+  }, [fetchProducts, fetchProductStats]);
 
   const handleSearchChange = (e) => {
     setFilters(prev => ({ ...prev, query: e.target.value, page: 1 }));
@@ -132,6 +145,9 @@ const AdminDashboard = () => {
           Add Product
         </button>
       </div>
+
+      {/* Dashboard Stats */}
+      <DashboardStats productStats={productStats} />
 
       {/* Search and Filters */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
