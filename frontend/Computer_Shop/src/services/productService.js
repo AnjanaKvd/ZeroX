@@ -1,6 +1,7 @@
 import api from './api';
 import { getFullImageUrl } from '../utils/imageUtils';
-import { getUserCount } from './authService';
+import { getUserCount, getCustomerCount } from './authService';
+import { getAllOrders } from './orderService';
 
 export const getProducts = async (params = {}) => {
   try {
@@ -386,6 +387,63 @@ export const sortProducts = (products, sortBy = 'name', order = 'asc') => {
   });
 };
 
+// Helper function to get total sales count from orders
+const getTotalSalesCount = async () => {
+  try {
+    // Fetch all orders from the API
+    const ordersData = await getAllOrders();
+    
+    // Check if orders data is available
+    if (ordersData && ordersData.content && Array.isArray(ordersData.content)) {
+      // Count only DELIVERED orders
+      const deliveredOrders = ordersData.content.filter(order => 
+        order.status === 'DELIVERED'
+      );
+      
+      // Return the count of delivered orders
+      return deliveredOrders.length;
+    }
+    
+    return 0;
+  } catch (error) {
+    console.error('Error calculating total sales count:', error);
+    return 0; // Return 0 as fallback
+  }
+};
+
+// Helper function to calculate total revenue from delivered orders
+const getTotalRevenue = async () => {
+  try {
+    // Fetch all orders from the API
+    const ordersData = await getAllOrders();
+    
+    // Check if orders data is available
+    if (ordersData && ordersData.content && Array.isArray(ordersData.content)) {
+      // Filter for delivered orders only
+      const deliveredOrders = ordersData.content.filter(order => 
+        order.status === 'DELIVERED'
+      );
+      
+      // Calculate total revenue from finalAmount field
+      const totalRevenue = deliveredOrders.reduce((sum, order) => {
+        // Parse the finalAmount as float, or use 0 if it's not available
+        const orderAmount = parseFloat(order.finalAmount || 0);
+        return sum + (isNaN(orderAmount) ? 0 : orderAmount);
+      }, 0);
+      
+      console.log('Calculated total revenue from delivered orders:', totalRevenue);
+      
+      // Return total revenue with 2 decimal places
+      return parseFloat(totalRevenue.toFixed(2));
+    }
+    
+    return 0;
+  } catch (error) {
+    console.error('Error calculating total revenue:', error);
+    return 0; // Return 0 as fallback
+  }
+};
+
 export const getProductStats = async () => {
   try {
     const response = await api.get('/products/stats');
@@ -393,15 +451,21 @@ export const getProductStats = async () => {
   } catch (error) {
     console.error('Error fetching product stats:', error);
     
-    // Get the user count from authService
-    const userCount = await getUserCount();
+    // Get the customer count
+    const customerCount = await getCustomerCount();
+    
+    // Get total sales count from orders
+    const totalSales = await getTotalSalesCount();
+    
+    // Get total revenue from delivered orders
+    const revenue = await getTotalRevenue();
     
     // Return mock data since the API endpoint doesn't exist or has an error
     return {
       activeCount: await getActiveProductCountSafe(),
-      totalSales: 0,
-      customerCount: userCount, 
-      revenue: 0
+      totalSales: totalSales,
+      customerCount: customerCount, 
+      revenue: revenue
     };
   }
 };
