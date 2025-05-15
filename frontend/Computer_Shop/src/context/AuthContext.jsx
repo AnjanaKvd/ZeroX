@@ -164,10 +164,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       
       const formattedUserData = formatUserData(userData);
-      
+
       // Store user data in localStorage for persistence
       localStorage.setItem('userData', JSON.stringify(formattedUserData));
-      
       setUser(formattedUserData);
       console.log('User logged in with roles:', formattedUserData.roles);
       
@@ -191,7 +190,6 @@ export const AuthProvider = ({ children }) => {
       
       // Store user data in localStorage for persistence
       localStorage.setItem('userData', JSON.stringify(formattedUserData));
-      
       setUser(formattedUserData);
       handleRoleRedirection(formattedUserData.roles);
       return { success: true };
