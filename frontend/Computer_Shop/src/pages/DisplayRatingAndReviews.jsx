@@ -6,28 +6,51 @@ const DisplayRatingAndReviews = ({ productId, refresh, onViewAllReviews }) => {
   const [loading, setLoading] = useState(true);
   const [averageRating, setAverageRating] = useState(0);
   const [totalVotes, setTotalVotes] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAverageRating = async () => {
       try {
+        setLoading(true);
+        console.log("Fetching rating for product ID:", productId);
+        
+        if (!productId) {
+          console.error("Missing productId for rating fetch");
+          setError("Unable to load ratings: Missing product ID");
+          setLoading(false);
+          return;
+        }
+        
         const response = await fetch(
           `/api/reviews/product/${productId}/rating`
         );
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch rating: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log("Rating data:", data);
         setAverageRating(data.averageRating || 0);
         setTotalVotes(data.numberOfReviews || 0);
       } catch (error) {
         console.error("Error displaying average rating:", error);
+        setError("Failed to load ratings. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAverageRating();
+    if (productId) {
+      fetchAverageRating();
+    }
   }, [productId, refresh]);
 
   if (loading)
     return <p className="text-center text-gray-400">Loading rating...</p>;
+    
+  if (error)
+    return <p className="text-center text-red-400">{error}</p>;
 
   return (
     <div className="bg-white rounded-2xl shadow-md px-6 py-4 w-full max-w-sm mx-auto">

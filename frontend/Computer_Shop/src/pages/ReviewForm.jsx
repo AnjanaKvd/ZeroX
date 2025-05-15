@@ -13,14 +13,17 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
     e.preventDefault();
     setError("");
 
+    if (!productId) {
+      setError("Cannot submit review: Missing product ID");
+      return;
+    }
+
     if (rating === 0) {
       setError("Please select a rating");
       return;
     }
 
     const token = localStorage.getItem("token");
-
-    console.log("token", token);
     if (!token) {
       setError("Please login to submit a review");
       return;
@@ -29,11 +32,13 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
     setIsSubmitting(true);
 
     try {
+      console.log("Submitting review for product ID:", productId);
+      
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           productId,
@@ -41,31 +46,48 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
           comment,
         }),
       });
-      console.log("Submitting review with:", { productId, rating, comment });
 
       if (response.ok) {
         const data = await response.json();
-        onReviewSubmit(data);
+        if (onReviewSubmit) {
+          onReviewSubmit(data);
+        }
         setRating(0);
         setComment("");
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to submit review");
+        // Parse error response from the backend
+        try {
+          const errorData = await response.json();
+          if (
+            errorData.message &&
+            errorData.message.includes("already reviewed")
+          ) {
+            setError("You have already reviewed this product.");
+          } else {
+            setError(errorData.message || "Failed to submit review");
+          }
+        } catch (jsonError) {
+          setError(`Review submission failed: ${response.status}`);
+        }
       }
     } catch (err) {
-      setError("An error occurred while submitting your review");
+      // Catching fetch or network errors
+      console.error("Submit Error:", err);
+      setError("Network error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
+    <div className="p-6 bg-slate-50 rounded-lg">
+      <h3 className="text-lg font-semibold mb-4">
+        Add your review for this product
+      </h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Rating
+            Select your rating
           </label>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((num) => (
@@ -93,19 +115,19 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
             ))}
           </div>
         </div>
-
+        <br />
         <div className="mb-4">
           <label
             htmlFor="comment"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Your Review
+            Write a comment
           </label>
           <textarea
             id="comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your comment for this product..."
+            placeholder="Share your thoughts about this product..."
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             rows="4"
           />
@@ -128,3 +150,4 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
 };
 
 export default ReviewForm;
+

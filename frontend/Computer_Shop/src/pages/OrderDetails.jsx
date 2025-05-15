@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getOrderById, cancelOrder } from '../services/orderService';
+import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
+  const navigate = useNavigate();
+  const { showToast } = useContext(ToastContext);
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,17 +34,24 @@ const OrderDetails = () => {
   }, [orderId]);
   
   const handleCancelOrder = async () => {
+    // Only allow cancellation of pending orders
+    if (order.status !== 'PENDING') {
+      showToast('Only pending orders can be cancelled', 'error');
+      return;
+    }
+    
     if (!window.confirm('Are you sure you want to cancel this order?')) {
       return;
     }
     
     setCancelling(true);
     try {
-      const updatedOrder = await cancelOrder(orderId);
-      setOrder(updatedOrder);
+      await cancelOrder(orderId);
+      setOrder({...order, status: 'CANCELLED'});
+      showToast('Order cancelled successfully', 'success');
     } catch (err) {
-      console.error('Error cancelling order', err);
-      setError('Failed to cancel order. Please try again later.');
+      console.error('Error cancelling order:', err);
+      showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setCancelling(false);
     }
@@ -66,11 +77,9 @@ const OrderDetails = () => {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           <LoadingSpinner />
         </main>
-        <Footer />
       </div>
     );
   }
@@ -78,29 +87,26 @@ const OrderDetails = () => {
   if (error || !order) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             {error || 'Order not found'}
           </div>
           <div className="mt-6 text-center">
-            <Link to="/orders" className="text-blue-600 hover:underline">
+            <Link to="/order-history" className="text-blue-600 hover:underline">
               ← Back to Orders
             </Link>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link to="/orders" className="text-blue-600 hover:underline">
+          <Link to="/order-history" className="text-blue-600 hover:underline">
             ← Back to Orders
           </Link>
         </div>
@@ -126,8 +132,12 @@ const OrderDetails = () => {
                   <span className="ml-2 font-medium">{new Date(order.createdAt).toLocaleString()}</span>
                 </div>
                 <div className="mb-2">
+                  <span className="text-gray-600">Customer Email:</span>
+                  <span className="ml-2 font-medium">{order.customerEmail}</span>
+                </div>
+                <div className="mb-2">
                   <span className="text-gray-600">Payment Method:</span>
-                  <span className="ml-2 font-medium">{order.paymentMethod.replace('_', ' ')}</span>
+                  <span className="ml-2 font-medium">{order.paymentMethod}</span>
                 </div>
                 {order.paymentId && (
                   <div>
@@ -160,7 +170,7 @@ const OrderDetails = () => {
                   <th className="text-left p-4">Product</th>
                   <th className="text-center p-4">Price</th>
                   <th className="text-center p-4">Quantity</th>
-                  <th className="text-right p-4">Total</th>
+                  <th className="text-right p-4">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,25 +184,13 @@ const OrderDetails = () => {
                         <span>{item.productName}</span>
                       </div>
                     </td>
-                    <td className="text-center p-4">${item.unitPrice.toFixed(2)}</td>
+                    <td className="text-center p-4">${item.priceAtPurchase.toFixed(2)}</td>
                     <td className="text-center p-4">{item.quantity}</td>
-                    <td className="text-right p-4 font-medium">${item.totalPrice.toFixed(2)}</td>
+                    <td className="text-right p-4 font-medium">${item.subtotal.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="bg-gray-50">
-                <tr className="border-t border-gray-200">
-                  <td colSpan="3" className="text-right p-4 font-medium">Subtotal</td>
-                  <td className="text-right p-4 font-medium">${order.totalAmount.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td colSpan="3" className="text-right p-4 font-medium">Shipping</td>
-                  <td className="text-right p-4 font-medium">$0.00</td>
-                </tr>
-                <tr>
-                  <td colSpan="3" className="text-right p-4 font-medium">Tax</td>
-                  <td className="text-right p-4 font-medium">$0.00</td>
-                </tr>
                 <tr className="border-t border-gray-200">
                   <td colSpan="3" className="text-right p-4 font-bold">Total</td>
                   <td className="text-right p-4 font-bold">${order.totalAmount.toFixed(2)}</td>
@@ -201,21 +199,60 @@ const OrderDetails = () => {
             </table>
           </div>
           
-          {order.status === 'PENDING' && (
-            <div className="text-center">
+          <div className="space-y-2 mt-4">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span><PriceDisplay amount={order.subtotal} /></span>
+            </div>
+            
+            {order.couponCode && (
+              <div className="flex justify-between text-green-600">
+                <span>Coupon ({order.couponCode}):</span>
+                <span>-<PriceDisplay amount={order.discountAmount || 0} /></span>
+              </div>
+            )}
+            
+            <div className="flex justify-between">
+              <span>Shipping:</span>
+              <span><PriceDisplay amount={order.shippingCost} /></span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span>Tax:</span>
+              <span><PriceDisplay amount={order.taxAmount} /></span>
+            </div>
+            
+            <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200">
+              <span>Total:</span>
+              <span><PriceDisplay amount={order.totalAmount} /></span>
+            </div>
+          </div>
+          
+          <div className="flex justify-end mt-8">
+            {order.status === 'PENDING' ? (
               <button
                 onClick={handleCancelOrder}
                 disabled={cancelling}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-md disabled:opacity-70"
+                className={`px-4 py-2 rounded-md ${
+                  cancelling
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
               >
                 {cancelling ? 'Cancelling...' : 'Cancel Order'}
               </button>
-            </div>
-          )}
+            ) : order.status !== 'CANCELLED' && order.status !== 'DELIVERED' ? (
+              <button
+                disabled={true}
+                className="px-4 py-2 rounded-md bg-gray-300 text-gray-500 cursor-not-allowed"
+                title="Only pending orders can be cancelled"
+              >
+                Cancel Order
+              </button>
+            ) : null}
+          </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

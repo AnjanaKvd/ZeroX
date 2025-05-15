@@ -1,15 +1,19 @@
 package com.zerox.csm.service;
 
+import com.zerox.csm.dto.CouponDto;
 import com.zerox.csm.dto.OrderDto.OrderItemRequest;
 import com.zerox.csm.dto.OrderDto.OrderRequest;
 import com.zerox.csm.dto.OrderDto.OrderResponse;
 import com.zerox.csm.dto.OrderDto.OrderItemResponse;
 import com.zerox.csm.exception.InsufficientStockException;
 import com.zerox.csm.exception.ResourceNotFoundException;
+import com.zerox.csm.exception.ValidationException;
 import com.zerox.csm.model.*;
+import com.zerox.csm.repository.CustomerAddressRepository;
 import com.zerox.csm.repository.OrderRepository;
 import com.zerox.csm.repository.ProductRepository;
 import com.zerox.csm.repository.UserRepository;
+import com.zerox.csm.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +34,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final CustomerAddressRepository addressRepository;
+    private final CouponRepository couponRepository;
+    private final CouponService couponService;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
@@ -37,25 +44,90 @@ public class OrderService {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // 2. Validate stock availability
+        // 2. Handle address
+        CustomerAddress address;
+        if (request.addressId() != null) {
+            // Use existing address
+            address = addressRepository.findById(request.addressId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+        } else if (request.shippingAddress() != null) {
+            // Create new address for this order
+            address = CustomerAddress.builder()
+                    .user(user)
+                    .fullName(request.shippingAddress().fullName())
+                    .addressLine1(request.shippingAddress().addressLine1())
+                    .addressLine2(request.shippingAddress().addressLine2())
+                    .city(request.shippingAddress().city())
+                    .state(request.shippingAddress().state())
+                    .zipCode(request.shippingAddress().zipCode())
+                    .country(request.shippingAddress().country())
+                    .isDefault(false)
+                    .build();
+
+            address = addressRepository.save(address);
+        } else {
+            throw new IllegalArgumentException("Either addressId or shippingAddress must be provided");
+        }
+
+        // 3. Validate stock availability
         List<OrderItem> items = validateAndCreateItems(request.items());
 
-        // 3. Calculate total
+        // 4. Calculate total
         BigDecimal total = calculateTotal(items);
+        
+        // 5. Handle coupon if provided
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal finalAmount = total;
+        Coupon coupon = null;
+        
+        if (request.couponCode() != null && !request.couponCode().isEmpty()) {
+            coupon = couponRepository.findByCode(request.couponCode())
+                    .orElseThrow(() -> new ValidationException("Invalid coupon code"));
+            
+            // Validate coupon
+            CouponDto.CouponValidationRequest validationRequest = new CouponDto.CouponValidationRequest(
+                    request.couponCode(),
+                    total,
+                    user.getUserId()
+            );
+            
+            CouponDto.CouponValidationResponse validationResponse = 
+                    couponService.validateCoupon(validationRequest);
+            
+            if (!validationResponse.valid()) {
+                throw new ValidationException(validationResponse.message());
+            }
+            
+            discountAmount = validationResponse.discountAmount();
+            finalAmount = total.subtract(discountAmount);
+        }
 
-        // 4. Create order
+        // 6. Create order
         Order order = Order.builder()
                 .user(user)
                 .items(items)
                 .totalAmount(total)
+                .discountAmount(discountAmount)
+                .finalAmount(finalAmount)
+                .coupon(coupon)
+                .couponCode(request.couponCode())
                 .status(OrderStatus.PENDING)
+                .paymentMethod(request.paymentMethod())
                 .createdAt(LocalDateTime.now())
+                .shippingAddress(address)
                 .build();
 
         // Set back-reference to order
         items.forEach(item -> item.setOrder(order));
+        
+        Order savedOrder = orderRepository.save(order);
+        
+        // 7. Record coupon usage if used
+        if (coupon != null) {
+            couponService.recordCouponUsage(coupon, user, savedOrder, discountAmount);
+        }
 
-        return mapToOrderResponse(orderRepository.save(order));
+        return mapToOrderResponse(savedOrder);
     }
 
     private List<OrderItem> validateAndCreateItems(List<OrderItemRequest> itemsRequest) {
@@ -102,6 +174,9 @@ public class OrderService {
                 order.getUser().getEmail(),
                 itemResponses,
                 order.getTotalAmount(),
+                order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO,
+                order.getFinalAmount(),
+                order.getCouponCode(),
                 order.getStatus(),
                 order.getPaymentMethod(),
                 order.getPaymentId(),

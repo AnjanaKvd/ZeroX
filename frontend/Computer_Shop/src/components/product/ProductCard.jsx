@@ -5,6 +5,7 @@ import { FiPackage } from 'react-icons/fi';
 import { getProductImageUrl } from '../../utils/imageUtils';
 import { useTheme } from '../../context/ThemeContext';
 import { Spinner } from '../common/LoadingSpinner/Spinner';
+import PriceDisplay from '../common/PriceDisplay';
 
 // Data URI for a simple gray square with text (doesn't require network)
 const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -79,7 +80,7 @@ const ProductCard = ({ product }) => {
 
           <div className="flex items-center justify-between">
             <span className="text-xl font-bold text-primary">
-              ${Number(product.price).toFixed(2)}
+              <PriceDisplay amount={product.price} />
             </span>
             
             <button

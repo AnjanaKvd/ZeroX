@@ -14,7 +14,9 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [discountCode, setDiscountCode] = useState(null);
+  const [couponCode, setCouponCode] = useState(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [discountedTotal, setDiscountedTotal] = useState(0);
   const { cartAdded, cartRemoved, success, error } = useToast();
   
   // Refs to track cart operations
@@ -32,6 +34,20 @@ export const CartProvider = ({ children }) => {
         setCartItems([]);
       }
     }
+    
+    // Load coupon details if available
+    const savedCoupon = localStorage.getItem('coupon');
+    if (savedCoupon) {
+      try {
+        const parsedCoupon = JSON.parse(savedCoupon);
+        setCouponCode(parsedCoupon.code);
+        setCouponDiscount(parsedCoupon.discount);
+      } catch (error) {
+        console.error('Failed to parse coupon from localStorage:', error);
+        setCouponCode(null);
+        setCouponDiscount(0);
+      }
+    }
   }, []);
   
   // Calculate total price whenever cart changes
@@ -41,6 +57,10 @@ export const CartProvider = ({ children }) => {
       0
     );
     setTotalPrice(total);
+    
+    // Calculate discounted total
+    const discountAmount = Math.min(couponDiscount, total);  // Don't allow negative totals
+    setDiscountedTotal(total - discountAmount);
     
     // Save to localStorage
     localStorage.setItem('cart', JSON.stringify(cartItems));
@@ -57,7 +77,7 @@ export const CartProvider = ({ children }) => {
       }
       pendingToastRef.current = null;
     }
-  }, [cartItems, cartAdded, cartRemoved, success]);
+  }, [cartItems, couponDiscount, cartAdded, cartRemoved, success]);
 
   // Add item to cart with proper duplicate handling
   const addToCart = (product) => {
@@ -144,26 +164,58 @@ export const CartProvider = ({ children }) => {
     }
   };
   
-  // Clear cart
+  // Clear cart and coupon
   const clearCart = () => {
     pendingToastRef.current = { 
       type: 'updated', 
       message: 'Cart cleared' 
     };
     setCartItems([]);
+    setCouponCode(null);
+    setCouponDiscount(0);
     localStorage.removeItem('cart');
+    localStorage.removeItem('coupon');
+  };
+  
+  // Apply coupon to cart
+  const applyCoupon = (code, discount) => {
+    setCouponCode(code);
+    setCouponDiscount(discount);
+    
+    // Save coupon to localStorage
+    localStorage.setItem('coupon', JSON.stringify({ code, discount }));
+    
+    pendingToastRef.current = { 
+      type: 'updated', 
+      message: `Coupon ${code} applied` 
+    };
+  };
+  
+  // Remove coupon from cart
+  const removeCoupon = () => {
+    setCouponCode(null);
+    setCouponDiscount(0);
+    localStorage.removeItem('coupon');
+    
+    pendingToastRef.current = { 
+      type: 'updated', 
+      message: 'Coupon removed' 
+    };
   };
 
   return (
     <CartContext.Provider value={{
       cartItems,
       totalPrice,
+      discountedTotal,
       addToCart,
       updateQuantity,
       removeFromCart,
       clearCart,
-      discountCode,
-      setDiscountCode
+      couponCode,
+      couponDiscount,
+      applyCoupon,
+      removeCoupon
     }}>
       {children}
     </CartContext.Provider>

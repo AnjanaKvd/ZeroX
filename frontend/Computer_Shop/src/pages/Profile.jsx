@@ -1,4 +1,3 @@
-
 import { useContext, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AuthContext } from "../context/AuthContext";
@@ -219,7 +218,7 @@ const Profile = () => {
                       </span>
                     </div>
                     <div className="mb-2">
-                      <span className="text-gray-600">Loyalty Points:</span>
+                      <span className="text-gray-600">Reward Points:</span>
                       <span className="ml-2 font-medium">
                         {userData?.loyaltyPoints || 0}
                       </span>
@@ -232,12 +231,26 @@ const Profile = () => {
                 <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="/orders" className="text-blue-600 hover:underline">
+                    <a
+                      href="/order-history"
+                      className="text-blue-600 hover:underline"
+                    >
                       My Orders
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-blue-600 hover:underline">
+                    <a
+                      href="/rewards"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Rewards
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/saved-addresses"
+                      className="text-blue-600 hover:underline"
+                    >
                       Saved Addresses
                     </a>
                   </li>
@@ -506,7 +519,9 @@ const Profile = () => {
                   <div className="bg-white rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-xl font-bold mb-4">Delete Account</h3>
                     <p className="mb-4">
-                      Are you sure you want to delete your account? If you once delete your account then you will lose all your data and access.
+                      Are you sure you want to delete your account? If you once
+                      delete your account then you will lose all your data and
+                      access.
                     </p>
 
                     {deleteError && (

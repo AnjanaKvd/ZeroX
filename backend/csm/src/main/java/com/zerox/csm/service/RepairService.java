@@ -95,7 +95,8 @@ public class RepairService {
                 repairRequest.getTechnicianNotes(),
                 repairRequest.getEstimatedCost(),
                 repairRequest.getServiceFee(),
-                repairRequest.getCreatedAt()
+                repairRequest.getCreatedAt(),
+                repairRequest.getUpdatedAt()
         );
     }
 } 

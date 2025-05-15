@@ -12,9 +12,10 @@ import java.util.UUID;
 
 @Repository
 public interface RepairRequestRepository extends JpaRepository<RepairRequest, UUID> {
-    List<RepairRequest> findByUserUserIdOrderByCreatedAtDesc(UUID userId);
+    //List<RepairRequest> findByUserUserIdOrderByCreatedAtDesc(UUID userId);
     
     Page<RepairRequest> findByStatus(Status status, Pageable pageable);
     
     List<RepairRequest> findByStatusOrderByCreatedAtAsc(Status status);
+    List<RepairRequest> findByUserUserIdOrderByCreatedAtDesc(UUID userId);
 } 
