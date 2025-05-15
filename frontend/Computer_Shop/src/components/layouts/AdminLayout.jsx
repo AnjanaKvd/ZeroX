@@ -26,6 +26,7 @@ const AdminLayout = () => {
     { path: '/admin/orders', label: 'Order Management' },
     { path: '/admin/repairs', label: 'Repair Management' },
     { path: '/admin/users', label: 'User Management' },
+    { path: '/admin/reports', label: 'Reports' },
     { path: '/admin/settings', label: 'System Settings' }
   ];
 
