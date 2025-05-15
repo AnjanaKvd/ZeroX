@@ -25,9 +25,27 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Format user data to ensure roles are consistent
+  const formatUserData = (userData) => {
+    // Check if we have a role property but empty roles array
+    if (userData.role && (!userData.roles || userData.roles.length === 0)) {
+      return {
+        ...userData,
+        roles: [userData.role]
+      };
+    }
+    
+    // Otherwise just ensure roles exists as an array
+    return {
+      ...userData,
+      roles: userData.roles || []
+    };
+  };
+
   const handleAuthError = useCallback((error) => {
     console.error('Authentication Error:', error);
     localStorage.removeItem('token');
+    localStorage.removeItem('userData'); // Clear userData as well
     setUser(null);
     setError(error.message || 'Authentication failed');
     
@@ -41,84 +59,79 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserProfile = useCallback(async () => {
     try {
-      if (user) {
-        return user;
-      }
-      
       const token = localStorage.getItem('token');
+      const storedUserData = localStorage.getItem('userData');
       
       if (!token) {
         return null;
       }
 
+      // Validate token expiry
       try {
         const decoded = jwtDecode(token);
         const currentTime = Date.now() / 1000;
         
         if (decoded.exp && decoded.exp < currentTime) {
           localStorage.removeItem('token');
+          localStorage.removeItem('userData');
           return null;
         }
       } catch (error) {
         localStorage.removeItem('token');
+        localStorage.removeItem('userData');
         return null;
       }
 
+      // Try to use cached userData first for faster loading
+      if (storedUserData) {
+        try {
+          const parsedUserData = JSON.parse(storedUserData);
+          return formatUserData(parsedUserData);
+        } catch (e) {
+          console.error('Error parsing stored user data:', e);
+          // Fall through to the API call
+        }
+      }
+
+      // Fetch fresh data if needed
       const userData = await getUserProfile();
+      const formattedUserData = formatUserData(userData);
       
-      return {
-        ...userData,
-        roles: userData.roles || []
-      };
+      // Cache the user data
+      localStorage.setItem('userData', JSON.stringify(formattedUserData));
+      
+      return formattedUserData;
     } catch (error) {
       console.error('Error in loadUserProfile:', error);
       handleAuthError(error);
       return null;
     }
-  }, [user, handleAuthError]);
+  }, [handleAuthError]);
 
   const initializeAuth = useCallback(async () => {
-    // Skip if we're already initialized
-    if (!isLoading && user) {
-      return;
-    }
-    
     try {
-      // Avoid API calls on pages where auth isn't critical
-      const isPublicPage = location.pathname === '/' || 
-                            location.pathname === '/products' ||
-                            location.pathname.startsWith('/product/');
-                            
-      // Skip profile check on public pages if we've already done it once
-      const skipProfileFetch = sessionStorage.getItem('skipProfileFetch') === 'true';
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
       
-      if (skipProfileFetch && isPublicPage) {
+      if (!token) {
         setIsLoading(false);
         return;
       }
       
+      // Always try to load user profile when token exists
       const userData = await loadUserProfile();
+      
       if (userData) {
         setUser(userData);
-        
-        // Only redirect if user just logged in
-        const justLoggedIn = sessionStorage.getItem('justLoggedIn') === 'true';
-        if (justLoggedIn) {
-          sessionStorage.removeItem('justLoggedIn');
-          handleRoleRedirection(userData.roles);
-        }
-      }
-      
-      // Mark that we've checked the profile
-      if (isPublicPage) {
-        sessionStorage.setItem('skipProfileFetch', 'true');
+        console.log('Authentication initialized with roles:', userData.roles);
       }
     } catch (error) {
+      console.error('Error initializing auth:', error);
       handleAuthError(error);
     } finally {
       setIsLoading(false);
     }
-  }, [loadUserProfile, handleAuthError, location.pathname, isLoading, user]);
+  }, [loadUserProfile, handleAuthError]);
 
   useEffect(() => {
     initializeAuth();
@@ -149,15 +162,14 @@ export const AuthProvider = ({ children }) => {
       const { token, ...userData } = loginResponse;
       
       localStorage.setItem('token', token);
-      sessionStorage.setItem('justLoggedIn', 'true');
-      sessionStorage.removeItem('skipProfileFetch');
       
-      const authenticatedUser = {
-        ...userData,
-        roles: userData.role ? [userData.role] : []
-      };
+      const formattedUserData = formatUserData(userData);
       
-      setUser(authenticatedUser);
+      // Store user data in localStorage for persistence
+      localStorage.setItem('userData', JSON.stringify(formattedUserData));
+      
+      setUser(formattedUserData);
+      console.log('User logged in with roles:', formattedUserData.roles);
       
       return { success: true };
     } catch (error) {
@@ -167,7 +179,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [handleAuthError]);
+  }, [handleAuthError, formatUserData]);
 
   const register = useCallback(async (userData) => {
     try {
@@ -175,13 +187,13 @@ export const AuthProvider = ({ children }) => {
       const { token, ...newUser } = await apiRegister(userData);
       localStorage.setItem('token', token);
       
-      const registeredUser = {
-        ...newUser,
-        roles: newUser.roles || []
-      };
+      const formattedUserData = formatUserData(newUser);
       
-      setUser(registeredUser);
-      handleRoleRedirection(registeredUser.roles);
+      // Store user data in localStorage for persistence
+      localStorage.setItem('userData', JSON.stringify(formattedUserData));
+      
+      setUser(formattedUserData);
+      handleRoleRedirection(formattedUserData.roles);
       return { success: true };
     } catch (error) {
       handleAuthError(error);
@@ -189,7 +201,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [handleAuthError, handleRoleRedirection]);
+  }, [handleAuthError, handleRoleRedirection, formatUserData]);
 
   const logout = useCallback(async () => {
     try {
@@ -199,6 +211,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout Error:', error);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('userData');
       setUser(null);
       navigate('/login', { replace: true });
       setIsLoading(false);
@@ -206,8 +219,17 @@ export const AuthProvider = ({ children }) => {
   }, [navigate]);
 
   const hasRole = useCallback(
-    (requiredRole) => user?.roles?.includes(requiredRole) || false,
-    [user?.roles]
+    (requiredRole) => {
+      if (!user) return false;
+      
+      // Handle the case where role is a string but roles is empty
+      if (user.role === requiredRole && (!user.roles || user.roles.length === 0)) {
+        return true;
+      }
+      
+      return user.roles?.includes(requiredRole) || false;
+    },
+    [user]
   );
 
   return (
