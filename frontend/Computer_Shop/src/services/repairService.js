@@ -49,20 +49,37 @@ export const getUserRepairRequests = async () => {
 
 /**
  * Get all repair requests (for admins or technicians).
+ * @param {Object} filters - Optional filters for the API request (status, query, page, etc.).
  * @returns {Promise<Array>} - List of all repair requests.
  */
-export const getAllRepairRequests = async () => {
+export const getAllRepairRequests = async (filters = {}) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
       throw new Error("Authentication token is missing. Please log in again.");
     }
 
-    const response = await api.get("/repairs", {
+    const queryParams = new URLSearchParams();
+    
+    // Add each filter to query parameters
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.query) queryParams.append('query', filters.query);
+    if (filters.page) queryParams.append('page', filters.page - 1); // Backend pagination often starts at 0
+    if (filters.pageSize) queryParams.append('size', filters.pageSize);
+    if (filters.sortBy) queryParams.append('sortBy', filters.sortBy);
+    if (filters.sortDirection) queryParams.append('sortDir', filters.sortDirection);
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `/repairs?${queryString}` : '/repairs';
+
+    console.log('API request URL:', url); // Debugging
+
+    const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+    
     return response.data;
   } catch (error) {
     console.error("Error fetching all repair requests:", error);
@@ -156,11 +173,37 @@ export const updateRepairDetails = async (repairId, updateData) => {
       throw new Error("Authentication token is missing. Please log in again.");
     }
 
-    const response = await api.put(`/repairs/${repairId}`, updateData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    // If status is included in updateData, handle it properly
+    const { status, ...otherData } = updateData;
+    
+    let response;
+    
+    // If status is provided, use it to update the status first
+    if (status) {
+      // First update the status
+      await api.patch(`/repairs/${repairId}/status?status=${status}`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+    
+    // Then update the other details
+    if (Object.keys(otherData).length > 0) {
+      response = await api.put(`/repairs/${repairId}`, otherData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } else if (status) {
+      // If only status was updated, get the current repair
+      response = await api.get(`/repairs/${repairId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+    
     return response.data;
   } catch (error) {
     console.error("Error updating repair details:", error);
@@ -187,6 +230,30 @@ export const getTechnicianRepairs = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching technician repairs:", error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a repair request by ID.
+ * @param {string} repairId - The ID of the repair request to delete.
+ * @returns {Promise<void>} - A promise that resolves when the repair request is deleted.
+ */
+export const deleteRepairRequest = async (repairId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Authentication token is missing. Please log in again.");
+    }
+
+    await api.delete(`/repairs/${repairId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return;
+  } catch (error) {
+    console.error("Error deleting repair request:", error);
     throw error;
   }
 };
