@@ -16,6 +16,7 @@
     "@zxing/library": "^0.21.3",
     "axios": "^1.6.7",
     "bootstrap": "^5.3.3",
+    "framer-motion": "^12.11.4",
     "jsbarcode": "^3.11.6",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.484.0",

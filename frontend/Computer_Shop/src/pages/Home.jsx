@@ -52,6 +52,23 @@ const Home = () => {
     }
   });
 
+  const [showSidebar, setShowSidebar] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Update this to NOT affect the Hot Deals section visibility
+      if (scrollY > window.innerHeight * 0.7) {
+        setShowSidebar(false);
+      } else {
+        setShowSidebar(true);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     if (!state.products.length) return;
     
@@ -496,13 +513,15 @@ const Home = () => {
 
       <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         
-        <FilterPanel
-          filters={state.filters}
-          onFilterChange={handleFilterChange}
-          onSortChange={handleSortChange}
-          theme={theme}
-          className="mb-8"
-        />
+        {showSidebar && (
+          <FilterPanel
+            filters={state.filters}
+            onFilterChange={handleFilterChange}
+            onSortChange={handleSortChange}
+            theme={theme}
+            className="mb-8"
+          />
+        )}
 
         {state.error && (
           <ErrorDisplay 
@@ -513,14 +532,21 @@ const Home = () => {
           />
         )}
 
-        <DiscountedProducts />
+        <div className="sticky-section" style={{ position: 'relative', zIndex: 10 }}>
+          <DiscountedProducts />
+        </div>
 
         <section className="mb-8">
-          <h2 className={`text-2xl font-bold mb-6 ${
-            theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
-          }`}>
-            {getHeadingText()}
-          </h2>
+          <div className="flex items-center mb-6" style={{ opacity: 1, visibility: 'visible' }}>
+            <h2 className={`text-2xl font-bold ${
+              theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
+            }`} style={{ display: 'block', opacity: 1 }}>
+              {getHeadingText()}
+            </h2>
+            <span className="ml-3 py-1 px-2 bg-blue-500 text-white text-sm font-semibold rounded-md">
+              Top Picks
+            </span>
+          </div>
           
           {state.loading ? (
             <div className="flex items-center justify-center h-64">
