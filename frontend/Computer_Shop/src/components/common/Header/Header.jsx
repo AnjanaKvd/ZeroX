@@ -83,10 +83,10 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Top header section - light bg for light theme, transparent for dark */}
+      {/* Top header section - full width and transparent */}
       <div 
-        className={`transition-all duration-300 ease-in-out ${
-          isDark ? 'bg-transparent' : 'bg-white/90'
+        className={`transition-all duration-300 ease-in-out w-full mx-auto ${
+          isDark ? 'bg-transparent' : 'bg-transparent'
         } ${
           isScrolled ? 'h-0 opacity-0 overflow-hidden' : 'h-12 opacity-100'
         }`}
@@ -94,11 +94,11 @@ const Header = () => {
         <div className="max-w-7xl mx-auto flex justify-between items-center h-full px-4">
           {/* Left section */}
           <div className="flex items-center space-x-6">
-            <Link to="/stores" className={`flex items-center text-sm ${isDark ? 'text-white' : 'text-gray-700'} hover:opacity-80`}>
+            <Link to="/stores" className={`flex items-center text-sm text-[#1ba5df] hover:opacity-80`}>
               <MapPinIcon className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Digana</span>
-          </Link>
-            <div className={`hidden sm:flex items-center text-sm ${isDark ? 'text-white' : 'text-gray-700'}`}>
+            </Link>
+            <div className={`hidden sm:flex items-center text-sm text-[#1ba5df]`}>
               <PhoneIcon className="h-4 w-4 mr-1" />
               <span>(94)-757-333-502</span>
             </div>
@@ -110,7 +110,7 @@ const Header = () => {
           </Link>
           
           {/* Right section */}
-          <div className={`flex items-center space-x-4 ${isDark ? 'text-white' : 'text-gray-700'}`}>
+          <div className={`flex items-center space-x-4 text-[#1ba5df]`}>
             <Link to="/wishlist" className="hover:opacity-80 hidden sm:block">
               <HeartIcon className="h-5 w-5" />
             </Link>
@@ -218,17 +218,18 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Main navigation - theme-aware styling */}
+      {/* Main navigation - rounded corners with shorter width */}
       <nav 
-        className={`backdrop-blur-md transition-all duration-500 ease-in-out ${
+        className={`backdrop-blur-md transition-all duration-500 ease-in-out 
+          w-3/4 mx-auto rounded-2xl ${
           isDark 
             ? 'bg-black/70' 
-            : 'bg-white/90 border-b border-gray-200'
+            : 'bg-white/80'
         } ${
           isScrolled ? 'shadow-lg' : ''
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
           {/* Mobile view - Logo + Hamburger */}
           <div className="md:hidden flex justify-between items-center h-14">
             {/* Logo */}

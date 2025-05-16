@@ -5,11 +5,23 @@ import { Spinner } from '../LoadingSpinner/Spinner';
 import { IconRenderer } from '../../../utils/iconRegistry';
 import { useTheme } from '../../../context/ThemeContext';
 
-const Sidebar = ({ isOpen, onToggle }) => {
+const Sidebar = ({ isOpen, onToggle, isVisible = true }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const [scrollPosition, setScrollPosition] = useState(0);
+
+  // Track scrolling to hide sidebar
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -33,36 +45,48 @@ const Sidebar = ({ isOpen, onToggle }) => {
     return category.id || category._id || category.uuid || '';
   };
 
+  // Hide sidebar completely when scroll position is beyond the first page
+  const shouldShowSidebar = scrollPosition < window.innerHeight;
+
   return (
-    <aside className={`h-screen border-r border-border transition-all duration-300 ${
-      isOpen ? 'w-64' : 'w-20'
-    } bg-surface`}>
+    <aside className={`
+      transition-all duration-300 
+      fixed left-4 top-20 bottom-4
+      rounded-xl shadow-lg
+      ${isOpen ? 'w-60' : 'w-20'}
+      ${isDark 
+        ? 'bg-black/40 backdrop-blur-md border border-white/10' 
+        : 'bg-white/40 backdrop-blur-md border border-gray-200/50'
+      }
+      ${shouldShowSidebar && isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+      z-30 overflow-hidden
+    `}>
       <button
         onClick={onToggle}
-        className={`w-full p-4 hover:bg-background transition-colors ${
-          theme === 'dark' ? 'text-text-dark-primary' : 'text-text-light-primary'
+        className={`w-full p-4 transition-colors ${
+          isDark 
+            ? 'text-white/80 hover:text-white hover:bg-white/10' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
         }`}
         aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
       >
         {isOpen ? '←' : '→'}
       </button>
       
-      <nav className={`p-4 ${isOpen ? '' : 'flex flex-col items-center'}`}>
+      <nav className={`p-3 ${isOpen ? '' : 'flex flex-col items-center'} overflow-y-auto overflow-x-hidden max-h-[calc(100vh-8rem)]`}>
         {loading ? (
           <div className="flex justify-center p-4">
-            <Spinner className={`w-6 h-6 ${
-              theme === 'dark' ? 'text-primary' : 'text-primary'
-            }`} />
+            <Spinner className="w-6 h-6 text-primary" />
           </div>
         ) : error ? (
           <div className={`text-sm p-2 ${
-            theme === 'dark' ? 'text-error-dark' : 'text-error-light'
+            isDark ? 'text-red-400' : 'text-red-500'
           }`}>
             {error}
           </div>
         ) : categories.length === 0 ? (
           <div className={`text-sm p-2 ${
-            theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
+            isDark ? 'text-white/70' : 'text-gray-500'
           }`}>
             {isOpen ? 'No categories available' : 'None'}
           </div>
@@ -71,33 +95,34 @@ const Sidebar = ({ isOpen, onToggle }) => {
             <Link
               key={getCategoryId(category)}
               to={`/category/${category.slug}`}
-              className={`flex items-center p-2 mb-2 rounded-lg hover:bg-background transition-colors ${
+              className={`flex items-center p-2 mb-3 rounded-lg transition-all ${
                 isOpen ? '' : 'justify-center'
               } ${
-                theme === 'dark' 
-                  ? 'text-text-dark-primary' 
-                  : 'text-text-light-primary'
+                isDark 
+                  ? 'text-white hover:bg-white/20' 
+                  : 'text-gray-700 hover:bg-gray-100/80'
               }`}
               title={!isOpen ? category.name : ''}
             >
-              <span className={isOpen ? '' : 'text-center'}>
+              <div className={`flex items-center justify-center ${
+                isOpen ? 'w-10 h-10' : 'w-12 h-12'
+              } rounded-full ${
+                isDark 
+                  ? 'bg-white/10 text-white shadow-inner' 
+                  : 'bg-primary/10 text-primary shadow-sm'
+              }`}>
                 {category.icon ? (
                   <IconRenderer 
                     iconName={category.icon} 
-                    className={`${isOpen ? 'w-5 h-5' : 'w-6 h-6'} text-primary`} 
+                    className={`${isOpen ? 'w-5 h-5' : 'w-6 h-6'}`} 
                   />
                 ) : (
-                  <div className={`${
-                    isOpen ? 'w-5 h-5' : 'w-6 h-6'
-                  } rounded-full flex items-center justify-center ${
-                    theme === 'dark' 
-                      ? 'bg-primary/20 text-primary' 
-                      : 'bg-primary/10 text-primary'
-                  }`}>
+                  <span className="text-lg font-medium">
                     {category.name.charAt(0)}
-                  </div>
+                  </span>
                 )}
-              </span>
+              </div>
+              
               {isOpen && (
                 <span className="ml-3 font-medium truncate">{category.name}</span>
               )}
