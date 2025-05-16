@@ -4,21 +4,26 @@ import {
   getProducts, 
   deleteProduct,
   createProduct,
-  updateProduct
+  updateProduct,
+  getProductStats
 } from '../services/productService';
 import ProductModal from '../components/admin/ProductModal';
 import ConfirmModal from '../components/admin/ConfirmModal';
+import DashboardStats from '../components/admin/DashboardStats';
+import OrderStatusChart from '../components/admin/OrderStatusChart';
 import Pagination from '../components/common/Pagination';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { ErrorMessage} from '../components/auth/FormElements';
 import { debounce } from '../utils/helpers';
-import { getProductImageUrl } from '../utils/imageUtils';
+import { useTheme } from '../context/ThemeContext';
 
 const AdminDashboard = () => {
+  const { theme } = useTheme();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalItems, setTotalItems] = useState(0);
+  const [productStats, setProductStats] = useState({});
   const [modalState, setModalState] = useState({
     showAdd: false,
     showEdit: false,
@@ -53,13 +58,23 @@ const AdminDashboard = () => {
     }
   }, [filters]);
 
+  const fetchProductStats = useCallback(async () => {
+    try {
+      const stats = await getProductStats();
+      setProductStats(stats);
+    } catch (err) {
+      console.error("Error fetching product stats:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchProducts();
+      fetchProductStats();
     }, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [fetchProducts]);
+  }, [fetchProducts, fetchProductStats]);
 
   const handleSearchChange = (e) => {
     setFilters(prev => ({ ...prev, query: e.target.value, page: 1 }));
@@ -133,6 +148,10 @@ const AdminDashboard = () => {
         </button>
       </div>
 
+      {/* Dashboard Stats */}
+      <DashboardStats productStats={productStats} />
+
+      <OrderStatusChart theme={theme} />
       {/* Search and Filters */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4 items-end">
@@ -198,14 +217,7 @@ const AdminDashboard = () => {
                 <tr key={product.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <img
-                          className="h-10 w-10 rounded object-cover"
-                          src={getProductImageUrl(product) || '/placeholder-product.jpg'}
-                          alt={product.name}
-                        />
-                      </div>
-                      <div className="ml-4">
+                      <div>
                         <div className="text-sm font-medium text-gray-900">
                           {product.name}
                         </div>
