@@ -443,13 +443,6 @@ const getTotalRevenue = async () => {
     return 0; // Return 0 as fallback
   }
 };
-
-export const getProductStats = async () => {
-  try {
-    const response = await api.get('/products/stats');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching product stats:', error);
     
     // Get the customer count
     const customerCount = await getCustomerCount();

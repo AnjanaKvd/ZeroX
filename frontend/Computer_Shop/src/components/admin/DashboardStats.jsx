@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BarChart3, Package, ShoppingCart, Users } from 'lucide-react';
 import { getCustomerCount } from '../../services/authService';
 
+
 const StatCard = ({ icon: Icon, title, value, bgColor }) => (
   <div className={`${bgColor} rounded-lg shadow-sm p-6 flex items-center space-x-4`}>
     <div className="rounded-full bg-white bg-opacity-30 p-3">
@@ -52,32 +53,12 @@ const DashboardStats = ({ productStats }) => {
       setRevenue(productStats.revenue);
     }
   }, [productStats?.revenue]);
-  
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <StatCard
-        icon={Package}
-        title="Active Products"
-        value={productStats?.activeCount || 0}
-        bgColor="bg-blue-600"
-      />
-      <StatCard
-        icon={ShoppingCart}
-        title="Total Sales"
-        value={productStats?.totalSales || 0}
-        bgColor="bg-green-600"
-      />
-      <StatCard
-        icon={Users}
         title="User Accounts"
         value={customerCount}
-        bgColor="bg-purple-600"
-      />
-      <StatCard
-        icon={BarChart3}
-        title="Revenue"
+        title="Customers"
+        value={productStats?.customerCount || 0}
         value={formatRevenue(revenue)}
-        bgColor="bg-orange-500"
+        value={`$${productStats?.revenue?.toFixed(2) || '0.00'}`}
       />
     </div>
   );

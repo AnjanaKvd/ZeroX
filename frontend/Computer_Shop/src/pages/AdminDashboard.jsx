@@ -151,9 +151,7 @@ const AdminDashboard = () => {
       {/* Dashboard Stats */}
       <DashboardStats productStats={productStats} />
 
-      {/* Order Status Chart */}
       <OrderStatusChart theme={theme} />
-
       {/* Search and Filters */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4 items-end">
