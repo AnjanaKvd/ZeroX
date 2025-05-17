@@ -17,7 +17,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -32,27 +31,15 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-
     public AuthResponse login(LoginRequest request) {
-        // Authenticate user
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.password()
-                )
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        // Generate token
-        var user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findTopByEmailAndIsDeletedFalseOrderByCreatedAtDesc(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("No active account found for this email"));
 
-        // Check if user is deleted
-        if(user.isDeleted()) {
-            throw new UsernameNotFoundException("No Access! This account has been deleted");
-        }
-
-
-        var jwt = jwtService.generateToken(
+        String token = jwtService.generateToken(
                 org.springframework.security.core.userdetails.User.builder()
                         .username(user.getEmail())
                         .password(user.getPasswordHash())
@@ -60,19 +47,15 @@ public class AuthService {
                         .build()
         );
 
-        // Update last login time
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
-//        return new AuthResponse(jwt, user.getEmail(), user.getRole().name());
-        return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone(),user.getUserId());
+        return new AuthResponse(token, user.getEmail(), user.getRole().name(),
+                user.getFullName(), user.getPhone(), user.getUserId());
     }
-
 
     @Transactional
     public void deleteAccount(UUID userId) {
-        // Verify user exists and isn't already deleted
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -80,41 +63,28 @@ public class AuthService {
             throw new IllegalStateException("Account already deleted");
         }
 
-        // Perform the soft delete
         userRepository.softDelete(userId);
     }
 
     public AuthResponse register(RegisterRequest request) {
-        // Check if email has been used more than 3 times (including deleted accounts)
-        int emailUsageCount = userRepository.countByEmail(request.email());
-        if (emailUsageCount >= 2) {
-            throw new IllegalArgumentException("This email has reached maximum registration attempts");
+        Optional<User> existingActive = userRepository.findTopByEmailAndIsDeletedFalseOrderByCreatedAtDesc(request.email());
+        if (existingActive.isPresent()) {
+            throw new IllegalArgumentException("This email is already used for an active account.");
         }
 
-        // Check if email already exists
-        if (userRepository.findByEmail(request.email()).isPresent()) {
-
-            throw new IllegalArgumentException("Email already in use");
-        }
-
-        // Check if deleted account exists
-        Optional<User> deletedUser = userRepository.findByEmailIncludeDeleted(request.email());
-        if (deletedUser.isPresent() && deletedUser.get().isDeleted()) {
-
+        Optional<User> deletedUser = userRepository.findTopByEmailAndIsDeletedTrueOrderByCreatedAtDesc(request.email());
+        if (deletedUser.isPresent()) {
             User user = deletedUser.get();
-            user.setDeleted(false);
-            user.setPasswordHash(passwordEncoder.encode(request.password()));
             user.setFullName(request.fullName());
             user.setPhone(request.phone());
+            user.setPasswordHash(passwordEncoder.encode(request.password()));
+            user.setDeleted(false);
             user.setCreatedAt(LocalDateTime.now());
-            user.setLastLogin(null);
-
-            //new token for new user
-            User savedUser = userRepository.save(user);
+            userRepository.save(user);
+            return generateAuthorResponseWithoutToken(user);
         }
 
-        // Create new user
-        var user = User.builder()
+        User user = User.builder()
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .fullName(request.fullName())
@@ -131,12 +101,11 @@ public class AuthService {
 
     private AuthResponse generateAuthorResponseWithoutToken(User user) {
         return new AuthResponse(null, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone(),user.getUserId());
+                user.getFullName(), user.getPhone(), user.getUserId());
     }
 
-
     private AuthResponse generateAuthorResponse(User user) {
-        var jwt = jwtService.generateToken(
+        String jwt = jwtService.generateToken(
                 org.springframework.security.core.userdetails.User.builder()
                         .username(user.getEmail())
                         .password(user.getPasswordHash())
@@ -145,7 +114,7 @@ public class AuthService {
         );
 
         return new AuthResponse(jwt, user.getEmail(), user.getRole().name(),
-                user.getFullName(), user.getPhone(),user.getUserId());
+                user.getFullName(), user.getPhone(), user.getUserId());
     }
 
     public UserDto.UserProfileResponse getUserProfile(String email) {
@@ -164,16 +133,12 @@ public class AuthService {
         );
     }
 
-
-
     public UserDto.UserProfileResponse updateUserProfile(String email, UserDto.UserUpdateRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Update allowed fields
         user.setFullName(request.fullName());
         user.setPhone(request.phone());
-
         User updatedUser = userRepository.save(user);
 
         return new UserDto.UserProfileResponse(
@@ -192,22 +157,18 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Verifying current password
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new PasswordChangeException("Current password is incorrect");
         }
 
-        // Validating new password
         if (request.newPassword().length() < 8) {
             throw new PasswordChangeException("Password must be at least 8 characters");
         }
 
-        // Verifying password confirmation
         if (!request.newPassword().equals(request.confirmPassword())) {
             throw new PasswordChangeException("New passwords don't match");
         }
 
-        // Update password
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
     }
@@ -217,3 +178,4 @@ public class AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }
+
