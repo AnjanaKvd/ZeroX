@@ -136,12 +136,12 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div className="container px-4 py-8 mx-auto">
+      <div className="flex flex-col items-start justify-between gap-4 mb-6 md:flex-row md:items-center">
         <h1 className="text-2xl font-bold text-gray-800">Product Management</h1>
         <button
           onClick={() => openModal('add')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
         >
           <Plus size={20} />
           Add Product
@@ -153,15 +153,15 @@ const AdminDashboard = () => {
 
       <OrderStatusChart theme={theme} />
       {/* Search and Filters */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
+      <div className="p-4 mb-6 bg-white border border-gray-100 rounded-lg shadow-sm">
+        <div className="flex flex-col items-end gap-4 md:flex-row">
           <div className="flex-1 w-full">
             <div className="relative">
               <input
                 type="text"
                 value={filters.query}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full py-2 pl-10 pr-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Search products..."
               />
               <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
@@ -173,7 +173,7 @@ const AdminDashboard = () => {
       {/* Products Table */}
       {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-x-auto">
+      <div className="overflow-x-auto bg-white border border-gray-100 rounded-lg shadow-sm">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
                       {product.stock} in stock
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm font-medium space-x-2">
+                  <td className="px-4 py-4 space-x-2 text-sm font-medium">
                     <button
                       onClick={() => openModal('edit', product)}
                       className="text-blue-600 hover:text-blue-900"
