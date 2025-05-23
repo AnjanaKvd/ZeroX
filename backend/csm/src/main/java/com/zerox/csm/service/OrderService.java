@@ -74,30 +74,30 @@ public class OrderService {
 
         // 4. Calculate total
         BigDecimal total = calculateTotal(items);
-        
+
         // 5. Handle coupon if provided
         BigDecimal discountAmount = BigDecimal.ZERO;
         BigDecimal finalAmount = total;
         Coupon coupon = null;
-        
+
         if (request.couponCode() != null && !request.couponCode().isEmpty()) {
             coupon = couponRepository.findByCode(request.couponCode())
                     .orElseThrow(() -> new ValidationException("Invalid coupon code"));
-            
+
             // Validate coupon
             CouponDto.CouponValidationRequest validationRequest = new CouponDto.CouponValidationRequest(
                     request.couponCode(),
                     total,
                     user.getUserId()
             );
-            
-            CouponDto.CouponValidationResponse validationResponse = 
+
+            CouponDto.CouponValidationResponse validationResponse =
                     couponService.validateCoupon(validationRequest);
-            
+
             if (!validationResponse.valid()) {
                 throw new ValidationException(validationResponse.message());
             }
-            
+
             discountAmount = validationResponse.discountAmount();
             finalAmount = total.subtract(discountAmount);
         }
@@ -119,9 +119,9 @@ public class OrderService {
 
         // Set back-reference to order
         items.forEach(item -> item.setOrder(order));
-        
+
         Order savedOrder = orderRepository.save(order);
-        
+
         // 7. Record coupon usage if used
         if (coupon != null) {
             couponService.recordCouponUsage(coupon, user, savedOrder, discountAmount);
@@ -211,7 +211,7 @@ public class OrderService {
     public OrderResponse updateOrderStatus(UUID orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        
+
         order.setStatus(status);
         return mapToOrderResponse(orderRepository.save(order));
     }
@@ -220,15 +220,15 @@ public class OrderService {
     public void cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        
+
         // Ensure order can be canceled - only PENDING or PROCESSING orders can be canceled
         if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.PROCESSING) {
             throw new IllegalStateException("Only pending or processing orders can be canceled");
         }
-        
+
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
-        
+
         // Optionally, restore inventory quantities
         for (OrderItem item : order.getItems()) {
             Product product = item.getProduct();

@@ -23,7 +23,7 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
-    
+
     @PostMapping
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<OrderResponse> createOrder(
@@ -33,7 +33,7 @@ public class OrderController {
         // Authorization: ensure customer can only create orders for themselves
         return ResponseEntity.ok(orderService.createOrder(request));
     }
-    
+
     @GetMapping("/{orderId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<OrderResponse> getOrder(
@@ -43,7 +43,7 @@ public class OrderController {
         // Authorization: ensure customer can only view their own orders
         return ResponseEntity.ok(orderService.getOrder(orderId));
     }
-    
+
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Page<OrderResponse>> getUserOrders(
@@ -55,7 +55,7 @@ public class OrderController {
         // Authorization: ensure customer can only view their own orders
         return ResponseEntity.ok(orderService.getUserOrders(userId, PageRequest.of(page, size)));
     }
-    
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<OrderResponse>> getAllOrders(
@@ -65,7 +65,7 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(orderService.getAllOrders(status, PageRequest.of(page, size)));
     }
-    
+
     @PutMapping("/{orderId}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderResponse> updateOrderStatus(
@@ -74,7 +74,7 @@ public class OrderController {
     ) {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, request.status()));
     }
-    
+
     @DeleteMapping("/{orderId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public ResponseEntity<Void> cancelOrder(

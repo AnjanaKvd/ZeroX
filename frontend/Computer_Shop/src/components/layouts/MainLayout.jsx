@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from '../common/Header/Header';
 import Footer from '../common/Footer/Footer';
 import Sidebar from '../common/Sidebar/Sidebar';
@@ -10,6 +10,10 @@ import { useTheme } from '../../context/ThemeContext';
 const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme } = useTheme();
+  const location = useLocation();
+  
+  // Only show sidebar on home page
+  const isHomePage = location.pathname === '/';
 
   const toggleSidebar = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -17,24 +21,29 @@ const MainLayout = () => {
 
   return (
     <div className={`flex flex-col min-h-screen ${theme === 'dark' ? 'bg-background-dark' : 'bg-background-light'}`}>
-      {/* Mobile Menu Toggle */}
-      <button
-        className={`md:hidden fixed right-4 top-4 z-50 p-2 rounded-lg shadow-lg ${
-          theme === 'dark' ? 'bg-surface-dark text-text-dark-primary' : 'bg-surface-light text-text-light-primary'
-        }`}
-        onClick={toggleSidebar}
-      >
-        {isMobileMenuOpen ? (
-          <XMarkIcon className="h-6 w-6" />
-        ) : (
-          <Bars3Icon className="h-6 w-6" />
-        )}
-      </button>
+      {/* Mobile Menu Toggle - only shown on home page */}
+      {isHomePage && (
+        <button
+          className={`md:hidden fixed right-4 top-4 z-50 p-2 rounded-lg shadow-lg ${
+            theme === 'dark' ? 'bg-surface-dark text-text-dark-primary' : 'bg-surface-light text-text-light-primary'
+          }`}
+          onClick={toggleSidebar}
+        >
+          {isMobileMenuOpen ? (
+            <XMarkIcon className="h-6 w-6" />
+          ) : (
+            <Bars3Icon className="h-6 w-6" />
+          )}
+        </button>
+      )}
 
       <Header />
       
       <div className="flex flex-1 relative">
-        <Sidebar isOpen={isMobileMenuOpen} onToggle={toggleSidebar} />
+        {/* Only render sidebar when on home page */}
+        {isHomePage && (
+          <Sidebar isOpen={isMobileMenuOpen} onToggle={toggleSidebar} />
+        )}
         
         <main className={`flex-1 p-4 md:p-6 transition-all duration-300 ${
           theme === 'dark' ? 'bg-background-dark text-text-dark-primary' : 'bg-background-light text-text-light-primary'

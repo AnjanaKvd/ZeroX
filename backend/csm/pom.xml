@@ -17,7 +17,7 @@
 	<description>Computer Shop Management System</description>
 
 	<properties>
-		<java.version>22</java.version>
+		<java.version>19</java.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<jjwt.version>0.12.5</jjwt.version>
 		<lombok.version>1.18.32</lombok.version>
@@ -139,11 +139,11 @@
 
 
 		<!-- https://mvnrepository.com/artifact/org.modelmapper/modelmapper -->
-<!--		<dependency>-->
-<!--			<groupId>org.modelmapper</groupId>-->
-<!--			<artifactId>modelmapper</artifactId>-->
-<!--			<version>3.2.2</version>-->
-<!--		</dependency>-->
+		<!--		<dependency>-->
+		<!--			<groupId>org.modelmapper</groupId>-->
+		<!--			<artifactId>modelmapper</artifactId>-->
+		<!--			<version>3.2.2</version>-->
+		<!--		</dependency>-->
 	</dependencies>
 
 	<build>
@@ -163,7 +163,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version> <!-- Add version explicitly -->
+				<!--				<version>3.10.1</version> &lt;!&ndash; Add version explicitly &ndash;&gt;-->
 				<configuration>
 					<release>${java.version}</release>
 					<compilerArgs>
