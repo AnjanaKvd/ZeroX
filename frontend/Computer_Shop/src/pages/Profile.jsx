@@ -240,6 +240,14 @@ const Profile = () => {
                   </li>
                   <li>
                     <a
+                      href="/repair-history"
+                      className="text-blue-600 hover:underline"
+                    >
+                      My Repairs
+                    </a>
+                  </li>
+                  <li>
+                    <a
                       href="/rewards"
                       className="text-blue-600 hover:underline"
                     >

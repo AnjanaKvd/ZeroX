@@ -27,6 +27,7 @@ const CategoryManagement = lazy(() => import("../pages/CategoryManagement"));
 const OrderManagement = lazy(() => import("../pages/OrderManagement"));
 const UserManagement = lazy(() => import("../pages/UserManagement"));
 const DiscountManagement = lazy(() => import("../pages/DiscountManagement"));
+const ReportManagement = lazy(() => import('../pages/ReportManagement'));
 const Settings = lazy(() => import("../pages/Settings"));
 const Logout = lazy(() => import("../pages/Logout"));
 const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));
@@ -39,6 +40,9 @@ const ReviewForm = lazy(() => import("../pages/ReviewForm"));
 const ReviewItem = lazy(() => import("../pages/ReviewItem"));
 const AdminOrderDetails = lazy(() => import("../pages/AdminOrderDetails"));
 const Rewards = lazy(() => import("../pages/Rewards"));
+const RepairHistory = lazy(() => import("../pages/RepairHistory"));
+const RepairDetail = lazy(() => import("../pages/RepairDetail"));
+const RepairManagement = lazy(() => import("../pages/RepairManagement"));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -94,6 +98,8 @@ const AppRoutes = () => {
               <Route path="order-history" element={<OrderHistory />} />
               <Route path="orders/:orderId" element={<OrderDetails />} />
               <Route path="/rewards" element={<Rewards />} />
+              <Route path="repair-history" element={<RepairHistory />} />
+              <Route path="repair/:repairId" element={<RepairDetail />} />
             </Route>
           </Route>
 
@@ -108,8 +114,10 @@ const AppRoutes = () => {
               <Route path="orders" element={<OrderManagement />} />
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="reports" element={<ReportManagement />} />
               <Route path="settings" element={<Settings />} />
               <Route path="coupons" element={<CouponManagement />} />
+              <Route path="repairs" element={<RepairManagement />} />
             </Route>
           </Route>
         </Routes>

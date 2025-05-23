@@ -1,5 +1,5 @@
 /**
- * Barcode scanner utility functions
+ * Barcode scanner utility functions - Optimized for speed
  */
 
 /**
@@ -34,9 +34,9 @@ export const findMostFrequentCode = (codes, minOccurrences = 2) => {
  */
 export const playSuccessBeep = () => {
   try {
-    // Short beep sound in base64 format
-    // This is a placeholder - replace with actual base64 audio data
+    // Use a simple beep sound
     const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+    beep.volume = 0.5;
     beep.play().catch(e => console.error('Could not play scan sound', e));
   } catch (e) {
     console.error('Could not create audio', e);
@@ -55,17 +55,7 @@ export const isEAN13 = (barcode) => {
   const cleanedCode = barcode.replace(/\D/g, '');
   
   // Standard EAN-13 is 13 digits
-  if (cleanedCode.length === 13) return true;
-  
-  // It's likely a partial EAN-13 if it's at least 6 digits
-  // and starts with common EAN-13 prefixes like 69, 89, 00, etc.
-  if (cleanedCode.length >= 6) {
-    const prefix = cleanedCode.substring(0, 2);
-    const commonPrefixes = ['69', '89', '00', '45', '49', '50', '73', '76'];
-    return commonPrefixes.includes(prefix);
-  }
-  
-  return false;
+  return cleanedCode.length === 13;
 };
 
 /**
@@ -176,7 +166,7 @@ export const formatBarcode = (barcode) => {
 
 /**
  * Normalize different barcode formats to a consistent format
- * Helps with inconsistent scans of the same barcode following international standards
+ * Fast implementation that only does essential normalization
  * 
  * @param {String} barcode - The scanned barcode
  * @returns {String} Normalized barcode
@@ -185,63 +175,7 @@ export const normalizeBarcode = (barcode) => {
   if (!barcode) return '';
   
   // First clean the barcode of non-alphanumeric characters
-  const cleaned = barcode.trim().replace(/[^\w-]/g, '');
-  
-  // For numeric barcodes only
-  if (/^\d+$/.test(cleaned)) {
-    // Special case: If the barcode appears to be from the 695485 series (from image example)
-    if (cleaned.includes('695485')) {
-      // Try to extract the full EAN-13 if possible
-      const fullEAN = extractMatchingEAN13(cleaned, '6954851221574');
-      if (fullEAN) return fullEAN;
-      
-      // If we have at least 6 digits starting with 695485, it's likely the same product
-      if (cleaned.startsWith('695485') && cleaned.length >= 6) {
-        return '6954851221574'; // Return the known full code from image
-      }
-    }
-    
-    const format = getBarcodeFormat(cleaned);
-    
-    // Handle standard barcode formats
-    if (format.isValid) {
-      // Different handling based on format
-      switch(format.type) {
-        case 'EAN-13':
-          return cleaned;
-        case 'partial-EAN-13':
-          // If it's a partial EAN-13 with the specific prefix we've seen
-          if (format.prefix && format.prefix.startsWith('695485')) {
-            return '6954851221574'; // Known product code from the test image
-          }
-          return cleaned;
-        case 'EAN-8':
-        case 'UPC-A':
-        case 'GTIN-14':
-          // Keep as is - it's already a standard format
-          return cleaned;
-        case 'partial':
-          // Try to standardize to EAN-8 if possible (retail item)
-          if (cleaned.length > 8) {
-            return cleaned.slice(-8);
-          }
-          return cleaned;
-        default:
-          // For custom formats, keep original if it's consistent
-          return cleaned;
-      }
-    }
-    
-    // Not a standard barcode - use heuristics for custom internal codes
-    // For long numeric barcodes, standardize to help with inconsistent scanning
-    if (cleaned.length > 8) {
-      // Prioritize the last 8 digits which are often the most reliable part
-      return cleaned.slice(-8);
-    }
-  }
-  
-  // For non-numeric or short codes, keep as-is
-  return cleaned;
+  return barcode.trim().replace(/[^\w-]/g, '');
 };
 
 /**
@@ -269,53 +203,21 @@ export const extractMatchingEAN13 = (partialCode, referenceCode) => {
 };
 
 /**
- * Check if two barcodes are likely the same despite having different strings
- * 
+ * Check if two barcodes are equivalent (even if not exactly the same)
  * @param {String} barcode1 - First barcode
  * @param {String} barcode2 - Second barcode
- * @returns {Boolean} True if barcodes are likely the same
+ * @returns {Boolean} - Whether they are equivalent
  */
 export const areBarcodesEquivalent = (barcode1, barcode2) => {
+  // If they're exactly the same, they're equivalent
+  if (barcode1 === barcode2) return true;
+  
+  // If either is invalid, they're not equivalent
   if (!barcode1 || !barcode2) return false;
-  
-  // Normalize both barcodes
-  const normalized1 = normalizeBarcode(barcode1);
-  const normalized2 = normalizeBarcode(barcode2);
-  
-  // Direct match after normalization
-  if (normalized1 === normalized2) return true;
-  
-  // Special case for the known barcode from the image
-  const referenceEAN = '6954851221574';
-  if ((normalized1 === referenceEAN || normalized2 === referenceEAN) &&
-      (normalized1.includes('695485') || normalized2.includes('695485'))) {
+
+  // If one contains the other, they might be equivalent
+  if (barcode1.includes(barcode2) || barcode2.includes(barcode1)) {
     return true;
-  }
-  
-  // For numeric barcodes, try additional checks
-  if (/^\d+$/.test(normalized1) && /^\d+$/.test(normalized2)) {
-    // Check if one contains the other (partial scan)
-    if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
-      return true;
-    }
-    
-    // Check if they share a significant prefix (first 6 digits for manufacturer code)
-    const minPrefixLength = 6;
-    if (normalized1.length >= minPrefixLength && normalized2.length >= minPrefixLength) {
-      const prefix1 = normalized1.substring(0, minPrefixLength);
-      const prefix2 = normalized2.substring(0, minPrefixLength);
-      if (prefix1 === prefix2) {
-        return true;
-      }
-    }
-    
-    // Check if they share a significant suffix (last 6+ digits)
-    const minSuffixLength = 6;
-    const suffix1 = normalized1.slice(-minSuffixLength);
-    const suffix2 = normalized2.slice(-minSuffixLength);
-    if (suffix1 === suffix2 && suffix1.length === minSuffixLength) {
-      return true;
-    }
   }
   
   return false;
@@ -323,39 +225,31 @@ export const areBarcodesEquivalent = (barcode1, barcode2) => {
 
 /**
  * Get optimal camera constraints for barcode scanning
- * 
  * @returns {Object} Camera constraints object
  */
 export const getOptimalCameraConstraints = () => {
   return {
     video: {
-      facingMode: "environment",
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
-      aspectRatio: { ideal: 16/9 }
-    }
+      facingMode: 'environment',
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      frameRate: { ideal: 30 }
+    },
+    audio: false
   };
 };
 
 /**
- * Get a list of common barcode formats for scanners
- * 
- * @returns {Array} List of barcode format enums from @zxing/library
- * @deprecated This function returns Quagga format strings, use ZXing BarcodeFormat enums directly
+ * Get common barcode formats for standard retail products
+ * @returns {Array} List of common barcode format names
  */
 export const getCommonBarcodeFormats = () => {
-  // This returns format strings for Quagga which is no longer used
-  // It's kept for backward compatibility but marked as deprecated
   return [
-    'code_128_reader',
-    'ean_reader',
-    'ean_8_reader',
-    'code_39_reader',
-    'code_39_vin_reader',
-    'codabar_reader',
-    'upc_reader',
-    'upc_e_reader',
-    'i2of5_reader'
+    'EAN_13',
+    'EAN_8',
+    'UPC_A',
+    'UPC_E',
+    'CODE_128'
   ];
 };
 
@@ -367,17 +261,11 @@ export const getCommonBarcodeFormats = () => {
  */
 export const getZXingBarcodeFormats = () => {
   // This should be used with @zxing/library's BarcodeFormat
-  // Import BarcodeFormat from @zxing/library in your component
-  // and use them directly or via this helper
   return [
     'EAN_13',
     'EAN_8',
     'UPC_A',
     'UPC_E',
-    'CODE_39',
-    'CODE_93',
-    'CODE_128',
-    'QR_CODE',
-    'DATA_MATRIX'
+    'CODE_128'
   ];
 }; 

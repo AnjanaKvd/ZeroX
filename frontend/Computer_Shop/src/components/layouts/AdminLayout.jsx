@@ -24,7 +24,9 @@ const AdminLayout = () => {
     { path: '/admin/categories', label: 'Category Management' },
     { path: '/admin/coupons', label: 'Coupon Management' },
     { path: '/admin/orders', label: 'Order Management' },
+    { path: '/admin/repairs', label: 'Repair Management' },
     { path: '/admin/users', label: 'User Management' },
+    { path: '/admin/reports', label: 'Reports' },
     { path: '/admin/settings', label: 'System Settings' }
   ];
 
