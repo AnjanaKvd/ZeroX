@@ -69,6 +69,22 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReview(reviewId));
     }
 
+    @PutMapping("/{reviewId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    public ResponseEntity<ReviewResponse> updateReview(
+            @PathVariable UUID reviewId,
+            @Valid @RequestBody ReviewUpdateRequest request
+    ) {
+        return ResponseEntity.ok(reviewService.updateReview(reviewId, request));
+    }
 
+    @DeleteMapping("/{reviewId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    public ResponseEntity<Void> deleteReview(
+            @PathVariable UUID reviewId
+    ) {
+        reviewService.deleteReview(reviewId);
+        return ResponseEntity.noContent().build();
+    }
 }
 

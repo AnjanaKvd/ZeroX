@@ -1,7 +1,7 @@
 import api from "./api";
 
 // Get rewards summary for a user
-export const getUserRewards = async (userId) => {
+export const getUserRewards = async(userId) => {
     try {
         const response = await api.get(`/rewards/user/${userId}`);
         return response.data;
@@ -41,7 +41,7 @@ export const earnReward = async(userId, orderId) => {
 };
 
 // Claim selected reward points
-export const claimRewards = async (userId, rewardIds) => {
+export const claimRewards = async(userId, rewardIds) => {
     try {
         const response = await api.post('/rewards/claim', {
             userId,
@@ -55,7 +55,7 @@ export const claimRewards = async (userId, rewardIds) => {
 };
 
 // Redeem points
-export const redeemPoints = async (pointsToRedeem) => {
+export const redeemPoints = async(pointsToRedeem) => {
     try {
         const response = await api.post('/rewards/redeem', { pointsToRedeem });
         return response.data;
@@ -66,7 +66,7 @@ export const redeemPoints = async (pointsToRedeem) => {
 };
 
 // Process all eligible orders for a user
-export const processUserOrders = async (userId) => {
+export const processUserOrders = async(userId) => {
     try {
         const response = await api.post(`/rewards/process/${userId}`);
         return response.data;
@@ -77,7 +77,7 @@ export const processUserOrders = async (userId) => {
 };
 
 // Admin endpoint to manually generate points for a specific order
-export const generatePointsForOrder = async (orderId) => {
+export const generatePointsForOrder = async(orderId) => {
     try {
         const response = await api.post(`/rewards/orders/${orderId}`);
         return response.data;

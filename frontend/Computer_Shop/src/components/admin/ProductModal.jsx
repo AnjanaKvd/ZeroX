@@ -23,6 +23,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
+  const [stockError, setStockError] = useState(null);
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -120,11 +121,41 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         ...prev,
         [name]: value
       }));
+      
+      if (name === 'stockQuantity' || name === 'lowStockThreshold') {
+        setStockError(null);
+      }
+      
+      // Check stock quantity validation
+      if ((name === 'stockQuantity' || name === 'lowStockThreshold') && 
+          formData.lowStockThreshold && formData.stockQuantity) {
+        const stockQty = name === 'stockQuantity' ? Number(value) : Number(formData.stockQuantity);
+        const threshold = name === 'lowStockThreshold' ? Number(value) : Number(formData.lowStockThreshold);
+        
+        if (stockQty < threshold) {
+          const difference = threshold - stockQty;
+          setStockError(`Stock quantity is lower than Low Stock Threshold by ${difference} units`);
+        } else {
+          setStockError(null);
+        }
+      }
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    
+    if (formData.stockQuantity && formData.lowStockThreshold) {
+      const stockQty = Number(formData.stockQuantity);
+      const threshold = Number(formData.lowStockThreshold);
+      
+      if (stockQty < threshold) {
+        const difference = threshold - stockQty;
+        setStockError(`Stock quantity is lower than Low Stock Threshold by ${difference} units`);
+        return; // Prevent form submission
+      }
+    }
     
     const submitFormData = new FormData();
     
@@ -221,7 +252,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
   return (
     <div className={`fixed inset-0 z-50 ${isOpen ? 'flex' : 'hidden'} items-center justify-center p-4 bg-black bg-opacity-50`}>
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center px-6 py-4 border-b">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-xl font-semibold text-gray-800">
             {mode === 'add' ? 'Add New Product' : 'Edit Product'}
           </h2>
@@ -236,7 +267,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Product Name *
               </label>
               <input
@@ -244,13 +275,13 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 required
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Description *
               </label>
               <textarea
@@ -258,14 +289,14 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 required
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Price ($) *
                 </label>
                 <input
@@ -273,7 +304,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   name="price"
                   value={formData.price}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   step="0.01"
                   min="0"
                   required
@@ -281,7 +312,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Stock Quantity *
                 </label>
                 <input
@@ -289,17 +320,20 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   name="stockQuantity"
                   value={formData.stockQuantity}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   min="0"
                   required
                 />
+                {stockError && (
+                  <p className="mt-1 text-sm text-red-500">{stockError}</p>
+                )}
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2">
               <div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     SKU *
                   </label>
                   <BarcodeInput
@@ -316,7 +350,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     Brand *
                   </label>
                   <input
@@ -324,27 +358,27 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                     name="brand"
                     value={formData.brand}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Category *
                 </label>
                 {loading ? (
-                  <div className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500">
+                  <div className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-md bg-gray-50">
                     Loading categories...
                   </div>
                 ) : categoryError ? (
-                  <div className="text-red-500 text-sm">{categoryError}</div>
+                  <div className="text-sm text-red-500">{categoryError}</div>
                 ) : (
                   <select
                     name="categoryId"
                     value={formData.categoryId}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     required
                   >
                     <option value="">Select a category</option>
@@ -363,7 +397,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Low Stock Threshold
                 </label>
                 <input
@@ -372,14 +406,14 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   value={formData.lowStockThreshold}
                   onChange={handleChange}
                   min="0"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Warranty (Months)
                 </label>
                 <input
@@ -388,12 +422,12 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   value={formData.warrantyPeriodMonths}
                   onChange={handleChange}
                   min="0"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   Keywords
                 </label>
                 <input
@@ -401,26 +435,26 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   name="keywords"
                   value={formData.keywords}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
                 
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Product Image
               </label>
-              <div className="mt-1 flex items-center space-x-4">
-                <div className="flex-shrink-0 h-32 w-32 border rounded-lg overflow-hidden bg-gray-100">
+              <div className="flex items-center mt-1 space-x-4">
+                <div className="flex-shrink-0 w-32 h-32 overflow-hidden bg-gray-100 border rounded-lg">
                   {imagePreview ? (
                     <img
                       src={imagePreview}
                       alt="Product preview"
-                      className="h-full w-full object-cover"
+                      className="object-cover w-full h-full"
                     />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center text-gray-400">
+                    <div className="flex items-center justify-center w-full h-full text-gray-400">
                       <Upload size={24} />
                     </div>
                   )}
@@ -436,7 +470,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   />
                   <label
                     htmlFor="image-upload"
-                    className="cursor-pointer py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50"
                   >
                     {mode === 'edit' ? 'Change Image' : 'Upload Image'}
                   </label>
@@ -447,7 +481,7 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                         setImagePreview(null);
                         setFormData(prev => ({ ...prev, image: null }));
                       }}
-                      className="py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-600 hover:bg-red-50"
+                      className="px-3 py-2 text-sm font-medium text-red-600 border border-gray-300 rounded-md shadow-sm hover:bg-red-50"
                     >
                       Remove Image
                     </button>
@@ -460,17 +494,17 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
             </div>
           </div>
           
-          <div className="mt-6 flex justify-end space-x-3">
+          <div className="flex justify-end mt-6 space-x-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
               disabled={loading}
             >
               {mode === 'add' ? 'Create Product' : 'Update Product'}
