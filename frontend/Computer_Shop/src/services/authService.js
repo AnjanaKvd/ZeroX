@@ -120,42 +120,31 @@ const isCustomerUser = (user) => {
 
 export const getCustomerCount = async () => {
   try {
-    // Try direct user count endpoint first
-    try {
-      console.log('Trying direct user count endpoint...');
-      const response = await api.get('/auth/users/count');
-      if (response && response.data && typeof response.data.count === 'number') {
-        console.log('User count from endpoint:', response.data.count);
-        return response.data.count;
-      }
-    } catch (countError) {
-      console.log('Direct user count endpoint not available:', countError.message);
-    }
-    
-    // Get all users
-    console.log('Fetching all users for count...');
+    // Fetch all users
     const usersData = await getAllUsers();
-    console.log('Users data received:', usersData);
-    
-    // Check if users data is available in standard format
-    if (usersData && usersData.content && Array.isArray(usersData.content)) {
-      const count = usersData.content.length;
-      console.log('Total users count:', count);
-      return count;
+    let users = [];
+    if (usersData && Array.isArray(usersData.content)) {
+      users = usersData.content;
+    } else if (Array.isArray(usersData)) {
+      users = usersData;
     }
-    
-    // Check if usersData is a plain array
-    if (Array.isArray(usersData)) {
-      const count = usersData.length;
-      console.log('Total users count (plain array):', count);
-      return count;
-    }
-    
-    // If we can't determine count, default to 1
-    console.log('Could not determine user count, returning default 1');
-    return 1;
+    // Count users with CUSTOMER role (case-insensitive)
+    const customerCount = users.filter(user => {
+      if (!user) return false;
+      if (Array.isArray(user.roles)) {
+        return user.roles.some(role => typeof role === 'string' && role.toUpperCase() === 'CUSTOMER');
+      }
+      if (typeof user.roles === 'string') {
+        return user.roles.split(',').map(r => r.trim().toUpperCase()).includes('CUSTOMER');
+      }
+      if (typeof user.role === 'string') {
+        return user.role.toUpperCase() === 'CUSTOMER';
+      }
+      return false;
+    }).length;
+    return customerCount;
   } catch (error) {
-    console.error('Error calculating user count:', error);
-    return 1; // Return default value of 1 on error
+    console.error('Error calculating customer count:', error);
+    return 0;
   }
 }; 

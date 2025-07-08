@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, FileText, Users, Package, ShoppingBag } from 'lucide-react';
+import { BarChart3, FileText, Users, Package, ShoppingBag, FileBarChart } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { getCategories } from '../services/categoryService';
 import ReportCard from '../components/reports/ReportCard';
@@ -7,6 +7,7 @@ import SalesReport from '../components/reports/SalesReport';
 import InventoryReport from '../components/reports/InventoryReport';
 import CustomerReport from '../components/reports/CustomerReport';
 import OrderReport from '../components/reports/OrderReport';
+import OrderDetailReport from '../components/reports/OrderDetailReport';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { exportReportToPdf, exportReportToCsv, downloadBlob } from '../services/reportService';
 
@@ -71,10 +72,17 @@ const ReportManagement = () => {
     },
     {
       id: 'orders',
-      title: 'Order Detail Report',
-      description: 'Generate detailed reports on orders with comprehensive order information',
+      title: 'Order Summary Report',
+      description: 'Generate summary reports on orders with basic order information',
       icon: 'file',
       component: <OrderReport theme={theme} />
+    },
+    {
+      id: 'orderdetails',
+      title: 'Order Detail Report',
+      description: 'Comprehensive order details with status tracking and item breakdown',
+      icon: 'chart',
+      component: <OrderDetailReport theme={theme} categories={categories} />
     },
     {
       id: 'inventory',
@@ -147,4 +155,4 @@ const ReportManagement = () => {
   );
 };
 
-export default ReportManagement; 
+export default ReportManagement;

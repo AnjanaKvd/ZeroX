@@ -18,12 +18,22 @@ const OrderReport = ({ theme, categories = [] }) => {
     key: 'orderDate',
     direction: 'desc'
   });
+  const [expandedRowId, setExpandedRowId] = useState(null);
   
   // Prepare table columns for order report
   const columns = [
     { key: 'orderDate', label: 'Order Date', sortable: true, 
       format: (value) => new Date(value).toLocaleDateString() },
-    { key: 'orderId', label: 'Order ID', sortable: true },
+    { key: 'orderId', label: 'Order ID', sortable: true, 
+      format: (value, row) => (
+        <button
+          className="text-blue-600 underline hover:text-blue-800 focus:outline-none"
+          onClick={() => setExpandedRowId(expandedRowId === row.orderId ? null : row.orderId)}
+        >
+          {value}
+        </button>
+      )
+    },
     { key: 'customerName', label: 'Customer', sortable: true },
     { key: 'totalAmount', label: 'Amount', sortable: true, 
       format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
@@ -170,6 +180,40 @@ const OrderReport = ({ theme, categories = [] }) => {
   
   const metrics = getSummaryMetrics();
   
+  // Add renderExpandedRow function
+  const renderExpandedRow = (order) => {
+    if (!order.items || order.items.length === 0) {
+      return (
+        <div className="p-4 text-gray-500">No item details available for this order.</div>
+      );
+    }
+    return (
+      <div className="p-4 bg-gray-50 dark:bg-gray-900">
+        <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-200">Order Items</h4>
+        <table className="min-w-full text-sm border">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-800">
+              <th className="px-3 py-2 border">Product</th>
+              <th className="px-3 py-2 border">Quantity</th>
+              <th className="px-3 py-2 border">Price</th>
+              <th className="px-3 py-2 border">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items.map((item, idx) => (
+              <tr key={idx}>
+                <td className="px-3 py-2 border">{item.productName || item.name}</td>
+                <td className="px-3 py-2 border">{item.quantity}</td>
+                <td className="px-3 py-2 border">Rs {parseFloat(item.price).toFixed(2)}</td>
+                <td className="px-3 py-2 border">{item.status || order.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+  
   return (
     <div>
       <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
@@ -262,6 +306,8 @@ const OrderReport = ({ theme, categories = [] }) => {
         sortConfig={sortConfig}
         onSort={handleSort}
         theme={theme}
+        expandedRowId={expandedRowId}
+        renderExpandedRow={renderExpandedRow}
       />
     </div>
   );
