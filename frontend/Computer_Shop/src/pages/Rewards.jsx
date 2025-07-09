@@ -3,8 +3,11 @@ import { AuthContext } from "../context/AuthContext";
 import {
   getUserRewards,
   claimRewards,
-  processUserOrders
+  processUserOrders,
+  getRewardCoupons,
+  generateRewardCoupon,
 } from "../services/rewardService";
+import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 
 const Rewards = () => {
   const { user } = useContext(AuthContext);
@@ -15,7 +18,8 @@ const Rewards = () => {
     currentTier: "BRONZE",
     currentPointsRate: 0.01,
     pointsToNextTier: 0,
-    recentRewards: []
+    lifetimePoints: 0, // ✅ add this
+    recentRewards: [],
   });
   const [selectedRewards, setSelectedRewards] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,9 +28,72 @@ const Rewards = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
+  const [rewardCoupons, setRewardCoupons] = useState([]);
+  const [pointsToSpend, setPointsToSpend] = useState("");
+  const [copiedCode, setCopiedCode] = useState(null);
+
+  const fetchRewardCoupons = async () => {
+    if (!user?.userId) {
+      // console.log("User ID missing");
+      return;
+    }
+
+    try {
+      const data = await getRewardCoupons(user.userId);
+
+      setRewardCoupons(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+  const handleGenerateCoupon = async () => {
+    if (!user?.userId) return;
+
+    const value = pointsToSpend.trim();
+
+    if (!value) {
+      setError("Please enter points to spend.");
+      return;
+    }
+
+    if (!/^\d+$/.test(value)) {
+      setError(
+        "Points must be a whole number (no letters, symbols, or decimals)."
+      );
+      return;
+    }
+
+    const parsed = parseInt(value, 10);
+
+    if (parsed <= 0) {
+      setError("Points must be greater than zero.");
+      return;
+    }
+
+    if (parsed > rewardsData.totalPoints) {
+      setError(`You can only spend up to ${rewardsData.totalPoints} points.`);
+      return;
+    }
+
+    setError(null);
+
+    try {
+      const result = await generateRewardCoupon(user.userId, parsed);
+      await fetchRewardCoupons();
+      await fetchUserRewards();
+      setPointsToSpend("");
+      setSuccessMessage(`Generated coupon: ${result.code}`);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to generate coupon");
+    }
+  };
+
   const fetchUserRewards = async () => {
     if (!user?.userId) return;
-    
+
     try {
       setIsLoading(true);
       const data = await getUserRewards(user.userId);
@@ -42,17 +109,25 @@ const Rewards = () => {
 
   useEffect(() => {
     fetchUserRewards();
+    fetchRewardCoupons();
   }, [user]);
 
   const handleProcessOrders = async () => {
     if (!user?.userId) return;
-    
+
     try {
       setIsProcessing(true);
       setSuccessMessage(null);
-      await processUserOrders(user.userId);
-      await fetchUserRewards(); // Refresh data
-      setSuccessMessage("Orders processed and new reward points generated!");
+      setError(null);
+
+      const result = await processUserOrders(user.userId);
+      await fetchUserRewards(); // Refresh points/tier
+
+      if (result && result.length > 0) {
+        setSuccessMessage("Orders processed and new reward points generated!");
+      } else {
+        setError("No new orders to generate points!");
+      }
     } catch (error) {
       console.error("Failed to process orders:", error);
       setError(error.message || "Failed to process orders");
@@ -62,9 +137,9 @@ const Rewards = () => {
   };
 
   const handleToggleReward = (rewardId) => {
-    setSelectedRewards(prev => {
+    setSelectedRewards((prev) => {
       if (prev.includes(rewardId)) {
-        return prev.filter(id => id !== rewardId);
+        return prev.filter((id) => id !== rewardId);
       } else {
         return [...prev, rewardId];
       }
@@ -73,7 +148,7 @@ const Rewards = () => {
 
   const handleClaimSelectedRewards = async () => {
     if (!user?.userId || selectedRewards.length === 0) return;
-    
+
     try {
       setIsClaiming(true);
       setSuccessMessage(null);
@@ -91,7 +166,7 @@ const Rewards = () => {
 
   // Helper to format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
@@ -100,7 +175,7 @@ const Rewards = () => {
     BRONZE: "text-amber-700",
     SILVER: "text-slate-600",
     GOLD: "text-yellow-600",
-    PLATINUM: "text-purple-600"
+    PLATINUM: "text-purple-600",
   };
 
   // Progress calculation for tier progress bar
@@ -109,19 +184,22 @@ const Rewards = () => {
       BRONZE: { min: 0, max: 999 },
       SILVER: { min: 1000, max: 4999 },
       GOLD: { min: 5000, max: 9999 },
-      PLATINUM: { min: 10000, max: 10000 } // No max for Platinum
+      PLATINUM: { min: 10000, max: 10000 }, // No max for Platinum
     };
-    
+
     const currentTier = rewardsData.currentTier;
-    
+
     if (currentTier === "PLATINUM") return 100;
-    
+
     const range = tierRanges[currentTier];
     const tierMin = range.min;
     const tierMax = range.max;
     const totalInTier = tierMax - tierMin;
-    const pointsInTier = rewardsData.totalPoints - tierMin;
-    
+    //const pointsInTier = rewardsData.totalPoints - tierMin;
+
+    const totalEarnedPoints =
+      rewardsData.claimedPoints + rewardsData.availablePoints;
+    const pointsInTier = Math.max(0, totalEarnedPoints - tierMin);
     return Math.min(Math.round((pointsInTier / totalInTier) * 100), 100);
   };
 
@@ -194,7 +272,8 @@ const Rewards = () => {
                 </p>
               </div>
             </div>
-
+            {console.log("Lifetime points:", rewardsData.lifetimePoints)}
+            {console.log("Progress:", calculateTierProgress())}
             {/* Progress Bar */}
             <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
               <div
@@ -202,7 +281,6 @@ const Rewards = () => {
                 style={{ width: `${calculateTierProgress()}%` }}
               ></div>
             </div>
-
             {/* Tier Progress Bar */}
             <div className="mt-6 mb-2">
               <div className="bg-slate-200 grid grid-cols-4 text-center py-3 rounded-lg">
@@ -244,7 +322,6 @@ const Rewards = () => {
                 </div>
               </div>
             </div>
-
             {/* Tier Benefits */}
             <div className="mt-6 text-sm text-gray-600">
               <h3 className="font-semibold mb-2">Loyalty Tier Benefits:</h3>
@@ -288,7 +365,7 @@ const Rewards = () => {
                 disabled={isProcessing}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessing ? "Processing..." : "Process Orders"}
+                {isProcessing ? "Processing..." : "Rewards for Orders"}
               </button>
               {selectedRewards.length > 0 && (
                 <button
@@ -416,6 +493,91 @@ const Rewards = () => {
               {error}
             </div>
           )}
+
+          {/* Reward Coupons Section */}
+          <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-700">
+            My Reward Coupons
+          </h2>
+
+          <div className="flex items-center space-x-4 mb-4">
+            <input
+              type="number"
+              value={pointsToSpend}
+              onChange={(e) => setPointsToSpend(e.target.value)}
+              placeholder="Points to spend..."
+              className="border border-gray-300 rounded-md px-3 py-2 w-48"
+            />
+            <button
+              onClick={handleGenerateCoupon}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+            >
+              Generate Coupon
+            </button>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow">
+            {rewardCoupons.length === 0 ? (
+              <p className="text-gray-500">No reward coupons yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Coupon Code
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Discount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valid Until
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Copy Code
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {rewardCoupons.map((coupon, idx) => (
+                      <tr key={idx}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {coupon.code}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-700 font-bold">
+                          {coupon.discountValueFormatted}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(coupon.validUntil)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">                    
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(coupon.code);
+                              setCopiedCode(coupon.code); 
+                              setTimeout(() => setCopiedCode(null), 3000); 
+                            }}
+                            className="text-blue-600 hover:text-blue-800 flex items-center"
+                            title="Copy coupon code"
+                          >
+                            {copiedCode === coupon.code ? (
+                              <span className="text-green-600 font-semibold">
+                                Copied!
+                              </span>
+                            ) : (
+                              <>
+                                <ClipboardDocumentIcon className="h-5 w-5 mr-1" />
+                                <span className="text-sm">Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           {/* How Points Work Section */}
           <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-700">

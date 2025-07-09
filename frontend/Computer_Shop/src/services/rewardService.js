@@ -43,9 +43,9 @@ export const earnReward = async(userId, orderId) => {
 // Claim selected reward points
 export const claimRewards = async(userId, rewardIds) => {
     try {
-        const response = await api.post('/rewards/claim', {
+        const response = await api.post("/rewards/claim", {
             userId,
-            rewardIds
+            rewardIds,
         });
         return response.data;
     } catch (error) {
@@ -57,7 +57,7 @@ export const claimRewards = async(userId, rewardIds) => {
 // Redeem points
 export const redeemPoints = async(pointsToRedeem) => {
     try {
-        const response = await api.post('/rewards/redeem', { pointsToRedeem });
+        const response = await api.post("/rewards/redeem", { pointsToRedeem });
         return response.data;
     } catch (error) {
         console.error("Error redeeming points:", error);
@@ -85,4 +85,18 @@ export const generatePointsForOrder = async(orderId) => {
         console.error("Error generating points for order:", error);
         throw error;
     }
+};
+
+// Get all reward coupons for a user
+export const getRewardCoupons = async(userId) => {
+    const response = await api.get(`/rewards/${userId}/coupons`);
+    return response.data;
+};
+
+// Generate a reward coupon for a user
+export const generateRewardCoupon = async(userId, pointsToSpend) => {
+    const response = await api.post(`/rewards/${userId}/generate-coupon`, {
+        pointsToRedeem: pointsToSpend,
+    });
+    return response.data;
 };

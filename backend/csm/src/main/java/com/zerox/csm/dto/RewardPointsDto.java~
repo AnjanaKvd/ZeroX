@@ -25,7 +25,6 @@ public class RewardPointsDto {
             LoyaltyTier currentTier,
             double currentPointsRate,
             int pointsToNextTier,
-            int lifeTimePoints,
             List<RewardPointsResponse> recentRewards
     ) {}
 

@@ -2,7 +2,9 @@ package com.zerox.csm.service;
 
 import com.zerox.csm.dto.RewardPointsDto.*;
 import com.zerox.csm.exception.ResourceNotFoundException;
+import com.zerox.csm.exception.ValidationException;
 import com.zerox.csm.model.*;
+import com.zerox.csm.repository.CouponRepository;
 import com.zerox.csm.repository.OrderRepository;
 import com.zerox.csm.repository.RewardPointsRepository;
 import com.zerox.csm.repository.UserRepository;
@@ -25,6 +27,7 @@ public class RewardPointsService {
     private final RewardPointsRepository rewardPointsRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final CouponRepository couponRepository;
 
     private static final int POINTS_EXPIRATION_MONTHS = 12;
 
@@ -47,7 +50,12 @@ public class RewardPointsService {
         }
 
         User user = order.getUser();
-        LoyaltyTier tier = LoyaltyTier.fromPoints(user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0);
+//        LoyaltyTier tier = LoyaltyTier.fromPoints(user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0);
+        Integer lifetimePoints = rewardPointsRepository.getTotalPointsByUserId(user.getUserId());
+        if (lifetimePoints == null) lifetimePoints = 0;
+
+        LoyaltyTier tier = LoyaltyTier.fromPoints(lifetimePoints);
+
 
         // Calculate points (based on final amount after any discounts)
         int pointsEarned = calculatePointsForAmount(order.getFinalAmount(), tier.getPointsRate());
@@ -66,6 +74,8 @@ public class RewardPointsService {
         return mapToRewardPointsResponse(savedReward);
     }
 
+
+
     /**
      * Calculate points based on order amount and points rate
      */
@@ -78,30 +88,31 @@ public class RewardPointsService {
     /**
      * Get a user's reward summary information
      */
+
     public UserRewardsResponse getUserRewards(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         int totalPoints = user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0;
 
-        // Get unclaimed points
         Integer unclaimedPoints = rewardPointsRepository.getTotalUnclaimedPointsByUserId(userId);
         if (unclaimedPoints == null) unclaimedPoints = 0;
 
-        // Get claimed points
         Integer claimedPoints = rewardPointsRepository.getTotalClaimedPointsByUserId(userId);
         if (claimedPoints == null) claimedPoints = 0;
 
-        // Calculate current tier and points to next tier
-        LoyaltyTier currentTier = LoyaltyTier.fromPoints(totalPoints);
-        int pointsToNextTier = 0;
+        // ✅ Lifetime points calculated dynamically!
+        Integer lifetimePoints = rewardPointsRepository.getTotalPointsByUserId(userId);
+        if (lifetimePoints == null) lifetimePoints = 0;
 
+        LoyaltyTier currentTier = LoyaltyTier.fromPoints(lifetimePoints);
+
+        int pointsToNextTier = 0;
         if (currentTier != LoyaltyTier.PLATINUM) {
             LoyaltyTier nextTier = LoyaltyTier.values()[currentTier.ordinal() + 1];
-            pointsToNextTier = nextTier.getMinPoints() - totalPoints;
+            pointsToNextTier = nextTier.getMinPoints() - lifetimePoints;
         }
 
-        // Get recent rewards
         List<RewardPoints> recentRewards = rewardPointsRepository
                 .findByUserUserIdOrderByCreatedAtDesc(userId);
 
@@ -116,9 +127,11 @@ public class RewardPointsService {
                 currentTier,
                 currentTier.getPointsRate(),
                 pointsToNextTier,
+                lifetimePoints,
                 recentRewardsResponse
         );
     }
+
 
     /**
      * Claim reward points for a user
@@ -213,4 +226,50 @@ public class RewardPointsService {
                 rewardPoints.getExpirationDate()
         );
     }
+
+    //pay from reward points
+    @Transactional
+    public RewardToCouponResponse redeemPointsToCoupon(UUID userId, RewardToCouponRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        int currentPoints = user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0;
+        if (currentPoints < request.pointsToRedeem()) {
+            throw new ValidationException("Not enough points");
+        }
+
+        // Deduct points
+        user.setLoyaltyPoints(currentPoints - request.pointsToRedeem());
+        userRepository.save(user);
+
+        BigDecimal discountValue = new BigDecimal(request.pointsToRedeem());
+
+        Coupon coupon = Coupon.builder()
+                .code("REWARD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .description("Coupon generated from reward points")
+                .discountType(Coupon.DiscountType.FIXED_AMOUNT)
+                .discountValue(discountValue)
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusYears(1))
+                .isActive(true)
+                .currentUses(0)
+                .maxUses(1)
+                .maxUsesPerUser(1)
+                .createdAt(LocalDateTime.now())
+                .user(user) 
+                .build();
+
+        couponRepository.save(coupon);
+
+        String formattedValue = "LKR " + discountValue.setScale(2, RoundingMode.HALF_UP);
+
+        return new RewardToCouponResponse(
+                coupon.getCode(),
+                discountValue,
+                formattedValue,
+                coupon.getEndDate()
+        );
+    }
+
+
 }
