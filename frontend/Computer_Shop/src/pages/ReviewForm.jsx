@@ -33,7 +33,7 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
 
     try {
       console.log("Submitting review for product ID:", productId);
-      
+
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
@@ -55,19 +55,27 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
         setRating(0);
         setComment("");
       } else {
-        // Parse error response from the backend
         try {
           const errorData = await response.json();
+
           if (
             errorData.message &&
-            errorData.message.includes("already reviewed")
+            errorData.message.toLowerCase().includes("already")
           ) {
-            setError("You have already reviewed this product.");
+            setError("You have already submitted a review for this product!");
           } else {
-            setError(errorData.message || "Failed to submit review");
+            setError(
+              errorData.message ||
+                `Review submission failed: ${response.status}`
+            );
           }
         } catch (jsonError) {
-          setError(`Review submission failed: ${response.status}`);
+          // Handle generic 500 with a user-friendly message
+          if (response.status === 500) {
+            setError("You have already submitted a review for this product!");
+          } else {
+            setError(`Review submission failed: ${response.status}`);
+          }
         }
       }
     } catch (err) {
@@ -150,4 +158,3 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
 };
 
 export default ReviewForm;
-

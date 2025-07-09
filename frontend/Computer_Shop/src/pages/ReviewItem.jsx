@@ -14,11 +14,11 @@ const ReviewItem = ({ productId }) => {
         setLoading(false);
         return;
       }
-      
+
       try {
         console.log("Fetching reviews for product ID:", productId);
         setLoading(true);
-        
+
         const response = await fetch(
           `/api/reviews/product/${productId}?page=0&size=10`
         );
@@ -29,11 +29,18 @@ const ReviewItem = ({ productId }) => {
 
         const data = await response.json();
         console.log("Reviews data:", data);
-        
+
+
         if (data.content) {
-          setReviews(data.content);
+          const sorted = [...data.content].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          setReviews(sorted);
         } else if (Array.isArray(data)) {
-          setReviews(data);
+          const sorted = [...data].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          setReviews(sorted);
         } else {
           setReviews([]);
         }
@@ -51,7 +58,7 @@ const ReviewItem = ({ productId }) => {
   return (
     <div className="space-y-4">
       {error && <div className="text-red-500 text-center">{error}</div>}
-      
+
       {loading ? (
         <p className="text-center text-gray-400">Loading reviews...</p>
       ) : reviews.length > 0 ? (
@@ -85,17 +92,18 @@ const ReviewItem = ({ productId }) => {
             </div>
             <hr />
 
-            <p className="text-gray-700">{review.comment || "No comment provided."}</p>
+            <p className="text-gray-700">
+              {review.comment || "No comment provided."}
+            </p>
           </div>
         ))
       ) : (
-        <p className="text-center text-gray-500">No reviews available for this product yet. Be the first to review!</p>
+        <p className="text-center text-gray-500">
+          No reviews available for this product yet. Be the first to review!
+        </p>
       )}
     </div>
   );
 };
 
 export default ReviewItem;
-
-
-
