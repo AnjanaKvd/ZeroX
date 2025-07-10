@@ -47,6 +47,9 @@ public class Product {
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
     
+@Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+private Boolean active = true;
+
     @Column(name = "low_stock_threshold")
     private Integer lowStockThreshold;
     

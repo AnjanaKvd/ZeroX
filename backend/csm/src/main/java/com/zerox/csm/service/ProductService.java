@@ -169,6 +169,15 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
+        // Check if the product has inventory logs
+        Page<InventoryLog> inventoryLogs = inventoryLogRepository.findByProductProductId(productId, PageRequest.of(0, 1));
+        if (inventoryLogs.hasContent()) {
+            throw new IllegalStateException("Cannot delete product with existing inventory logs. Please archive it instead.");
+        }
+
+        // Delete stock alerts associated with this product
+        stockAlertRepository.deleteByProductProductId(productId);
+
         // Delete associated image if exists
         if (product.getImageUrl() != null) {
             imageStorageService.deleteImage(product.getImageUrl());
@@ -195,9 +204,9 @@ public class ProductService {
         
         Page<Product> products;
         if (query != null && !query.trim().isEmpty()) {
-            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, pageable);
+            products = productRepository.searchProductsByQuery(query, categoryId, minPrice, maxPrice, brand, true, pageable);
         } else {
-            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, pageable);
+            products = productRepository.searchProducts(categoryId, minPrice, maxPrice, brand, true, pageable);
         }
         
         return products.map(this::mapToProductResponse);

@@ -53,15 +53,7 @@ const DashboardStats = ({ productStats }) => {
       setRevenue(productStats.revenue);
     }
   }, [productStats?.revenue]);
-        title="User Accounts"
-        value={customerCount}
-        title="Customers"
-        value={productStats?.customerCount || 0}
-        value={formatRevenue(revenue)}
-        value={`$${productStats?.revenue?.toFixed(2) || '0.00'}`}
-      />
-    </div>
-  );
+
 };
 
 export default DashboardStats; 

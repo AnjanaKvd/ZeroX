@@ -29,6 +29,12 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    public List<CategoryResponse> getSidebarCategories() {
+        return categoryRepository.findBySidebarTrue().stream()
+                .map(this::mapToCategoryResponse)
+                .collect(Collectors.toList());
+    }
+
     public CategoryResponse getCategory(UUID categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
@@ -65,6 +71,7 @@ public class CategoryService {
                 .slug(slug)
                 .description(request.description())
                 .icon(request.icon())
+                .sidebar(request.sidebar() != null ? request.sidebar() : false)
                 .parentCategory(parentCategory)
                 .subCategories(new ArrayList<>())
                 .products(new ArrayList<>())
@@ -113,6 +120,20 @@ public class CategoryService {
         category.setDescription(request.description());
         category.setIcon(request.icon());
         
+        // Update sidebar if provided
+        if (request.sidebar() != null) {
+            category.setSidebar(request.sidebar());
+        }
+
+        return mapToCategoryResponse(categoryRepository.save(category));
+    }
+
+    @Transactional
+    public CategoryResponse updateCategorySidebar(UUID categoryId, Boolean sidebar) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        category.setSidebar(sidebar);
         return mapToCategoryResponse(categoryRepository.save(category));
     }
 
@@ -171,6 +192,7 @@ public class CategoryService {
                 category.getSlug(),
                 category.getDescription(),
                 category.getIcon(),
+                category.getSidebar(),
                 category.getParentCategory() != null ? category.getParentCategory().getCategoryId() : null,
                 category.getParentCategory() != null ? category.getParentCategory().getName() : null,
                 category.getSubCategories().stream()

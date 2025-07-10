@@ -27,7 +27,8 @@ const Sidebar = ({ isOpen, onToggle, isVisible = true }) => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const data = await getCategories();
+        // Only fetch categories that are marked for sidebar
+        const data = await getCategories(true); // true means sidebarOnly
         setCategories(data || []);
         setError(null);
       } catch (err) {

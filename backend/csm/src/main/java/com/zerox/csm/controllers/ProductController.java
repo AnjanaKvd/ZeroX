@@ -3,6 +3,7 @@ package com.zerox.csm.controllers;
 import com.zerox.csm.dto.InventoryLogDto;
 import com.zerox.csm.dto.ProductDto;
 import com.zerox.csm.service.ImageStorageService;
+import com.zerox.csm.service.ProductArchiveService;
 import com.zerox.csm.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 // src/main/java/com/zerox/csm/controller/ProductController.java
@@ -27,6 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final ProductArchiveService productArchiveService;
     private final ImageStorageService imageStorageService;
 
     @GetMapping
@@ -76,9 +79,23 @@ public class ProductController {
     
     @DeleteMapping("/{productId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteProduct(@PathVariable UUID productId) {
-        productService.deleteProduct(productId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteProduct(@PathVariable UUID productId) {
+        try {
+            productService.deleteProduct(productId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            if (e.getMessage().contains("Cannot delete product with existing inventory logs")) {
+                // If we can't delete due to inventory logs, automatically archive instead
+                ProductDto.ProductResponse archivedProduct = productArchiveService.archiveProduct(productId);
+                return ResponseEntity
+                    .status(HttpStatus.ACCEPTED)
+                    .body(Map.of(
+                        "message", "Product could not be deleted due to existing inventory logs. It has been archived instead.",
+                        "product", archivedProduct
+                    ));
+            }
+            throw e;
+        }
     }
     
     @PostMapping("/stock")

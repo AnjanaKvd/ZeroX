@@ -75,7 +75,6 @@ const Header = () => {
 
   const navItems = [
     { to: "/", label: "HOME" },
-    { to: "/categories", label: "CATEGORIES" },
     { to: "/products", label: "PRODUCTS" },
     { to: "/repair", label: "SERVICES" },
     { to: "/contact", label: "CONTACT" },
@@ -318,7 +317,7 @@ const Header = () => {
             </div>
 
             {/* Navigation Links - Center column, always fixed position */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center gap-2">
               {navItems.map(item => (
                 <NavLink 
                   key={item.to}

@@ -443,25 +443,6 @@ const getTotalRevenue = async () => {
     return 0; // Return 0 as fallback
   }
 };
-    
-    // Get the customer count
-    const customerCount = await getCustomerCount();
-    
-    // Get total sales count from orders
-    const totalSales = await getTotalSalesCount();
-    
-    // Get total revenue from delivered orders
-    const revenue = await getTotalRevenue();
-    
-    // Return mock data since the API endpoint doesn't exist or has an error
-    return {
-      activeCount: await getActiveProductCountSafe(),
-      totalSales: totalSales,
-      customerCount: customerCount, 
-      revenue: revenue
-    };
-  }
-};
 
 // Safer helper function with additional error handling
 const getActiveProductCountSafe = async () => {

@@ -47,12 +47,7 @@ const App = () => {
                 <div className="flex flex-col min-h-screen">
                   {/* API Connection Warning */}
                   {!apiConnected && apiCheckComplete && (
-                    <div 
-                      role="alert"
-                      className="bg-error-light/10 dark:bg-error-dark/10 border border-error-light dark:border-error-dark text-error-light dark:text-error-dark px-4 py-3 text-center"
-                    >
-                      ⚠️ Warning: Connection to backend API failed. Some features may be unavailable.
-                    </div>
+                    console.log("API Connection Warning")
                   )}
 
                   {/* Main Application Routes */}

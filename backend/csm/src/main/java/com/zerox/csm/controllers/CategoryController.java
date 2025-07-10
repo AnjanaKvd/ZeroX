@@ -22,6 +22,11 @@ public class CategoryController {
     public ResponseEntity<List<CategoryDto.CategoryResponse>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
+
+    @GetMapping("/sidebar")
+    public ResponseEntity<List<CategoryDto.CategoryResponse>> getSidebarCategories() {
+        return ResponseEntity.ok(categoryService.getSidebarCategories());
+    }
     
     @GetMapping("/{categoryId}")
     public ResponseEntity<CategoryDto.CategoryResponse> getCategory(
@@ -59,5 +64,14 @@ public class CategoryController {
     public ResponseEntity<Void> deleteCategory(@PathVariable UUID categoryId) {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{categoryId}/sidebar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CategoryDto.CategoryResponse> updateCategorySidebar(
+            @PathVariable UUID categoryId,
+            @RequestParam Boolean sidebar
+    ) {
+        return ResponseEntity.ok(categoryService.updateCategorySidebar(categoryId, sidebar));
     }
 } 

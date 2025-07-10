@@ -21,6 +21,8 @@
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<jjwt.version>0.12.5</jjwt.version>
 		<lombok.version>1.18.32</lombok.version>
+		<maven.compiler.source>19</maven.compiler.source>
+		<maven.compiler.target>19</maven.compiler.target>
 	</properties>
 
 	<dependencies>
@@ -41,6 +43,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>jakarta.persistence</groupId>
+			<artifactId>jakarta.persistence-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
 
 		<!-- Database -->
 		<dependency>
@@ -119,12 +127,6 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Add this dependency for HTML template support -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-		</dependency>
-
 		<!-- Environment Variables Support -->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
@@ -163,12 +165,12 @@
 			<plugin>
 				 <groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-<!--				<version>3.10.1</version> &lt;!&ndash; Add version explicitly &ndash;&gt;-->
+				<version>3.11.0</version> <!-- Add version explicitly -->
 				<configuration>
 					<release>${java.version}</release>
-					<compilerArgs>
-						<arg>--enable-preview</arg>
-					</compilerArgs>
+<!--					<compilerArgs>-->
+<!--						<arg>&#45;&#45;enable-preview</arg>-->
+<!--					</compilerArgs>-->
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.mapstruct</groupId>
