@@ -19,6 +19,12 @@ const OrderReport = ({ theme, categories = [] }) => {
     direction: 'desc'
   });
   const [expandedRowId, setExpandedRowId] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    totalPages: 1,
+    totalElements: 0
+  });
   
   // Prepare table columns for order report
   const columns = [
@@ -53,13 +59,29 @@ const OrderReport = ({ theme, categories = [] }) => {
     },
   ];
   
-  // Load report data when filters change
+  // Load report data when filters or pagination change
   useEffect(() => {
     const fetchReportData = async () => {
       try {
         setLoading(true);
-        const response = await getOrderReport(filters);
-        setReportData(response);
+        // Pass status, page, and size as query params
+        const response = await getOrderReport({
+          ...filters,
+          status: filters.status || undefined,
+          page: pagination.page,
+          size: pagination.size
+        });
+        // If backend returns paginated data
+        if (response && response.content) {
+          setReportData(response.content);
+          setPagination(prev => ({
+            ...prev,
+            totalPages: response.totalPages,
+            totalElements: response.totalElements
+          }));
+        } else {
+          setReportData(response);
+        }
       } catch (error) {
         console.error('Failed to fetch order report:', error);
       } finally {
@@ -68,11 +90,12 @@ const OrderReport = ({ theme, categories = [] }) => {
     };
     
     fetchReportData();
-  }, [filters]);
+  }, [filters, pagination.page, pagination.size]);
   
   // Handle filter changes
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
+    if (name === 'status') setPagination(prev => ({ ...prev, page: 0 })); // Reset page on filter
   };
   
   // Apply sorting
@@ -229,6 +252,8 @@ const OrderReport = ({ theme, categories = [] }) => {
         onExportPdf={handleExportPdf}
         onExportCsv={handleExportCsv}
         theme={theme}
+        // Add status options for filter
+        statusOptions={['', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']}
       />
       
       {/* Summary Cards */}
@@ -308,9 +333,16 @@ const OrderReport = ({ theme, categories = [] }) => {
         theme={theme}
         expandedRowId={expandedRowId}
         renderExpandedRow={renderExpandedRow}
+        // Add pagination props
+        page={pagination.page}
+        pageSize={pagination.size}
+        totalPages={pagination.totalPages}
+        totalElements={pagination.totalElements}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </div>
   );
 };
 
-export default OrderReport; 
+export default OrderReport;

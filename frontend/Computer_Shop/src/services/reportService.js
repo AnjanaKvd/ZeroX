@@ -40,51 +40,22 @@ export const getSalesReport = async (params = {}) => {
  */
 export const getOrderReport = async (params = {}) => {
   try {
-    console.log('Fetching order report with params:', params);
-    
-    // Use the orders API endpoint instead of reports/orders
-    const apiParams = { 
-      size: 100, // Get a large number of orders
-      ...params
-    };
-    
-    // Convert status to uppercase if present (API expects uppercase)
-    if (params.status) {
-      apiParams.status = params.status.toUpperCase();
-    }
-    
+    // Only send supported params to /orders
+    const apiParams = {};
+    if (params.status) apiParams.status = params.status.toUpperCase();
+    if (params.page !== undefined) apiParams.page = params.page;
+    if (params.size !== undefined) apiParams.size = params.size;
     const response = await api.get('/orders', { params: apiParams });
-    const orders = response.data.content || [];
-    
-    // Transform the order data into the format expected by the order report
-    return orders.map(order => {
-      // Calculate item count
-      const itemCount = order.items ? order.items.reduce((sum, item) => 
-        sum + (item.quantity || 0), 0) : 0;
-      
-      // Format the order date
-      const orderDate = order.createdAt || order.orderDate || new Date().toISOString();
-      
-      // Format delivery date if available
-      let deliveryDate = null;
-      if (order.status === 'DELIVERED' && order.updatedAt) {
-        deliveryDate = order.updatedAt;
-      }
-      
+    // If backend returns paginated data
+    if (response.data && response.data.content) {
       return {
-        orderId: order.orderId,
-        orderDate: orderDate,
-        customerName: order.customerName || 'Unknown',
-        customerEmail: order.customerEmail || '',
-        customerPhone: order.customerPhone || '',
-        totalAmount: order.finalAmount || order.totalAmount || 0,
-        itemCount: itemCount,
-        status: order.status || 'Pending',
-        deliveryDate: deliveryDate,
-        items: order.items || [],
-        shippingAddress: order.shippingAddress || null
+        content: response.data.content,
+        totalPages: response.data.totalPages,
+        totalElements: response.data.totalElements
       };
-    });
+    } else {
+      return response.data;
+    }
   } catch (error) {
     console.error('Error fetching order report:', error);
     throw error;
