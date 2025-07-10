@@ -107,8 +107,8 @@ const UserManagement = () => {
         setStats({
           totalUsers: data.totalUsers || 0,
           activeUsers: data.activeUsers || 0,
-          admins: data.adminsCount || 0,
-          technicians: data.techniciansCount || 0
+          adminsCount: data.adminsCount || 0,
+          techniciansCount: data.techniciansCount || 0
         });
       }
     } catch (error) {
@@ -117,8 +117,8 @@ const UserManagement = () => {
       setStats({
         totalUsers: 0,
         activeUsers: 0,
-        admins: 0,
-        technicians: 0
+        adminsCount: 0,
+        techniciansCount: 0
       });
     }
   };

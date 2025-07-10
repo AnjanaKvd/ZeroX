@@ -20,6 +20,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // For finding users including deleted ones (not exposed to controllers)
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmailIncludeDeleted(@Param("email") String email);
+    
+    @Query("SELECT u FROM User u WHERE u.userId = :userId")
+    Optional<User> findByIdIncludeDeleted(@Param("userId") UUID userId);
 
     // Soft delete of user
     @Modifying
@@ -46,5 +49,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Count users by role
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
     long countByRole(@Param("role") UserRole role);
+    
+    // Hard delete a user (bypasses soft delete)
+    @Modifying
+    @Query(value = "DELETE FROM users WHERE user_id = :userId", nativeQuery = true)
+    void hardDelete(@Param("userId") UUID userId);
 
 }
