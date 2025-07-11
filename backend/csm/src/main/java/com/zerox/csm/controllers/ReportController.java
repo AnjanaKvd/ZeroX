@@ -14,15 +14,25 @@ import com.zerox.csm.dto.OrderDto;
 import com.zerox.csm.dto.OrderDto.OrderResponse;
 import com.zerox.csm.dto.OrderDto.OrderItemResponse;
 import com.zerox.csm.model.OrderItem;
+import com.zerox.csm.repository.UserRepository;
+import com.zerox.csm.dto.UserDto.AdminUserResponse;
 import java.util.stream.Collectors;
 import java.util.List;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
+//@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/report")
 @PreAuthorize("hasRole('ADMIN')")
 public class ReportController {
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private com.zerox.csm.service.RepairService repairService;
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderResponse>> getAllOrdersReport(
@@ -69,5 +79,28 @@ public class ReportController {
             )
         ).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/customers")
+    public ResponseEntity<List<AdminUserResponse>> getAllCustomersReport() {
+        List<AdminUserResponse> customers = userRepository.findAll().stream()
+            .map(user -> new AdminUserResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getPhone(),
+                user.getRole() != null ? user.getRole() : null,
+                user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0,
+                user.getCreatedAt() != null ? user.getCreatedAt() : null,
+                user.getLastLogin() != null ? user.getLastLogin() : null
+            ))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(customers);
+    }
+
+    @GetMapping("/repairs")
+    public ResponseEntity<List<com.zerox.csm.dto.RepairDto>> getAllRepairsReport() {
+        List<com.zerox.csm.dto.RepairDto> repairs = repairService.getAllRepairs();
+        return ResponseEntity.ok(repairs);
     }
 }

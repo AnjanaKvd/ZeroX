@@ -7,6 +7,7 @@ import SalesReport from '../components/reports/SalesReport';
 import InventoryReport from '../components/reports/InventoryReport';
 import CustomerReport from '../components/reports/CustomerReport';
 import OrderReport from '../components/reports/OrderReport';
+import RepairsReport from '../components/reports/RepairsReport';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import { exportReportToPdf, exportReportToCsv, downloadBlob } from '../services/reportService';
 
@@ -63,13 +64,6 @@ const ReportManagement = () => {
   // Report definitions
   const reports = [
     {
-      id: 'sales',
-      title: 'Sales Report',
-      description: 'Analyze sales performance, revenue trends, and order metrics over time',
-      icon: 'chart',
-      component: <SalesReport theme={theme} categories={categories} />
-    },
-    {
       id: 'orderdetails',
       title: 'Order Detail Report',
       description: 'Comprehensive order details with status tracking and item breakdown',
@@ -89,6 +83,13 @@ const ReportManagement = () => {
       description: 'Analyze customer demographics, spending patterns, and lifetime value',
       icon: 'chart',
       component: <CustomerReport theme={theme} categories={categories} />
+    },
+    {
+      id: 'repairs',
+      title: 'Repairs Report',
+      description: 'View completed repairs, costs, and technician performance',
+      icon: 'file',
+      component: <RepairsReport theme={theme} />
     }
   ];
   

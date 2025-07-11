@@ -1,6 +1,6 @@
 import api from './api';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Fetches sales report data
@@ -25,6 +25,31 @@ export const getSalesReport = async (params = {}) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching sales report:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches repairs report data
+ * @param {Object} params - Parameters for filtering the report
+ * @param {string} params.startDate - Start date for filtering (YYYY-MM-DD)
+ * @param {string} params.endDate - End date for filtering (YYYY-MM-DD)
+ * @param {string} params.category - Filter by product category
+ * @returns {Promise<Object>} - Report data for completed repairs only
+ */
+export const getRepairsReport = async (params = {}) => {
+  try {
+    // Add status=completed to params to get only completed repairs
+    const queryParams = {
+      ...params,
+      status: 'completed',
+      ...(params.category && { categoryId: params.category })
+    };
+    console.log('Fetching repairs report with params:', queryParams);
+    const response = await api.get('/reports/repairs', { params: queryParams });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching repairs report:', error);
     throw error;
   }
 };
@@ -504,7 +529,7 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       yPos += 10;
       
       // Create summary table
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)']],
         body: summaryData.map(item => [
@@ -543,7 +568,7 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       yPos = 40;
       
       // Create detailed items table
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Date', 'Order ID', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)']],
         body: salesData.detailed.map(item => [
@@ -575,6 +600,48 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       console.log('PDF generation completed');
       
       // Return as a blob
+      return doc.output('blob');
+    }
+    
+    // Special handling for customer reports
+    if (reportType === 'customers' && Array.isArray(params.data) && Array.isArray(params.columns)) {
+      const doc = new jsPDF();
+      const title = 'Customer Report';
+      const date = new Date().toLocaleDateString();
+      doc.setFontSize(18);
+      doc.text(title, 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${date}`, 14, 30);
+      let yPos = 38;
+      if (params.startDate) {
+        doc.text(`Start Date: ${params.startDate}`, 14, yPos);
+        yPos += 7;
+      }
+      if (params.endDate) {
+        doc.text(`End Date: ${params.endDate}`, 14, yPos);
+        yPos += 7;
+      }
+      // Prepare table data
+      const head = [params.columns.map(col => col.label)];
+      const body = params.data.map(row => params.columns.map(col => {
+        if (col.format) return col.format(row[col.key], row);
+        return row[col.key] ?? '';
+      }));
+      autoTable(doc, {
+        startY: yPos,
+        head,
+        body,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
       return doc.output('blob');
     }
     
@@ -656,7 +723,7 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       yPos += 6;
       
       // Create order table
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Order ID', 'Date', 'Customer', 'Items', 'Amount (Rs)', 'Status']],
         body: orderData.map(order => [
@@ -813,6 +880,29 @@ export const exportReportToCsv = async (reportType, params = {}) => {
       console.log('CSV generation completed');
       
       const blob = new Blob([fullCsvContent], { type: 'text/csv;charset=utf-8;' });
+      return blob;
+    }
+    
+    // Special handling for customer reports
+    if (reportType === 'customers' && Array.isArray(params.data) && Array.isArray(params.columns)) {
+      // Prepare headers and rows for only the selected columns
+      const headers = params.columns.map(col => col.label);
+      const rows = params.data.map(row => params.columns.map(col => {
+        let value = col.format ? col.format(row[col.key], row) : row[col.key] ?? '';
+        // Escape value for CSV: wrap in quotes if it contains comma, quote, or newline
+        value = String(value);
+        if (value.includes('"')) value = value.replace(/"/g, '""');
+        if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+          value = `"${value}"`;
+        }
+        return value;
+      }));
+      // Create CSV content with CRLF line endings for Excel compatibility
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       return blob;
     }
     

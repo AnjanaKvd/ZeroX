@@ -228,8 +228,8 @@ const ReportFilters = ({
           </>
         )}
         
-        {/* Category Filter - For Sales and Customer Reports */}
-        {(reportType === 'sales' || reportType === 'customers') && (
+        {/* Category Filter - For Sales Reports Only */}
+        {reportType === 'sales' && (
           <div>
             <label htmlFor="category" className={`block text-sm font-medium mb-1 ${colors.text}`}>
               Category
@@ -289,7 +289,7 @@ const ReportFilters = ({
       <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
         {onApplyFilters && (
           <button
-            onClick={onApplyFilters}
+            onClick={() => onApplyFilters(filters)}
             className={`px-4 py-2 text-white rounded-md ${colors.buttonPrimary}`}
           >
             Apply Filters
@@ -318,4 +318,4 @@ const ReportFilters = ({
   );
 };
 
-export default ReportFilters; 
+export default ReportFilters;
