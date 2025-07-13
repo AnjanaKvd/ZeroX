@@ -4,10 +4,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Import the actual images
-import gamingLaptops from "../../assets/images/hero/gaming-laptops-banner.jpg";
-import summerSale from "../../assets/images/hero/summer-sale-banner.jpg";
-import customPC from "../../assets/images/hero/custom-pc-banner.jpg";
+// Import shop images
+import image1 from "../../assets/images/hero/image1.jpg";
+import image2 from "../../assets/images/hero/image2.jpg";
+import image3 from "../../assets/images/hero/image3.jpg";
+import image4 from "../../assets/images/hero/image4.jpg";
+import image5 from "../../assets/images/hero/image5.jpg";
+import image6 from "../../assets/images/hero/image6.jpg";
+
 
 export default function HeroBanner() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -20,27 +24,51 @@ export default function HeroBanner() {
   const slides = [
     {
       id: 1,
-      title: "New Gaming Laptops",
-      description: "Experience next-level gaming with our latest collection",
+      title: "Premium Computer Shop",
+      description: "Your one-stop destination for all tech needs",
       buttonText: "Shop Now",
-      buttonLink: "/category/laptops/gaming",
-      image: gamingLaptops,
+      buttonLink: "/products",
+      image: image1,
     },
     {
       id: 2,
-      title: "Summer Sale",
-      description: "Up to 60% off on selected items",
-      buttonText: "View Deals",
-      buttonLink: "/special-offers",
-      image: summerSale,
+      title: "Expert Technical Support",
+      description: "Professional assistance for all your tech requirements",
+      buttonText: "Learn More",
+      buttonLink: "/services",
+      image: image2,
     },
     {
       id: 3,
-      title: "Build Your Dream PC",
-      description: "Customize your perfect setup with our components",
-      buttonText: "Start Building",
-      buttonLink: "/custom-build",
-      image: customPC,
+      title: "Premium Computer Shop",
+      description: "Your one-stop destination for all tech needs",
+      buttonText: "Shop Now",
+      buttonLink: "/products",
+      image: image3,
+    },
+    {
+      id: 4,
+      title: "Expert Technical Support",
+      description: "Professional assistance for all your tech requirements",
+      buttonText: "Learn More",
+      buttonLink: "/services",
+      image: image4,
+    },
+    {
+      id: 5,
+      title: "Premium Computer Shop",
+      description: "Your one-stop destination for all tech needs",
+      buttonText: "Shop Now",
+      buttonLink: "/products",
+      image: image5,
+    },
+    {
+      id: 6,
+      title: "Expert Technical Support",
+      description: "Professional assistance for all your tech requirements",
+      buttonText: "Learn More",
+      buttonLink: "/services",
+      image: image6,
     },
   ];
 
@@ -118,15 +146,14 @@ export default function HeroBanner() {
             <img
               src={slides[currentSlide].image}
               alt={slides[currentSlide].title}
-              className="w-full h-full object-cover object-center"
-            />
-            {/* Dark gradient overlay */}
-            <div 
-              className="absolute inset-0 transition-colors duration-500" 
+              className="absolute inset-0 w-full h-full object-cover"
               style={{ 
-                background: `linear-gradient(to right, rgba(0,0,0,${0.8 + (1-opacity)*0.2}) 0%, rgba(0,0,0,${0.6 + (1-opacity)*0.4}) 50%, rgba(0,0,0,${0.4 + (1-opacity)*0.6}) 100%)`,
+                objectPosition: 'center 30%',
+                filter: 'brightness(0.7)'
               }}
             />
+            {/* Enhanced dark gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40" />
           </motion.div>
         </AnimatePresence>
         
@@ -163,7 +190,6 @@ export default function HeroBanner() {
                   transition={{ duration: 0.5, delay: 0.3 }}
                   className="inline-block px-4 py-1 mb-4 bg-primary/90 text-white text-sm font-semibold rounded-full backdrop-blur-sm"
                 >
-                  Featured Deal
                 </motion.div>
                 
                 {/* Title */}
