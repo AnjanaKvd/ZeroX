@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
 import { useWishlist } from '../../../context/WishlistContext';
@@ -18,6 +18,8 @@ import {
   ChartBarSquareIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '../../../context/ThemeContext';
+import { useCategories } from '../../../context/CategoriesContext';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import logoImage from '../../../assets/images/logo.png';
 
 const Header = () => {
@@ -31,9 +33,13 @@ const Header = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const prevScrollY = useRef(0);
   const settingsRef = useRef(null);
   const wishlistRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { categories, loading: categoriesLoading } = useCategories();
+  const categoriesRef = useRef(null);
   
   const isDark = theme === 'dark';
   const cartItemCount = cartItems?.reduce((total, item) => total + (item.quantity || 0), 0) || 0;
@@ -74,6 +80,9 @@ const Header = () => {
       }
       if (wishlistRef.current && !wishlistRef.current.contains(event.target)) {
         setIsWishlistOpen(false);
+      }
+      if (categoriesRef.current && !categoriesRef.current.contains(event.target)) {
+        setIsCategoriesOpen(false);
       }
     };
 
@@ -415,20 +424,24 @@ const Header = () => {
                   
                   {/* Categories dropdown menu */}
                   {isCategoriesOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200">
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
                       <div className="py-1">
-                        <Link to="/products?category=laptops" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Laptops & Computers
-                        </Link>
-                        <Link to="/products?category=accessories" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Computer Accessories
-                        </Link>
-                        <Link to="/products?category=storage" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Storage Devices
-                        </Link>
-                        <Link to="/products?category=networking" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Networking
-                        </Link>
+                        {categoriesLoading ? (
+                          <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">Loading categories...</div>
+                        ) : categories.length > 0 ? (
+                          categories.map((category) => (
+                            <Link
+                              key={category.categoryId}
+                              to={`/categories/${category.categoryId}`}
+                              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              onClick={() => setIsCategoriesOpen(false)}
+                            >
+                              {category.name}
+                            </Link>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">No categories found</div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -570,18 +583,34 @@ const Header = () => {
                 </div>
               ) : (
                 /* Search bar when not scrolled */
-                <div className={`flex items-center rounded-md px-3 py-1.5 w-64 ${
-                  isDark ? 'bg-white/10' : 'bg-gray-100'
-                }`}>
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) {
+                      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                    }
+                  }}
+                  className={`flex items-center rounded-md px-3 py-1.5 w-64 ${
+                    isDark ? 'bg-white/10' : 'bg-gray-100'
+                  }`}
+                >
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="ENTER YOUR KEY WORD"
                     className={`bg-transparent text-sm border-none outline-none w-full ${
                       isDark ? 'text-white placeholder-white/70' : 'text-gray-700 placeholder-gray-500'
                     }`}
                   />
-                  <MagnifyingGlassIcon className={`h-5 w-5 ${isDark ? 'text-white' : 'text-gray-500'}`} />
-                </div>
+                  <button 
+                    type="submit"
+                    className="focus:outline-none"
+                    aria-label="Search products"
+                  >
+                    <MagnifyingGlassIcon className={`h-5 w-5 ${isDark ? 'text-white' : 'text-gray-500'}`} />
+                  </button>
+                </form>
               )}
             </div>
           </div>
@@ -618,18 +647,35 @@ const Header = () => {
           </div>
           
           {/* Search input */}
-          <div className={`my-4 rounded-md px-3 py-2 flex items-center ${
-            isDark ? 'bg-white/10' : 'bg-gray-100'
-          }`}>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                setIsMobileMenuOpen(false);
+              }
+            }}
+            className={`my-4 rounded-md px-3 py-2 flex items-center ${
+              isDark ? 'bg-white/10' : 'bg-gray-100'
+            }`}
+          >
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="ENTER YOUR KEY WORD"
               className={`bg-transparent border-none outline-none w-full ${
                 isDark ? 'text-white placeholder-white/70' : 'text-gray-700 placeholder-gray-500'
               }`}
             />
-            <MagnifyingGlassIcon className={`h-5 w-5 ${isDark ? 'text-white' : 'text-gray-500'}`} />
-          </div>
+            <button 
+              type="submit"
+              className="focus:outline-none"
+              aria-label="Search products"
+            >
+              <MagnifyingGlassIcon className={`h-5 w-5 ${isDark ? 'text-white' : 'text-gray-500'}`} />
+            </button>
+          </form>
 
           {/* Main navigation links */}
           <div className="space-y-2 mt-6">

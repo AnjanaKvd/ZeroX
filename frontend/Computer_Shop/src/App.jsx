@@ -5,6 +5,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { CurrencyProvider } from './context/CurrencyContext';
+import { CategoriesProvider } from './context/CategoriesContext';
 import AppRoutes from './routes/AppRoutes';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingOverlay from './components/common/LoadingOverlay';
@@ -46,6 +47,7 @@ const App = () => {
             <CurrencyProvider>
               <CartProvider>
                 <WishlistProvider>
+                  <CategoriesProvider>
                   <div className="flex flex-col min-h-screen">
                     {/* API Connection Warning */}
                     {!apiConnected && apiCheckComplete && (
@@ -57,7 +59,8 @@ const App = () => {
                       <AppRoutes />
                     </Suspense>
                   </div>
-                </WishlistProvider>
+                </CategoriesProvider>
+              </WishlistProvider>
               </CartProvider>
             </CurrencyProvider>
           </ToastProvider>

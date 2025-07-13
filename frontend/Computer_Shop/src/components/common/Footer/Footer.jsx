@@ -38,7 +38,7 @@ const Footer = () => {
                 Shop All Products
               </Link>
               <Link
-                to="/build-guides"
+                to="/pc-building-guides"
                 className={`text-sm hover:text-primary-hover transition-colors ${
                   theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
                 }`}
@@ -46,7 +46,7 @@ const Footer = () => {
                 PC Building Guides
               </Link>
               <Link
-                to="/support"
+                to="/contact"
                 className={`text-sm hover:text-primary-hover transition-colors ${
                   theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
                 }`}
@@ -62,9 +62,12 @@ const Footer = () => {
             <address className={`not-italic text-sm ${
               theme === 'dark' ? 'text-text-dark-secondary' : 'text-text-light-secondary'
             }`}>
-              <p>No. 89/2/B,</p>
+              <p>No. 254,</p>
+              <p>Rjawella 02,</p>
               <p> Gonawala,</p>
               <p> Digana</p>
+              <p>Kandy</p>
+              <p>Sri Lanka</p>
               <p className="mt-2">
                 Email:{' '}
                 <a 

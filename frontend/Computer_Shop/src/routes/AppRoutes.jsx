@@ -45,6 +45,9 @@ const RepairDetail = lazy(() => import("../pages/RepairDetail"));
 const RepairManagement = lazy(() => import("../pages/RepairManagement"));
 const Stores = lazy(() => import("../pages/Stores"));
 const WishlistPage = lazy(() => import("../pages/WishlistPage"));
+const ContactPage = lazy(() => import("../pages/ContactPage"));
+const PCBuildingGuides = lazy(() => import("../pages/PCBuildingGuides"));
+const CategoryProductsPage = lazy(() => import("../pages/CategoryProductsPage"));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -74,9 +77,12 @@ const AppRoutes = () => {
             <Route index element={<Home />} />
             <Route path="products" element={<ProductsListing />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
+            <Route path="categories/:categoryId" element={<CategoryProductsPage />} />
             <Route path="cart" element={<Cart />} />
             <Route path="repair" element={<Repair />} />
-            <Route path="stores" element={<Stores />} />
+            <Route path="wishlist" element={<WishlistPage />} />
+            <Route path="contact" element={<ContactPage />} />
+            <Route path="pc-building-guides" element={<PCBuildingGuides />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getProducts, searchProducts, sortProducts } from '../services/productService';
 import ProductGrid from '../components/product/ProductGrid';
 import FilterPanel from '../components/common/FilterPanel';
@@ -8,6 +9,10 @@ import { useTheme } from '../context/ThemeContext';
 
 const ProductsListing = () => {
   const { theme } = useTheme();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
+  const category = searchParams.get('category') || '';
+
   const [state, setState] = useState({
     // Raw data
     products: [], // Original products (all or search results)
@@ -23,8 +28,8 @@ const ProductsListing = () => {
     // Filter and sort settings
     filters: {
       // Search settings
-      searchQuery: '',
-      isSearchResults: false, // Whether current products are from search
+      searchQuery: searchQuery,
+      isSearchResults: !!searchQuery, // Whether current products are from search
       
       // Price filter settings
       minPrice: '',
@@ -37,22 +42,66 @@ const ProductsListing = () => {
     }
   });
 
-  // Initial data fetch
+  // Handle search and initial data fetch
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setState(prev => ({ ...prev, loading: true }));
         
-        const response = await getProducts();
-        const products = response.content || response || [];
+        let products = [];
         
-        setState(prev => ({
-          ...prev,
-          products,
-          sortedProducts: products,
-          loading: false,
-          error: null
-        }));
+        if (searchQuery) {
+          // If there's a search query, perform search
+          const searchResults = await searchProducts(searchQuery);
+          products = Array.isArray(searchResults) ? searchResults : [];
+          
+          setState(prev => ({
+            ...prev,
+            products,
+            sortedProducts: products,
+            loading: false,
+            error: null,
+            filters: {
+              ...prev.filters,
+              searchQuery,
+              isSearchResults: true
+            }
+          }));
+        } else if (category) {
+          // If there's a category filter, fetch products by category
+          const response = await getProducts({ categoryId: category });
+          products = response.content || response || [];
+          
+          setState(prev => ({
+            ...prev,
+            products,
+            sortedProducts: products,
+            loading: false,
+            error: null,
+            filters: {
+              ...prev.filters,
+              searchQuery: '',
+              isSearchResults: false
+            }
+          }));
+        } else {
+          // Otherwise, fetch all products
+          const response = await getProducts();
+          products = response.content || response || [];
+          
+          setState(prev => ({
+            ...prev,
+            products,
+            sortedProducts: products,
+            loading: false,
+            error: null,
+            filters: {
+              ...prev.filters,
+              searchQuery: '',
+              isSearchResults: false
+            }
+          }));
+        }
       } catch (err) {
         console.error('Error fetching products:', err);
         setState(prev => ({
@@ -64,7 +113,7 @@ const ProductsListing = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [searchQuery, category]);
 
   // Process filtered and sorted products when data changes
   useEffect(() => {
@@ -145,10 +194,15 @@ const ProductsListing = () => {
 
   // Get heading based on current filters
   const getHeadingText = () => {
-    const { isSearchResults, searchQuery } = state.filters;
+    const { isSearchResults } = state.filters;
     
-    if (isSearchResults && searchQuery) {
+    if (searchQuery) {
       return `Search Results for "${searchQuery}"`;
+    }
+    
+    if (category) {
+      const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+      return categoryName === 'Laptops' ? 'Laptops & Computers' : categoryName;
     }
     
     return 'All Products';
