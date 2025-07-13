@@ -25,6 +25,7 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
   const [filters, setFilters] = useState({
     startDate: thirtyDaysAgo.toISOString().split('T')[0],
     endDate: today.toISOString().split('T')[0],
+    category: '' // Add category filter
   });
   
   // Track if filters have been applied
@@ -109,35 +110,36 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      // Prepare query parameters
-      const params = { 
-        status: 'DELIVERED', // Only fetch delivered orders
-        size: 100 // Get more orders at once
+      console.log('Fetching orders with filters:', filters);
+      
+      // Build query parameters
+      const queryParams = {
+        status: 'DELIVERED',
+        size: 1000 // Get more orders at once
       };
       
-      // Format dates for API if provided
+      // Add date filters if present
       if (filters.startDate) {
-        // Make sure date is in the correct format YYYY-MM-DD
-        const startDate = new Date(filters.startDate);
-        params.startDate = startDate.toISOString().split('T')[0];
+        queryParams.startDate = filters.startDate;
       }
-      
       if (filters.endDate) {
-        // Make sure date is in the correct format YYYY-MM-DD
-        const endDate = new Date(filters.endDate);
-        params.endDate = endDate.toISOString().split('T')[0];
+        queryParams.endDate = filters.endDate;
       }
       
-      console.log('Fetching orders with params:', params);
+      // Add category filter if present
+      if (filters.category) {
+        queryParams.categoryId = filters.category;
+      }
       
-      // Fetch orders from API
-      const response = await api.get('/orders', { params });
+      console.log('Query params:', queryParams);
       
-      // Extract orders from paginated response
+      const response = await api.get('/orders', { params: queryParams });
+      console.log('Orders API response:', response.data);
+      
       let ordersData = response.data.content || [];
-      console.log('Received orders before filtering:', ordersData.length);
+      console.log('Initial orders count:', ordersData.length);
       
-      // Apply date filter on client side to ensure strict date range compliance
+      // Apply client-side date filtering as a safety measure
       if (filters.startDate || filters.endDate) {
         ordersData = ordersData.filter(order => {
           // Extract date from order.createdAt (assuming ISO format)
@@ -145,6 +147,14 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
           return isDateInRange(orderDate, filters.startDate, filters.endDate);
         });
         console.log('Orders after client-side date filtering:', ordersData.length);
+      }
+      
+      // Apply client-side category filtering if needed
+      if (filters.category) {
+        ordersData = ordersData.filter(order => {
+          return order.items.some(item => item.categoryId === filters.category);
+        });
+        console.log('Orders after category filtering:', ordersData.length);
       }
       
       setOrders(ordersData);

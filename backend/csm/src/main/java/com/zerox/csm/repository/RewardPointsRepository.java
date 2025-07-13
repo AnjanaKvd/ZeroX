@@ -24,8 +24,11 @@ public interface RewardPointsRepository extends JpaRepository<RewardPoints, UUID
     Integer getTotalUnclaimedPointsByUserId(@Param("userId") UUID userId);
 
     List<RewardPoints> findByUserUserIdAndClaimedOrderByCreatedAtDesc(UUID userId, boolean claimed);
-    
+   
     @Modifying
     @Query("DELETE FROM RewardPoints rp WHERE rp.user.userId = :userId")
     int deleteByUserUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT SUM(r.pointsEarned) FROM RewardPoints r WHERE r.user.userId = :userId")
+    Integer getTotalPointsByUserId(@Param("userId") UUID userId);
 }

@@ -2,6 +2,7 @@ package com.zerox.csm.dto;
 
 import com.zerox.csm.model.LoyaltyTier;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class RewardPointsDto {
             LoyaltyTier currentTier,
             double currentPointsRate,
             int pointsToNextTier,
+            int lifeTimePoints,
             List<RewardPointsResponse> recentRewards
     ) {}
 
@@ -37,4 +39,18 @@ public class RewardPointsDto {
             int totalPointsAfterClaim,
             LoyaltyTier newTier
     ) {}
+
+    //pay from reward points
+    public record RewardToCouponRequest(
+            int pointsToRedeem
+    ) {}
+    public record RewardToCouponResponse(
+            String code,
+            BigDecimal discountValue,
+            String discountValueFormatted,
+            LocalDateTime validUntil
+    ) {}
+
+
+
 }

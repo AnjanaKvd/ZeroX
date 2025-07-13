@@ -1,6 +1,6 @@
 import api from './api';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Fetches sales report data
@@ -13,11 +13,43 @@ import 'jspdf-autotable';
 export const getSalesReport = async (params = {}) => {
   try {
     // Add status=delivered to params to get only delivered orders
-    const queryParams = { ...params, status: 'delivered' };
+    const queryParams = { 
+      ...params, 
+      status: 'delivered',
+      // Convert category to categoryId if present
+      ...(params.category && { categoryId: params.category })
+    };
+    
+    console.log('Fetching sales report with params:', queryParams);
     const response = await api.get('/reports/sales', { params: queryParams });
     return response.data;
   } catch (error) {
     console.error('Error fetching sales report:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches repairs report data
+ * @param {Object} params - Parameters for filtering the report
+ * @param {string} params.startDate - Start date for filtering (YYYY-MM-DD)
+ * @param {string} params.endDate - End date for filtering (YYYY-MM-DD)
+ * @param {string} params.category - Filter by product category
+ * @returns {Promise<Object>} - Report data for completed repairs only
+ */
+export const getRepairsReport = async (params = {}) => {
+  try {
+    // Add status=completed to params to get only completed repairs
+    const queryParams = {
+      ...params,
+      status: 'completed',
+      ...(params.category && { categoryId: params.category })
+    };
+    console.log('Fetching repairs report with params:', queryParams);
+    const response = await api.get('/reports/repairs', { params: queryParams });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching repairs report:', error);
     throw error;
   }
 };
@@ -33,8 +65,22 @@ export const getSalesReport = async (params = {}) => {
  */
 export const getOrderReport = async (params = {}) => {
   try {
-    const response = await api.get('/reports/orders', { params });
-    return response.data;
+    // Only send supported params to /orders
+    const apiParams = {};
+    if (params.status) apiParams.status = params.status.toUpperCase();
+    if (params.page !== undefined) apiParams.page = params.page;
+    if (params.size !== undefined) apiParams.size = params.size;
+    const response = await api.get('/orders', { params: apiParams });
+    // If backend returns paginated data
+    if (response.data && response.data.content) {
+      return {
+        content: response.data.content,
+        totalPages: response.data.totalPages,
+        totalElements: response.data.totalElements
+      };
+    } else {
+      return response.data;
+    }
   } catch (error) {
     console.error('Error fetching order report:', error);
     throw error;
@@ -483,7 +529,7 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       yPos += 10;
       
       // Create summary table
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Date', 'Orders', 'Sales Amount (Rs)', 'Items Sold', 'Avg Order Value (Rs)']],
         body: summaryData.map(item => [
@@ -522,7 +568,7 @@ export const exportReportToPdf = async (reportType, params = {}) => {
       yPos = 40;
       
       // Create detailed items table
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Date', 'Order ID', 'Item Name', 'Quantity', 'Price (Rs)', 'Total (Rs)']],
         body: salesData.detailed.map(item => [
@@ -538,6 +584,158 @@ export const exportReportToPdf = async (reportType, params = {}) => {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           })
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
+      
+      console.log('PDF generation completed');
+      
+      // Return as a blob
+      return doc.output('blob');
+    }
+    
+    // Special handling for customer reports
+    if (reportType === 'customers' && Array.isArray(params.data) && Array.isArray(params.columns)) {
+      const doc = new jsPDF();
+      const title = 'Customer Report';
+      const date = new Date().toLocaleDateString();
+      doc.setFontSize(18);
+      doc.text(title, 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${date}`, 14, 30);
+      let yPos = 38;
+      if (params.startDate) {
+        doc.text(`Start Date: ${params.startDate}`, 14, yPos);
+        yPos += 7;
+      }
+      if (params.endDate) {
+        doc.text(`End Date: ${params.endDate}`, 14, yPos);
+        yPos += 7;
+      }
+      // Prepare table data
+      const head = [params.columns.map(col => col.label)];
+      const body = params.data.map(row => params.columns.map(col => {
+        if (col.format) return col.format(row[col.key], row);
+        return row[col.key] ?? '';
+      }));
+      autoTable(doc, {
+        startY: yPos,
+        head,
+        body,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
+      return doc.output('blob');
+    }
+    
+    // Special handling for order reports
+    if (reportType === 'orders') {
+      console.log('Generating order PDF report...');
+      
+      // Fetch order data
+      const orderData = await getOrderReport(params);
+      console.log('Order data fetched for PDF:', orderData);
+      
+      // Create a PDF using jsPDF library with autotable plugin
+      const doc = new jsPDF();
+      
+      // Add title and date
+      const title = 'Order Report';
+      const date = new Date().toLocaleDateString();
+      doc.setFontSize(18);
+      doc.text(title, 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Generated on: ${date}`, 14, 30);
+      
+      // Add filter information
+      let yPos = 38;
+      if (params.startDate) {
+        doc.text(`Start Date: ${params.startDate}`, 14, yPos);
+        yPos += 7;
+      }
+      if (params.endDate) {
+        doc.text(`End Date: ${params.endDate}`, 14, yPos);
+        yPos += 7;
+      }
+      if (params.status) {
+        doc.text(`Status: ${params.status}`, 14, yPos);
+        yPos += 7;
+      }
+      
+      // Add summary information
+      const totalOrders = orderData.length;
+      const totalAmount = orderData.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
+      const avgOrderValue = totalOrders ? totalAmount / totalOrders : 0;
+      
+      // Count orders by status
+      const statusCounts = {};
+      orderData.forEach(order => {
+        const status = order.status || 'Unknown';
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+      
+      doc.setFontSize(14);
+      doc.text('Order Summary', 14, yPos);
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.text(`Total Orders: ${totalOrders}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Total Amount: Rs ${totalAmount.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, 14, yPos);
+      yPos += 6;
+      
+      doc.text(`Average Order Value: Rs ${avgOrderValue.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, 14, yPos);
+      yPos += 6;
+      
+      // Add status breakdown
+      doc.text('Status Breakdown:', 14, yPos);
+      yPos += 6;
+      
+      Object.entries(statusCounts).forEach(([status, count]) => {
+        doc.text(`${status}: ${count} orders`, 24, yPos);
+        yPos += 5;
+      });
+      
+      yPos += 6;
+      
+      // Create order table
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Order ID', 'Date', 'Customer', 'Items', 'Amount (Rs)', 'Status']],
+        body: orderData.map(order => [
+          order.orderId,
+          new Date(order.orderDate).toLocaleDateString(),
+          order.customerName,
+          order.itemCount,
+          Number(order.totalAmount).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }),
+          order.status
         ]),
         theme: 'striped',
         headStyles: {
@@ -685,6 +883,109 @@ export const exportReportToCsv = async (reportType, params = {}) => {
       return blob;
     }
     
+    // Special handling for customer reports
+    if (reportType === 'customers' && Array.isArray(params.data) && Array.isArray(params.columns)) {
+      // Prepare headers and rows for only the selected columns
+      const headers = params.columns.map(col => col.label);
+      const rows = params.data.map(row => params.columns.map(col => {
+        let value = col.format ? col.format(row[col.key], row) : row[col.key] ?? '';
+        // Escape value for CSV: wrap in quotes if it contains comma, quote, or newline
+        value = String(value);
+        if (value.includes('"')) value = value.replace(/"/g, '""');
+        if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+          value = `"${value}"`;
+        }
+        return value;
+      }));
+      // Create CSV content with CRLF line endings for Excel compatibility
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      return blob;
+    }
+    
+    // Special handling for order reports
+    if (reportType === 'orders') {
+      console.log('Generating order CSV report...');
+      
+      // Fetch order data
+      const orderData = await getOrderReport(params);
+      console.log('Order data fetched for CSV:', orderData);
+      
+      // Define headers
+      const headers = ['Order ID', 'Date', 'Customer', 'Items', 'Amount (Rs)', 'Status'];
+      
+      // Create rows
+      const rows = orderData.map(order => [
+        order.orderId,
+        new Date(order.orderDate).toLocaleDateString(),
+        order.customerName,
+        order.itemCount,
+        Number(order.totalAmount).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }),
+        order.status
+      ]);
+      
+      // Create CSV content
+      let csvContent = headers.join(',') + '\n';
+      
+      // Add rows to CSV content
+      rows.forEach(row => {
+        const escapedRow = row.map(value => {
+          // Escape commas and quotes
+          const stringValue = String(value || '');
+          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;  // Escape quotes by doubling them
+          }
+          return stringValue;
+        });
+        csvContent += escapedRow.join(',') + '\n';
+      });
+      
+      // Add summary section
+      csvContent += '\n"Order Summary"\n';
+      
+      // Calculate summary data
+      const totalOrders = orderData.length;
+      const totalAmount = orderData.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
+      const avgOrderValue = totalOrders ? totalAmount / totalOrders : 0;
+      
+      // Add summary rows
+      csvContent += `"Total Orders",${totalOrders}\n`;
+      csvContent += `"Total Amount","Rs ${totalAmount.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}"\n`;
+      csvContent += `"Average Order Value","Rs ${avgOrderValue.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}"\n`;
+      
+      // Add status breakdown
+      csvContent += '\n"Status Breakdown"\n';
+      
+      // Count orders by status
+      const statusCounts = {};
+      orderData.forEach(order => {
+        const status = order.status || 'Unknown';
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+      
+      Object.entries(statusCounts).forEach(([status, count]) => {
+        csvContent += `"${status}",${count}\n`;
+      });
+      
+      console.log('CSV generation completed');
+      
+      // Create and return blob
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      return blob;
+    }
+    
     // If we get here, the report type isn't supported
     console.error(`CSV export not implemented for report type: ${reportType}`);
     throw new Error(`CSV export not implemented for report type: ${reportType}`);
@@ -715,4 +1016,4 @@ export const downloadBlob = (blob, fileName) => {
     console.error('Error downloading blob as file:', error);
     throw error;
   }
-}; 
+};

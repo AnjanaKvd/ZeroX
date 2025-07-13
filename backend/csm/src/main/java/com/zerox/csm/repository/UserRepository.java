@@ -14,17 +14,28 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
+
     Optional<User> findByEmail(String email);
     Optional<User> findById(UUID userId);
 
-    // For finding users including deleted ones (not exposed to controllers)
+    // Include deleted users
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmailIncludeDeleted(@Param("email") String email);
     
     @Query("SELECT u FROM User u WHERE u.userId = :userId")
     Optional<User> findByIdIncludeDeleted(@Param("userId") UUID userId);
 
-    // Soft delete of user
+    // Active user only
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    Optional<User> findActiveByEmail(@Param("email") String email);
+
+    // Latest active account for login
+    Optional<User> findTopByEmailAndIsDeletedFalseOrderByCreatedAtDesc(String email);
+
+    // Latest soft-deleted account for reactivation
+    Optional<User> findTopByEmailAndIsDeletedTrueOrderByCreatedAtDesc(String email);
+
+    // Soft delete
     @Modifying
     @Query("UPDATE User u SET u.isDeleted = true WHERE u.userId = :userId")
     void softDelete(@Param("userId") UUID userId);
@@ -55,4 +66,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query(value = "DELETE FROM users WHERE user_id = :userId", nativeQuery = true)
     void hardDelete(@Param("userId") UUID userId);
 
+    // Count only active accounts by email
+    @Query("SELECT COUNT(u) FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    int countActiveEmail(@Param("email") String email);
 }

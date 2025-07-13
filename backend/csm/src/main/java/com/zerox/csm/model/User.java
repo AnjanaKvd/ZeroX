@@ -33,7 +33,7 @@ public class User {
     @Column(name = "user_id")
     private UUID userId;
 
-    @Column(name = "email", unique = true, nullable = false)
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
@@ -152,3 +152,4 @@ public class User {
         item.setUser(null);
     }
 }
+

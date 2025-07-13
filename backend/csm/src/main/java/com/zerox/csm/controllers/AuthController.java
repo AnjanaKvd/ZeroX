@@ -97,6 +97,8 @@ public class AuthController {
         }
     }
 
+
+    //localhost:8080/api/auth/deleteaccount
     @DeleteMapping("/deleteaccount")
     public ResponseEntity<?> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails
@@ -120,8 +122,6 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        // Since JWT is stateless, server-side logout isn't strictly necessary
-        // But you could implement token blacklisting if needed
         return ResponseEntity.noContent().build();
     }
 }

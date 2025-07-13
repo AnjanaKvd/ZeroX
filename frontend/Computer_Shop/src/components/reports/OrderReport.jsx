@@ -3,7 +3,7 @@ import { Package, Calendar, ShoppingBag, Download } from 'lucide-react';
 import ReportFilters from './ReportFilters';
 import ReportTable from './ReportTable';
 import ReportChart from './ReportChart';
-import { getOrderReport, exportReportToPdf, exportReportToCsv, downloadBlob } from '../../services/reportService';
+import { exportReportToPdf, exportReportToCsv, downloadBlob } from '../../services/reportService';
 
 const OrderReport = ({ theme, categories = [] }) => {
   const [loading, setLoading] = useState(false);
@@ -18,51 +18,96 @@ const OrderReport = ({ theme, categories = [] }) => {
     key: 'orderDate',
     direction: 'desc'
   });
+  const [expandedRowId, setExpandedRowId] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    totalPages: 1,
+    totalElements: 0
+  });
   
   // Prepare table columns for order report
   const columns = [
-    { key: 'orderDate', label: 'Order Date', sortable: true, 
-      format: (value) => new Date(value).toLocaleDateString() },
-    { key: 'orderId', label: 'Order ID', sortable: true },
-    { key: 'customerName', label: 'Customer', sortable: true },
-    { key: 'totalAmount', label: 'Amount', sortable: true, 
+    { key: 'createdAt', label: 'Order Date', sortable: true, 
+      format: (value) => value ? new Date(value).toLocaleDateString() : '' },
+    { key: 'customerEmail', label: 'Customer Email', sortable: true },
+    { key: 'productName', label: 'Product', sortable: false, 
+      format: (value, row) => {
+        if (row.items && row.items.length > 0) {
+          return row.items.map(item => item.productName).join(', ');
+        }
+        return '';
+      }
+    },
+    { key: 'quantity', label: 'Quantity', sortable: false, 
+      format: (value, row) => {
+        if (row.items && row.items.length > 0) {
+          return row.items.map(item => item.quantity).join(', ');
+        }
+        return '';
+      }
+    },
+    { key: 'finalAmount', label: 'Final Amount', sortable: true, 
       format: (value) => `Rs ${parseFloat(value).toFixed(2)}` },
-    { key: 'itemCount', label: 'Items', sortable: true },
     { key: 'status', label: 'Status', sortable: true,
       format: (value) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
-          value === 'Delivered' ? 'bg-green-100 text-green-800' :
-          value === 'Processing' ? 'bg-blue-100 text-blue-800' :
-          value === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-          value === 'Cancelled' ? 'bg-red-100 text-red-800' :
+          value === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+          value === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
+          value === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+          value === 'CANCELLED' ? 'bg-red-100 text-red-800' :
           'bg-gray-100 text-gray-800'
         }`}>
           {value}
         </span>
       )
     },
+    { key: 'paymentMethod', label: 'Payment Method', sortable: true },
   ];
   
-  // Load report data when filters change
+  // Load report data when filters or pagination change
   useEffect(() => {
     const fetchReportData = async () => {
       try {
         setLoading(true);
-        const response = await getOrderReport(filters);
-        setReportData(response);
+        const params = {};
+        if (filters.status) params.status = filters.status;
+        if (filters.startDate) params.startDate = filters.startDate;
+        if (filters.endDate) params.endDate = filters.endDate;
+        // Get token from localStorage (or your auth provider)
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/report/orders' +
+          (Object.keys(params).length > 0
+            ? '?' + new URLSearchParams(params).toString()
+            : ''),
+          {
+            headers: {
+              'Authorization': token ? `Bearer ${token}` : undefined,
+              'Accept': 'application/json'
+            }
+          }
+        );
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          setReportData(data);
+        } catch (jsonError) {
+          console.error('Order report API did not return valid JSON:', text);
+          throw new Error('Order report API did not return valid JSON');
+        }
       } catch (error) {
         console.error('Failed to fetch order report:', error);
       } finally {
         setLoading(false);
       }
     };
-    
     fetchReportData();
   }, [filters]);
   
   // Handle filter changes
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
+    if (name === 'status') setPagination(prev => ({ ...prev, page: 0 })); // Reset page on filter
   };
   
   // Apply sorting
@@ -170,6 +215,46 @@ const OrderReport = ({ theme, categories = [] }) => {
   
   const metrics = getSummaryMetrics();
   
+  // Add renderExpandedRow function
+  const renderExpandedRow = (order) => {
+    if (!order.items || order.items.length === 0) {
+      return (
+        <div className="p-4 text-gray-500">No item details available for this order.</div>
+      );
+    }
+    return (
+      <div className="p-4 bg-gray-50 dark:bg-gray-900">
+        <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-200">Order Items</h4>
+        <table className="min-w-full text-sm border">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-800">
+              <th className="px-3 py-2 border">Product</th>
+              <th className="px-3 py-2 border">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items.map((item, idx) => (
+              <tr key={idx}>
+                <td className="px-3 py-2 border">{item.productName}</td>
+                <td className="px-3 py-2 border">{item.quantity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+  
+  // Order status options for dropdown
+  const orderStatusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'PROCESSING', label: 'Processing' },
+    { value: 'SHIPPED', label: 'Shipped' },
+    { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+  ];
+  
   return (
     <div>
       <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
@@ -185,6 +270,8 @@ const OrderReport = ({ theme, categories = [] }) => {
         onExportPdf={handleExportPdf}
         onExportCsv={handleExportCsv}
         theme={theme}
+        // Use improved status options for dropdown
+        statusOptions={orderStatusOptions}
       />
       
       {/* Summary Cards */}
@@ -262,9 +349,12 @@ const OrderReport = ({ theme, categories = [] }) => {
         sortConfig={sortConfig}
         onSort={handleSort}
         theme={theme}
+        expandedRowId={expandedRowId}
+        renderExpandedRow={renderExpandedRow}
+        // Pagination handlers removed since API does not support pagination
       />
     </div>
   );
 };
 
-export default OrderReport; 
+export default OrderReport;
