@@ -36,17 +36,17 @@ public class Order {
 
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
-    
+
     @Column(name = "discount_amount")
     private BigDecimal discountAmount;
-    
+
     @Column(name = "final_amount", nullable = false)
     private BigDecimal finalAmount;
-    
+
     @ManyToOne
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
-    
+
     @Column(name = "coupon_code")
     private String couponCode;
 

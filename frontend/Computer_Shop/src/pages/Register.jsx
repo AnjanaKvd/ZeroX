@@ -68,30 +68,32 @@ const Register = () => {
       }
     } catch (err) {
       console.error("Registration error:", err);
+      
       if (err.response) {
-        if (
-          err.response.data?.message?.includes("maximum registration attempts")
-        ) {
-          setRegistrationError(
-            "This email has reached maximum registration attempts. Use a different email."
-          );
-        } else if (
-          err.response.data?.message?.includes("Email already in use")
-        ) {
-          setRegistrationError(
-            "An account already exists with this email. Please login instead."
-          );
-        } else if (err.response.data?.message?.includes("deleted")) {
-          setRegistrationError(
-            "This email was previously used for a deleted account and cannot be reused."
-          );
-        } else {
-          setRegistrationError(
-            err.response.data?.message ||
-              "Registration failed. Please try again."
-          );
-        }
-      } else if (err.request) {
+          const msg = err.response.data?.message;
+
+          if (msg?.includes("maximum registration attempts")) {
+            setRegistrationError(
+              "This email has reached maximum registration attempts. Use a different email."
+            );
+          } else if (msg?.includes("already used for an active account")) {
+            setRegistrationError(
+              "This e-mail is currently using for another account!"
+            );
+          } else if (msg?.includes("Email already in use")) {
+            setRegistrationError(
+              "An account already exists with this email. Please login instead."
+            );
+          } else if (msg?.includes("deleted")) {
+            setRegistrationError(
+              "This email was previously used for a deleted account and cannot be reused."
+            );
+          } else {
+            setRegistrationError(
+              msg || "Registration failed. Please try again."
+            );
+          }
+      }else if (err.request) {
         setRegistrationError("Network error. Please check your connection.");
       } else {
         setRegistrationError("An unexpected error occurred.");

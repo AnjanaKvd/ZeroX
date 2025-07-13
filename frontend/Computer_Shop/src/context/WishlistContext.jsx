@@ -35,7 +35,7 @@ export const WishlistProvider = ({ children }) => {
       return items || [];
     } catch (err) {
       console.error('Failed to load wishlist:', err);
-      const errorMsg = err.response?.data?.message || 'Failed to load wishlist';
+      const errorMsg = err.response?.data?.message;
       setError(errorMsg);
       showError(errorMsg);
       return [];

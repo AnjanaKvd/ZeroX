@@ -69,7 +69,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         Optional<User> existingActive = userRepository.findTopByEmailAndIsDeletedFalseOrderByCreatedAtDesc(request.email());
         if (existingActive.isPresent()) {
-            throw new IllegalArgumentException("The Email already in use.");
+            throw new IllegalArgumentException("This email is already used for an active account.");
         }
 
         Optional<User> deletedUser = userRepository.findTopByEmailAndIsDeletedTrueOrderByCreatedAtDesc(request.email());

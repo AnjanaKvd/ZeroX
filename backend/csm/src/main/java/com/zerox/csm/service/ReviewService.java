@@ -81,25 +81,6 @@ public class ReviewService {
         return mapToReviewResponse(review);
     }
 
-    @Transactional
-    public ReviewResponse updateReview(UUID reviewId, ReviewUpdateRequest request) {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
-
-        review.setRating(request.rating());
-        review.setComment(request.comment());
-
-        return mapToReviewResponse(reviewRepository.save(review));
-    }
-
-    @Transactional
-    public void deleteReview(UUID reviewId) {
-        if (!reviewRepository.existsById(reviewId)) {
-            throw new ResourceNotFoundException("Review not found");
-        }
-
-        reviewRepository.deleteById(reviewId);
-    }
 
     public ProductRatingResponse getProductRating(UUID productId) {
         Product product = productRepository.findById(productId)

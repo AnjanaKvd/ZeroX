@@ -46,7 +46,7 @@ public class OrderDto {
             BigDecimal priceAtPurchase,
             BigDecimal subtotal
     ) {}
-    
+
     public record OrderStatusUpdateRequest(
             @NotNull OrderStatus status
     ) {}

@@ -16,7 +16,7 @@ import java.util.UUID;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByUserUserId(UUID userId, Pageable pageable);
-    
+
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     List<Order> findByUserUserIdAndStatus(UUID userId, OrderStatus status);

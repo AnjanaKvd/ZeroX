@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
+import { getCategories } from '../../services/categoryService';
 
 /**
  * ReportFilters component for filtering reports by date, category, etc.
@@ -7,7 +8,6 @@ import { Download } from 'lucide-react';
 const ReportFilters = ({ 
   reportType,
   filters,
-  categories = [],
   statusOptions = [],
   onFilterChange,
   onApplyFilters,
@@ -15,6 +15,30 @@ const ReportFilters = ({
   onExportCsv,
   theme 
 }) => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState(null);
+
+  // Fetch categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        setCategoryError(null);
+        const response = await getCategories();
+        console.log("Categories response:", response); // Debug: Check category structure
+        setCategories(response || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setCategoryError("Failed to load categories. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     onFilterChange(name, value);
@@ -41,6 +65,34 @@ const ReportFilters = ({
         buttonSecondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800'
       };
 
+  // Helper function to determine the category ID property name
+  const getCategoryIdProperty = () => {
+    if (categories.length === 0) return 'id';
+    const category = categories[0];
+    // Check possible property names that could contain the UUID
+    if (category.categoryId !== undefined) return 'categoryId';
+    if (category.id !== undefined) return 'id';
+    if (category.uuid !== undefined) return 'uuid';
+    // Default fallback
+    return Object.keys(category).find(key => 
+      typeof category[key] === 'string' && 
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category[key])
+    ) || 'id';
+  };
+
+  // Get the appropriate category ID property
+  const categoryIdProperty = getCategoryIdProperty();
+
+  // Get the appropriate category name property
+  const getCategoryNameProperty = () => {
+    if (categories.length === 0) return 'name';
+    const category = categories[0];
+    return category.name !== undefined ? 'name' : 
+           category.categoryName !== undefined ? 'categoryName' : 'name';
+  };
+
+  const categoryNameProperty = getCategoryNameProperty();
+
   // Simplified layout for inventory report
   if (reportType === 'inventory') {
     return (
@@ -51,6 +103,13 @@ const ReportFilters = ({
             <label htmlFor="category" className={`block text-sm font-medium mb-2 ${colors.text}`}>
               Category
             </label>
+            {loading ? (
+              <div className={`w-full rounded-md border px-3 py-2 ${colors.select} h-11 flex items-center`}>
+                Loading categories...
+              </div>
+            ) : categoryError ? (
+              <div className="text-red-500 text-sm">{categoryError}</div>
+            ) : (
             <select
               id="category"
               name="category"
@@ -60,11 +119,15 @@ const ReportFilters = ({
             >
               <option value="">All Categories</option>
               {categories.map(category => (
-                <option key={category.id || category.categoryId} value={category.id || category.categoryId}>
-                  {category.name || category.categoryName}
+                  <option 
+                    key={category[categoryIdProperty]} 
+                    value={category[categoryIdProperty]}
+                  >
+                    {category[categoryNameProperty]}
                 </option>
               ))}
             </select>
+            )}
           </div>
 
           {/* Stock Level Filter */}
@@ -165,12 +228,19 @@ const ReportFilters = ({
           </>
         )}
         
-        {/* Category Filter - For Sales and Customer Reports */}
-        {(reportType === 'sales' || reportType === 'customers') && (
+        {/* Category Filter - For Sales Reports Only */}
+        {reportType === 'sales' && (
           <div>
             <label htmlFor="category" className={`block text-sm font-medium mb-1 ${colors.text}`}>
               Category
             </label>
+            {loading ? (
+              <div className={`w-full rounded-md border px-3 py-2 ${colors.select} flex items-center`}>
+                Loading categories...
+              </div>
+            ) : categoryError ? (
+              <div className="text-red-500 text-sm">{categoryError}</div>
+            ) : (
             <select
               id="category"
               name="category"
@@ -179,12 +249,16 @@ const ReportFilters = ({
               className={`w-full rounded-md border px-3 py-2 ${colors.select}`}
             >
               <option value="">All Categories</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
+                {categories.map(category => (
+                <option 
+                    key={category[categoryIdProperty]} 
+                    value={category[categoryIdProperty]}
+                >
+                    {category[categoryNameProperty]}
                 </option>
               ))}
             </select>
+            )}
           </div>
         )}
 
@@ -215,7 +289,7 @@ const ReportFilters = ({
       <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
         {onApplyFilters && (
           <button
-            onClick={onApplyFilters}
+            onClick={() => onApplyFilters(filters)}
             className={`px-4 py-2 text-white rounded-md ${colors.buttonPrimary}`}
           >
             Apply Filters
@@ -244,4 +318,4 @@ const ReportFilters = ({
   );
 };
 
-export default ReportFilters; 
+export default ReportFilters;

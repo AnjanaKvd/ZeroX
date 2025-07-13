@@ -33,7 +33,7 @@ const ProductManagement = () => {
     brand: '',
     sortBy: 'name',
     sortDirection: 'asc',
-    page: 1,
+    page: 0,  // Changed from 1 to 0 for 0-based pagination
     size: 10
   });
 

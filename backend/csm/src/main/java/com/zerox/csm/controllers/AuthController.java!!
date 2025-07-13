@@ -96,9 +96,7 @@ public class AuthController {
             ));
         }
     }
-
-
-    //localhost:8080/api/auth/deleteaccount
+    
     @DeleteMapping("/deleteaccount")
     public ResponseEntity<?> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails

@@ -16,6 +16,12 @@
 	<name>csm</name>
 	<description>Computer Shop Management System</description>
 
+<!--	<properties>-->
+<!--		<java.version>19</java.version>-->
+<!--		<mapstruct.version>1.5.5.Final</mapstruct.version>-->
+<!--		<jjwt.version>0.12.5</jjwt.version>-->
+<!--		<lombok.version>1.18.32</lombok.version>-->
+<!--	</properties>-->
 	<properties>
 		<java.version>19</java.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
@@ -141,11 +147,11 @@
 
 
 		<!-- https://mvnrepository.com/artifact/org.modelmapper/modelmapper -->
-<!--		<dependency>-->
-<!--			<groupId>org.modelmapper</groupId>-->
-<!--			<artifactId>modelmapper</artifactId>-->
-<!--			<version>3.2.2</version>-->
-<!--		</dependency>-->
+		<!--		<dependency>-->
+		<!--			<groupId>org.modelmapper</groupId>-->
+		<!--			<artifactId>modelmapper</artifactId>-->
+		<!--			<version>3.2.2</version>-->
+		<!--		</dependency>-->
 	</dependencies>
 
 	<build>
@@ -163,7 +169,7 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				 <groupId>org.apache.maven.plugins</groupId>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.11.0</version> <!-- Add version explicitly -->
 				<configuration>

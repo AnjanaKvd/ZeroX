@@ -99,13 +99,13 @@ const ReportTable = ({
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {data.map((row, rowIndex) => (
-                  <React.Fragment key={row.id || `row-${rowIndex}`}>
+                  <React.Fragment key={row.userId || row.id || `row-${rowIndex}`}>
                     <tr 
-                      className={`${rowIndex % 2 === 0 ? colors.rowEven : colors.rowOdd} ${colors.rowHover} ${expandedRowId === row.id || expandedRowId === row.orderId ? 'border-b-0' : ''}`}
+                      className={`${rowIndex % 2 === 0 ? colors.rowEven : colors.rowOdd} ${colors.rowHover} ${expandedRowId === row.userId || expandedRowId === row.id || expandedRowId === row.orderId ? 'border-b-0' : ''}`}
                     >
                       {columns.map((column) => (
                         <td 
-                          key={`${row.id || rowIndex}-${column.key}`}
+                          key={`${row.userId || row.id || rowIndex}-${column.key}`}
                           className={`px-6 py-4 whitespace-nowrap text-sm ${colors.text}`}
                         >
                           {column.format ? column.format(row[column.key], row) : row[column.key]}
@@ -113,7 +113,7 @@ const ReportTable = ({
                       ))}
                     </tr>
                     {/* Expanded Row for Details */}
-                    {(expandedRowId === row.id || expandedRowId === row.orderId) && renderExpandedRow && (
+                    {(expandedRowId === row.userId || expandedRowId === row.id || expandedRowId === row.orderId) && renderExpandedRow && (
                       <tr>
                         <td colSpan={columns.length} className="p-0">
                           {renderExpandedRow(row)}
@@ -137,4 +137,4 @@ const ReportTable = ({
   );
 };
 
-export default ReportTable; 
+export default ReportTable;
