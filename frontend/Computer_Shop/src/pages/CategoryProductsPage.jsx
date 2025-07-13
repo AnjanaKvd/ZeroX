@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { getProducts } from '../services/productService';
 import EnhancedProductGrid from '../components/product/ProductGrid';
 import { useCategories } from '../context/CategoriesContext';
@@ -7,33 +7,44 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 const CategoryProductsPage = () => {
   const { categoryId } = useParams();
-  const { categories } = useCategories();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Find the current category
   const category = categories.find(cat => cat.categoryId === categoryId);
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
-      if (!categoryId) return;
+      if (!categoryId) {
+        console.log('No categoryId provided');
+        return;
+      }
+      
+      console.log(`Fetching products for category ID: ${categoryId}`);
       
       try {
         setLoading(true);
+        setError(null);
         
-        // Use the same getProducts function as ProductsListing
-        // Note: The API expects page to start from 0 (0-based index)
+        // Use the getProducts function with the categoryId filter
         const response = await getProducts({
           categoryId: categoryId,
           page: 0, // First page (0-based index)
           size: 100 // Default size, adjust as needed
         });
         
+        console.log('Products response:', response);
+        
         // The response should already be in the correct format
-        // as it's using the same service as ProductsListing
-        // response.content contains the array of products
-        setProducts(Array.isArray(response.content) ? response.content : []);
+        const productsData = Array.isArray(response.content) ? response.content : [];
+        console.log(`Found ${productsData.length} products for category ${categoryId}`);
+        setProducts(productsData);
+        
       } catch (err) {
         console.error('Error fetching category products:', err);
         setError('Failed to load products for this category');
@@ -43,8 +54,32 @@ const CategoryProductsPage = () => {
       }
     };
 
-    fetchCategoryProducts();
-  }, [categoryId]);
+    // Only fetch if we have a valid category ID and categories are loaded
+    if (categoriesLoading) {
+      console.log('Categories still loading...');
+      return;
+    }
+    
+    if (categoryId) {
+      fetchCategoryProducts();
+    } else if (categories.length > 0) {
+      // If no categoryId but we have categories, redirect to the first one
+      console.log('No category ID in URL, redirecting to first category');
+      navigate(`/categories/${categories[0].categoryId}`, { replace: true });
+    } else {
+      console.log('No categories available');
+      setError('No categories available');
+      setLoading(false);
+    }
+  }, [categoryId, categories, categoriesLoading, navigate]);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('Category ID from URL:', categoryId);
+    console.log('Current category:', category);
+    console.log('Available categories:', categories);
+    console.log('Location state:', location.state);
+  }, [categoryId, category, categories, location.state]);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
