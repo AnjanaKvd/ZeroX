@@ -39,7 +39,8 @@ public class Category {
     @Column(name = "icon")
     private String icon;
 
-    @Column(name = "sidebar", columnDefinition = "boolean default false")
+    @Column(name = "sidebar", nullable = false)
+    @Builder.Default
     private Boolean sidebar = false;
 
     @ManyToOne(fetch = FetchType.LAZY)

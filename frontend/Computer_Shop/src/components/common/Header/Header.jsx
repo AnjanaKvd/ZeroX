@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
+import { useWishlist } from '../../../context/WishlistContext';
 import { 
   ShoppingCartIcon, 
   UserCircleIcon,
@@ -22,14 +23,17 @@ import logoImage from '../../../assets/images/logo.png';
 const Header = () => {
   const { user, logout, hasRole } = useAuth();
   const { cartItems } = useCart();
+  const { wishlist, itemCount: wishlistCount, loading: wishlistLoading, removeFromWishlist, refreshWishlist } = useWishlist();
   const { theme, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const location = useLocation();
   const prevScrollY = useRef(0);
   const settingsRef = useRef(null);
+  const wishlistRef = useRef(null);
   
   const isDark = theme === 'dark';
   const cartItemCount = cartItems?.reduce((total, item) => total + (item.quantity || 0), 0) || 0;
@@ -52,16 +56,31 @@ const Header = () => {
     setIsSettingsOpen(false);
   }, [location.pathname]);
 
-  // Close settings dropdown when clicking outside
+  // Toggle wishlist dropdown
+  const toggleWishlist = (e) => {
+    e.stopPropagation();
+    if (!isWishlistOpen && user) {
+      // Refresh wishlist when opening dropdown
+      refreshWishlist();
+    }
+    setIsWishlistOpen(!isWishlistOpen);
+  };
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setIsSettingsOpen(false);
       }
+      if (wishlistRef.current && !wishlistRef.current.contains(event.target)) {
+        setIsWishlistOpen(false);
+      }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -110,9 +129,110 @@ const Header = () => {
           
           {/* Right section */}
           <div className={`flex items-center space-x-4 text-[#1ba5df]`}>
-            <Link to="/wishlist" className="hover:opacity-80 hidden sm:block">
-              <HeartIcon className="h-5 w-5" />
-            </Link>
+            <div className="relative hidden sm:block" ref={wishlistRef}>
+              <button
+                onClick={toggleWishlist}
+                className="p-2 text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary-300 transition-colors relative"
+                aria-label="Wishlist"
+                aria-expanded={isWishlistOpen}
+              >
+                <HeartIcon className="h-6 w-6" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+              
+              {/* Wishlist Dropdown */}
+              {isWishlistOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium text-gray-900 dark:text-white">My Wishlist</h3>
+                      <Link 
+                        to="/wishlist" 
+                        className="text-sm text-primary hover:underline"
+                        onClick={() => setIsWishlistOpen(false)}
+                      >
+                        View All
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="max-h-96 overflow-y-auto">
+                    {wishlistLoading ? (
+                      <div className="p-4 flex justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      </div>
+                    ) : wishlist.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                        Your wishlist is empty
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {wishlist.slice(0, 5).map((item) => (
+                          <Link
+                            key={item.wishlistItemId}
+                            to={`/products/${item.productId}`}
+                            className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            onClick={() => setIsWishlistOpen(false)}
+                          >
+                            <div className="flex-shrink-0 h-16 w-16 bg-gray-100 dark:bg-gray-600 rounded overflow-hidden">
+                              {item.productImageUrl ? (
+                                <img
+                                  src={item.productImageUrl}
+                                  alt={item.productName}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-600">
+                                  <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {item.productName}
+                              </p>
+                              <p className="text-sm text-primary font-medium">
+                                ${item.productPrice.toFixed(2)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                removeFromWishlist(item.productId);
+                              }}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              aria-label="Remove from wishlist"
+                            >
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </Link>
+                        ))}
+                        {wishlist.length > 5 && (
+                          <div className="p-3 text-center border-t border-gray-200 dark:border-gray-700">
+                            <Link
+                              to="/wishlist"
+                              className="text-sm text-primary hover:underline"
+                              onClick={() => setIsWishlistOpen(false)}
+                            >
+                              View all {wishlist.length} items
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <Link
               to="/cart"
               className="relative hover:opacity-80"

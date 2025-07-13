@@ -43,6 +43,8 @@ const Rewards = lazy(() => import("../pages/Rewards"));
 const RepairHistory = lazy(() => import("../pages/RepairHistory"));
 const RepairDetail = lazy(() => import("../pages/RepairDetail"));
 const RepairManagement = lazy(() => import("../pages/RepairManagement"));
+const Stores = lazy(() => import("../pages/Stores"));
+const WishlistPage = lazy(() => import("../pages/WishlistPage"));
 
 const ProtectedRoute = ({ roles = [], children }) => {
   const { user, isLoading } = useAuth();
@@ -74,6 +76,7 @@ const AppRoutes = () => {
             <Route path="products/:id" element={<ProductDetailPage />} />
             <Route path="cart" element={<Cart />} />
             <Route path="repair" element={<Repair />} />
+            <Route path="stores" element={<Stores />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 
@@ -96,6 +99,7 @@ const AppRoutes = () => {
               <Route path="profile" element={<Profile />} />
               <Route path="saved-addresses" element={<SavedAddresses />} />
               <Route path="order-history" element={<OrderHistory />} />
+              <Route path="wishlist" element={<WishlistPage />} />
               <Route path="orders/:orderId" element={<OrderDetails />} />
               <Route path="/rewards" element={<Rewards />} />
               <Route path="repair-history" element={<RepairHistory />} />

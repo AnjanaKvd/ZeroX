@@ -1,6 +1,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { CurrencyProvider } from './context/CurrencyContext';
@@ -44,17 +45,19 @@ const App = () => {
           <ToastProvider>
             <CurrencyProvider>
               <CartProvider>
-                <div className="flex flex-col min-h-screen">
-                  {/* API Connection Warning */}
-                  {!apiConnected && apiCheckComplete && (
-                    console.log("API Connection Warning")
-                  )}
+                <WishlistProvider>
+                  <div className="flex flex-col min-h-screen">
+                    {/* API Connection Warning */}
+                    {!apiConnected && apiCheckComplete && (
+                      console.log("API Connection Warning")
+                    )}
 
-                  {/* Main Application Routes */}
-                  <Suspense fallback={<LoadingOverlay />}>
-                    <AppRoutes />
-                  </Suspense>
-                </div>
+                    {/* Main Application Routes */}
+                    <Suspense fallback={<LoadingOverlay />}>
+                      <AppRoutes />
+                    </Suspense>
+                  </div>
+                </WishlistProvider>
               </CartProvider>
             </CurrencyProvider>
           </ToastProvider>

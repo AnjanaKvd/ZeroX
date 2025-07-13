@@ -1,7 +1,10 @@
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { Card, CardActionArea, CardActions, CardContent, CardMedia, Typography, IconButton, Box } from '@mui/material';
+import { AddShoppingCart } from '@mui/icons-material';
 import { CartContext } from '../../../context/CartContext';
 import { getFullImageUrl } from '../../../utils/imageUtils';
+import WishlistButton from '../WishlistButton';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useContext(CartContext);
@@ -15,48 +18,106 @@ const ProductCard = ({ product }) => {
   if (!product) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link to={`/products/${product.id || product.productId}`}>
-        <div className="h-48 bg-gray-200 flex items-center justify-center">
+    <Card sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      transition: 'transform 0.2s, box-shadow 0.2s',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: 3
+      }
+    }}>
+      <CardActionArea component={Link} to={`/products/${product.id || product.productId}`}>
+        <Box sx={{ position: 'relative', pt: '100%' }}>
           {product.image ? (
-            <img 
-              src={getFullImageUrl(product.image)} 
-              alt={product.name} 
-              className="h-full w-full object-cover"
+            <CardMedia
+              component="img"
+              image={getFullImageUrl(product.image)}
+              alt={product.name}
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
             />
           ) : (
-            <span className="text-gray-500">Product Image</span>
-          )}
-        </div>
-        
-        <div className="p-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">{product.name}</h3>
-          
-          <div className="flex items-center mb-2">
-            <span className="text-sm text-gray-600">{product.brand}</span>
-            <span className="mx-2 text-gray-400">•</span>
-            <span className="text-sm text-gray-600">{product.category?.name}</span>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <span className="text-xl font-bold text-blue-600">${product.price.toFixed(2)}</span>
-            
-            <button
-              onClick={handleAddToCart}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+            <Box 
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: 'grey.100',
+                color: 'grey.500'
+              }}
             >
-              Add to Cart
-            </button>
-          </div>
+              <Typography variant="body2">No Image</Typography>
+            </Box>
+          )}
+          <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
+            <WishlistButton productId={product.id || product.productId} size="small" />
+          </Box>
+        </Box>
+      </CardActionArea>
+      
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <Typography 
+          gutterBottom 
+          variant="subtitle1" 
+          component="h3" 
+          noWrap
+          sx={{ fontWeight: 'medium' }}
+        >
+          {product.name}
+        </Typography>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {product.brand}
+          </Typography>
+          {product.category?.name && (
+            <>
+              <Box component="span" sx={{ mx: 0.5 }}>•</Box>
+              <Typography variant="body2" color="text.secondary" noWrap>
+                {product.category.name}
+              </Typography>
+            </>
+          )}
+        </Box>
+        
+        <Typography variant="h6" color="primary" fontWeight="bold">
+          Rs.{product.price.toFixed(2)}
+        </Typography>
+      </CardContent>
+      
+      <CardActions sx={{ p: 2, pt: 0 }}>
+        <IconButton 
+          color="primary" 
+          onClick={handleAddToCart}
+          size="large"
+          sx={{ 
+            ml: 'auto',
+            '&:hover': { bgcolor: 'primary.light' }
+          }}
+        >
+          <AddShoppingCart />
+        </IconButton>
           
           {product.stockQuantity <= 5 && product.stockQuantity > 0 ? (
             <p className="text-orange-500 text-sm mt-2">Only {product.stockQuantity} left!</p>
           ) : product.stockQuantity === 0 ? (
             <p className="text-red-500 text-sm mt-2">Out of stock</p>
           ) : null}
-        </div>
-      </Link>
-    </div>
+      </CardActions>
+    </Card>
   );
 };
 

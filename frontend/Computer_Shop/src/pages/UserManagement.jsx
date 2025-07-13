@@ -59,19 +59,49 @@ const UserManagement = () => {
   // Debounce filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      setPagination(prev => ({ ...prev, page: 0 }));
+      // Reset to first page when filters change
+      setPagination(prev => ({
+        ...prev,
+        page: 0
+      }));
+      // Fetch new data with updated filters
+      fetchUsers();
     }, 500);
+    
     return () => clearTimeout(timer);
   }, [filters.query, filters.role, filters.status]);
+  
+  // Add a separate effect to handle page/size changes
+  useEffect(() => {
+    fetchUsers();
+  }, [pagination.page, pagination.size]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       // Prepare query parameters
       const params = new URLSearchParams();
-      if (filters.query) params.append('query', filters.query);
-      if (filters.role) params.append('role', filters.role);
-      if (filters.status !== 'all') params.append('active', filters.status === 'active');
+      
+      // Add search query if provided
+      if (filters.query && filters.query.trim() !== '') {
+        params.append('search', filters.query.trim());
+      }
+      
+      // Add role filter if provided
+      if (filters.role && filters.role !== '') {
+        params.append('role', filters.role);
+      }
+      
+      // Add status filter if provided
+      if (filters.status === 'active') {
+        params.append('isActive', 'true');
+      } else if (filters.status === 'inactive') {
+        params.append('isActive', 'false');
+      }
+      
+      // Add pagination parameters
+      params.append('page', pagination.page);
+      params.append('size', pagination.size);
       
       const data = await userService.getUsers(pagination.page, pagination.size, params.toString());
       

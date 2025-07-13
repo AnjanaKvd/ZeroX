@@ -6,10 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 // src/main/java/com/zerox/csm/model/User.java
@@ -21,12 +23,9 @@ import java.util.UUID;
 @AllArgsConstructor
 
 
-//soft delete for users
+// Soft delete configuration
 @SQLDelete(sql = "UPDATE users SET is_deleted = 1 WHERE user_id = ?")
-//default users are not deleted
-@Where(clause = "is_deleted = 0")
-
-
+@SQLRestriction("is_deleted = 0")
 public class User {
     @Id
     @GeneratedValue
@@ -52,11 +51,13 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @Column(name = "loyalty_points")
-    private Integer loyaltyPoints;
+    @Column(name = "loyalty_points", nullable = false)
+    @Builder.Default
+    private Integer loyaltyPoints = 0;
 
-    @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
-    private boolean isDeleted;
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
 
 
     public UUID getUserId() {
@@ -133,7 +134,21 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private UserRole role;
+    @Builder.Default
+    private UserRole role = UserRole.CUSTOMER;
 
-    // Other fields and relationships...
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<WishlistItem> wishlistItems = new ArrayList<>();
+    
+    // Helper methods for wishlist
+    public void addToWishlist(WishlistItem item) {
+        wishlistItems.add(item);
+        item.setUser(this);
+    }
+    
+    public void removeFromWishlist(WishlistItem item) {
+        wishlistItems.remove(item);
+        item.setUser(null);
+    }
 }
