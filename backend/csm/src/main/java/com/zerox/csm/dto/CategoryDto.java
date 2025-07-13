@@ -14,7 +14,8 @@ public class CategoryDto {
             String slug,
             String description,
             String icon,
-            UUID parentCategoryId
+            UUID parentCategoryId,
+            Boolean sidebar
     ) {}
     
     public record CategoryResponse(
@@ -23,6 +24,7 @@ public class CategoryDto {
             String slug,
             String description,
             String icon,
+            Boolean sidebar,
             UUID parentCategoryId,
             String parentCategoryName,
             List<CategoryBriefResponse> subCategories,

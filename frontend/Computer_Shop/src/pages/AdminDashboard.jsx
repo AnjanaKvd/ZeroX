@@ -5,7 +5,7 @@ import {
   deleteProduct,
   createProduct,
   updateProduct,
-  getProductStats
+  // getProductStats
 } from '../services/productService';
 import ProductModal from '../components/admin/ProductModal';
 import ConfirmModal from '../components/admin/ConfirmModal';
@@ -60,7 +60,7 @@ const AdminDashboard = () => {
 
   const fetchProductStats = useCallback(async () => {
     try {
-      const stats = await getProductStats();
+      // const stats = await getProductStats();
       setProductStats(stats);
     } catch (err) {
       console.error("Error fetching product stats:", err);

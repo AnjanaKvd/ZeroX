@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
-import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { useWishlist } from '../../context/WishlistContext';
+import { ShoppingCartIcon, HeartIcon as HeartIconOutline, HeartIcon as HeartIconSolid } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartIconFilled } from '@heroicons/react/24/solid';
+import { useState, useEffect } from 'react';
 import { FiPackage } from 'react-icons/fi';
 import { getProductImageUrl } from '../../utils/imageUtils';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,12 +17,34 @@ const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
 const formatImageUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('http')) return url;
-  return `http://localhost:8080${url}`;
+  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}${url}`;
 };
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
+  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { theme } = useTheme();
+  const [isInWishlist, setIsInWishlist] = useState(false);
+
+  // Check if product is in wishlist
+  useEffect(() => {
+    const productId = product.productId || product.id;
+    setIsInWishlist(wishlist.some(item => (item.productId || item.id) === productId));
+  }, [wishlist, product]);
+
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const productId = product.productId || product.id;
+    if (!productId) return;
+    
+    if (isInWishlist) {
+      removeFromWishlist(productId);
+    } else {
+      addToWishlist(productId);
+    }
+  };
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -48,6 +73,19 @@ const ProductCard = ({ product }) => {
   return (
     <article className={`group relative overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition-all duration-300 hover:shadow-md`}>
       <Link to={`/products/${productId}`} className="block h-full">
+        {/* Wishlist Button */}
+        <button
+          onClick={handleWishlistClick}
+          className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          {isInWishlist ? (
+            <HeartIconFilled className="h-5 w-5 text-red-500" />
+          ) : (
+            <HeartIconOutline className="h-5 w-5 text-gray-700" />
+          )}
+        </button>
+
         {/* Image Container */}
         <div className="relative aspect-square bg-background">
           {imageUrl ? (

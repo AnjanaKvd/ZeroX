@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface StockAlertRepository extends JpaRepository<StockAlert, UUID> {
+    void deleteByProductProductId(UUID productId);
     
     List<StockAlert> findByProductProductId(UUID productId);
     

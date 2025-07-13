@@ -9,6 +9,8 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 // Product.java
@@ -47,6 +49,9 @@ public class Product {
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
     
+@Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+private Boolean active = true;
+
     @Column(name = "low_stock_threshold")
     private Integer lowStockThreshold;
     
@@ -61,4 +66,19 @@ public class Product {
 
     @Column(name ="keywords")
     private String keywords;
+    
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<WishlistItem> wishlistItems = new ArrayList<>();
+    
+    // Helper methods for wishlist
+    public void addToWishlist(WishlistItem item) {
+        wishlistItems.add(item);
+        item.setProduct(this);
+    }
+    
+    public void removeFromWishlist(WishlistItem item) {
+        wishlistItems.remove(item);
+        item.setProduct(null);
+    }
 }

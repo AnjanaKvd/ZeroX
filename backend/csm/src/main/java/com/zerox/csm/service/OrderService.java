@@ -169,9 +169,12 @@ public class OrderService {
                 ))
                 .collect(Collectors.toList());
 
+        // Handle potentially null user
+        String userEmail = order.getUser() != null ? order.getUser().getEmail() : "Guest User";
+
         return new OrderResponse(
                 order.getOrderId(),
-                order.getUser().getEmail(),
+                userEmail,
                 itemResponses,
                 order.getTotalAmount(),
                 order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO,

@@ -27,7 +27,8 @@ const Sidebar = ({ isOpen, onToggle, isVisible = true }) => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const data = await getCategories();
+        // Only fetch categories that are marked for sidebar
+        const data = await getCategories(true); // true means sidebarOnly
         setCategories(data || []);
         setError(null);
       } catch (err) {
@@ -42,7 +43,18 @@ const Sidebar = ({ isOpen, onToggle, isVisible = true }) => {
   }, []);
 
   const getCategoryId = (category) => {
-    return category.id || category._id || category.uuid || '';
+    return category.categoryId || category.id || category._id || category.uuid || '';
+  };
+  
+  // Handle category click - ensures proper navigation and data fetching
+  const handleCategoryClick = (category) => {
+    // Close sidebar on mobile after selection
+    if (onToggle) {
+      onToggle();
+    }
+    
+    // The actual navigation is handled by the Link component's to prop
+    // The CategoryProductsPage will handle the data fetching based on the URL parameter
   };
 
   // Hide sidebar completely when scroll position is beyond the first page
@@ -94,7 +106,9 @@ const Sidebar = ({ isOpen, onToggle, isVisible = true }) => {
           categories.map((category) => (
             <Link
               key={getCategoryId(category)}
-              to={`/category/${category.slug}`}
+              to={`/categories/${getCategoryId(category)}`}
+              onClick={() => handleCategoryClick(category)}
+              state={{ fromSidebar: true }}
               className={`flex items-center p-2 mb-3 rounded-lg transition-all ${
                 isOpen ? '' : 'justify-center'
               } ${

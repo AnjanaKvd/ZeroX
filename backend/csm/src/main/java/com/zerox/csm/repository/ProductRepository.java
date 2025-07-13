@@ -15,18 +15,21 @@ import java.util.UUID;
 // src/main/java/com/zerox/csm/repository/ProductRepository.java
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
+    Page<Product> findByActiveTrue(Pageable pageable);
     Optional<Product> findBySku(String sku);
     
     @Query("SELECT p FROM Product p WHERE " +
             "(:category IS NULL OR p.category.categoryId = :category) AND " +
             "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
             "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
-            "(:brand IS NULL OR p.brand = :brand)")
+            "(:brand IS NULL OR p.brand = :brand) AND " +
+            "(:active IS NULL OR p.active = :active)")
     Page<Product> searchProducts(
             @Param("category") UUID category,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("brand") String brand,
+            @Param("active") Boolean active,
             Pageable pageable
     );
     
@@ -36,13 +39,15 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             "(:category IS NULL OR p.category.categoryId = :category) AND " +
             "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
             "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
-            "(:brand IS NULL OR p.brand = :brand)")
+            "(:brand IS NULL OR p.brand = :brand) AND " +
+            "(:active IS NULL OR p.active = :active)")
     Page<Product> searchProductsByQuery(
             @Param("query") String query,
             @Param("category") UUID category,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("brand") String brand,
+            @Param("active") Boolean active,
             Pageable pageable
     );
 }

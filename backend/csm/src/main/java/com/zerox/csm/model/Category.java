@@ -39,6 +39,10 @@ public class Category {
     @Column(name = "icon")
     private String icon;
 
+    @Column(name = "sidebar", nullable = false)
+    @Builder.Default
+    private Boolean sidebar = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category_id")
     private Category parentCategory;

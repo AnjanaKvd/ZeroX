@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Check, X } from 'lucide-react';
 import * as categoryService from '../services/categoryService';
 import CategoryModal from '../components/admin/CategoryModal';
 import ConfirmModal from '../components/admin/ConfirmModal';
@@ -78,7 +78,7 @@ const CategoryManagement = () => {
     }
   };
 
-  const handleDeleteConfirm = async () => {
+    const handleDeleteConfirm = async () => {
     try {
       const categoryId = getCategoryId(modalState.selectedCategory);
       if (!categoryId) {
@@ -93,6 +93,28 @@ const CategoryManagement = () => {
     } catch (error) {
       console.error('Error deleting category:', error);
       setError('Failed to delete category. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSidebarToggle = async (category, e) => {
+    e.stopPropagation();
+    const categoryId = getCategoryId(category);
+    if (!categoryId) return;
+
+    try {
+      setLoading(true);
+      await categoryService.updateCategorySidebarStatus(categoryId, !category.sidebar);
+      // Update the local state to reflect the change immediately
+      setCategories(categories.map(cat => 
+        getCategoryId(cat) === categoryId 
+          ? { ...cat, sidebar: !category.sidebar } 
+          : cat
+      ));
+    } catch (error) {
+      console.error('Error updating sidebar status:', error);
+      setError('Failed to update sidebar status. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -184,6 +206,9 @@ const CategoryManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  In Sidebar
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -207,6 +232,22 @@ const CategoryManagement = () => {
                     <div className="text-sm text-gray-500 truncate max-w-xs">
                       {category.description || 'No description'}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={(e) => handleSidebarToggle(category, e)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${category.sidebar ? 'bg-blue-600' : 'bg-gray-200'}`}
+                      role="switch"
+                      aria-checked={category.sidebar}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${category.sidebar ? 'translate-x-6' : 'translate-x-1'}`}>
+                        {category.sidebar ? (
+                          <Check className="h-3 w-3 text-blue-600 mx-auto mt-0.5" />
+                        ) : (
+                          <X className="h-3 w-3 text-gray-400 mx-auto mt-0.5" />
+                        )}
+                      </span>
+                    </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">

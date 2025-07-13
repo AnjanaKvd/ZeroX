@@ -1,12 +1,23 @@
 import api from './api';
 
-export const getCategories = async () => {
+export const getCategories = async (sidebarOnly = false) => {
   try {
-    const response = await api.get('/categories');
+    const url = sidebarOnly ? '/categories/sidebar' : '/categories';
+    const response = await api.get(url);
     console.log('Raw category response:', response.data); // Debug log
     return response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);
+    throw error;
+  }
+};
+
+export const updateCategorySidebarStatus = async (categoryId, showInSidebar) => {
+  try {
+    const response = await api.patch(`/categories/${categoryId}/sidebar?sidebar=${showInSidebar}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating category sidebar status:', error);
     throw error;
   }
 };

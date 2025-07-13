@@ -1,23 +1,27 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getProductById } from "../services/productService";
-import { getActiveDiscountForProduct } from "../services/discountService";
-import { useCart } from "../context/CartContext";
-import { useTheme } from "../context/ThemeContext";
-import LoadingOverlay from "../components/common/LoadingOverlay";
-import ErrorDisplay from "../components/common/ErrorDisplay";
-import { Plus, Minus, ShoppingCart } from "lucide-react";
-import { getProductImageUrl } from "../utils/imageUtils";
-import DisplayRatingAndReviews from "./DisplayRatingAndReviews";
-import ReviewForm from "./ReviewForm";
-import ReviewItem from "./ReviewItem";
-import PriceDisplay from "../components/common/PriceDisplay";
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getProductById } from '../services/productService';
+import { getActiveDiscountForProduct } from '../services/discountService';
+import { useCart } from '../context/CartContext';
+import { useTheme } from '../context/ThemeContext';
+import { useWishlist } from '../context/WishlistContext';
+import LoadingOverlay from '../components/common/LoadingOverlay';
+import ErrorDisplay from '../components/common/ErrorDisplay';
+import { Plus, Minus, ShoppingCart, Heart } from 'lucide-react';
+import WishlistButton from '../components/common/WishlistButton';
+import { getProductImageUrl } from '../utils/imageUtils';
+import DisplayRatingAndReviews from './DisplayRatingAndReviews';
+import ReviewForm from './ReviewForm';
+import ReviewItem from './ReviewItem';
+import PriceDisplay from '../components/common/PriceDisplay';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { theme } = useTheme();
+  const { isInWishlist, toggleWishlistItem } = useWishlist();
+
   const [product, setProduct] = useState(null);
   const [discount, setDiscount] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -225,8 +229,12 @@ const ProductDetails = () => {
             }`}
           >
             {product.name}
+            <WishlistButton 
+              productId={product.id || product.productId} 
+              size="large" 
+              sx={{ ml: 2, verticalAlign: 'middle' }}
+            />
           </h1>
-
           {/* Price Section */}
           <div className="mb-4">
             {discount ? (

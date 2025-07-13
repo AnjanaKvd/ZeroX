@@ -9,9 +9,9 @@ export const getProducts = async (params = {}) => {
   try {
     // Build query string from params
     const queryParams = new URLSearchParams();
-    if (params.page !== undefined) queryParams.append("page", params.page - 1); // API is zero-based
-    if (params.size !== undefined) queryParams.append("size", params.size);
-
+    // The API expects 0-based page index, so we use the page as is
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.size !== undefined) queryParams.append('size', params.size);
     // Sorting
     if (params.sortBy) {
       const direction = params.sortDirection || "asc";
