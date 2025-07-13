@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BarChart3, Package, ShoppingCart, Users } from 'lucide-react';
 import { getCustomerCount } from '../../services/authService';
 
+
 const StatCard = ({ icon: Icon, title, value, bgColor }) => (
   <div className={`${bgColor} rounded-lg shadow-sm p-6 flex items-center space-x-4`}>
     <div className="p-3 bg-white rounded-full bg-opacity-30">
