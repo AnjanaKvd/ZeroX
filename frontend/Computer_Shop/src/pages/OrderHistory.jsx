@@ -191,6 +191,7 @@ const OrderHistory = () => {
                           <div className="flex justify-between text-sm text-green-600 mt-1">
                             <span>Coupon applied: {order.couponCode}</span>
                             <span className="font-semibold">-<PriceDisplay amount={order.discountAmount || 0} /></span>
+                            <span className="font-semibold"><PriceDisplay amount={order.finalAmount} /></span>
                           </div>
                         )}
                       </td>

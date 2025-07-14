@@ -147,7 +147,7 @@ const OrderConfirmation = () => {
             <h3 className="text-lg font-medium mb-4">Pay with Credit Card</h3>
             <StripePaymentWrapper 
               orderId={orderId} 
-              amount={order.totalAmount} 
+              amount={order.finalAmount || order.totalAmount} 
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
             />
@@ -252,11 +252,29 @@ const OrderConfirmation = () => {
 </td>
                     </tr>
                   ))}
+                  {order.couponCode && order.discountAmount > 0 && (
+                    <>
+                      <tr className="border-t border-gray-200">
+                        <td colSpan="2" className="text-right p-4 font-medium">Subtotal</td>
+                        <td className="text-right p-4">
+                          <PriceDisplay amount={order.totalAmount} />
+                        </td>
+                      </tr>
+                      <tr className="border-t border-gray-200">
+                        <td colSpan="2" className="text-right p-4 font-medium">
+                          Discount ({order.couponCode})
+                        </td>
+                        <td className="text-right p-4 text-green-600">
+                          -<PriceDisplay amount={order.discountAmount} />
+                        </td>
+                      </tr>
+                    </>
+                  )}
                   <tr className="border-t border-gray-200 bg-gray-50">
                     <td colSpan="2" className="text-right p-4 font-medium">Total</td>
                     <td className="text-right p-4 font-bold">
-  <PriceDisplay amount={order.totalAmount} />
-</td>
+                      <PriceDisplay amount={order.finalAmount || order.totalAmount} />
+                    </td>
                   </tr>
                 </tbody>
               </table>
