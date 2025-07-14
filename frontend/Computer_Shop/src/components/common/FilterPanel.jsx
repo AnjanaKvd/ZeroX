@@ -83,13 +83,11 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
         try {
             setIsSearching(true);
             setError(null);
-            console.log("Searching for:", searchTerm);
             
             // Update parent component filters before search
             onFilterChange('searchQuery', searchTerm);
             
             const results = await searchProducts(searchTerm);
-            console.log("Search results:", results);
             
             // Check if results is empty or undefined
             if (!results || (Array.isArray(results) && results.length === 0)) {
@@ -102,7 +100,6 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
             // Pass the search results to parent component
             onFilterChange('searchResults', results);
         } catch (error) {
-            console.error('Search failed:', error);
             setError("Failed to search products. Please try again.");
             onFilterChange('searchResults', []);
         } finally {
@@ -120,8 +117,6 @@ const FilterPanel = ({ categories, filters, onFilterChange, onSortChange = () =>
             setValidationError("Please enter min or max price");
             return;
         }
-        
-        console.log("Applying price filter:", minPrice, maxPrice);
         
         // Update parent component with price values
         onFilterChange('minPrice', minPrice);

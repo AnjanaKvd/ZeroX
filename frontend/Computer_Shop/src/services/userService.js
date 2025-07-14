@@ -13,7 +13,6 @@ export const userService = {
       const response = await api.get(`${USER_BASE_URL}?${params.toString()}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching users:', error);
       throw error;
     }
   },
@@ -24,7 +23,6 @@ export const userService = {
       const response = await api.get(`${USER_BASE_URL}/stats`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching user stats:', error);
       throw error;
     }
   },
@@ -35,7 +33,6 @@ export const userService = {
       const response = await api.get(`${USER_BASE_URL}/${userId}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching user ${userId}:`, error);
       throw error;
     }
   },
@@ -49,7 +46,6 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      console.error(`Error updating role for user ${userId}:`, error);
       throw error;
     }
   },
@@ -63,7 +59,6 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      console.error(`Error updating email for user ${userId}:`, error);
       throw error;
     }
   },
@@ -77,7 +72,6 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      console.error(`Error updating password for user ${userId}:`, error);
       throw error;
     }
   },
@@ -91,7 +85,6 @@ export const userService = {
       );
       return response.data;
     } catch (error) {
-      console.error(`Error updating status for user ${userId}:`, error);
       throw error;
     }
   },
@@ -102,7 +95,6 @@ export const userService = {
       await api.delete(`${USER_BASE_URL}/${userId}`);
       return true;
     } catch (error) {
-      console.error(`Error deleting user ${userId}:`, error);
       throw error;
     }
   }

@@ -14,7 +14,6 @@ const Logout = () => {
         await logout();
         navigate('/', { replace: true, state: { from: 'logout' } });
       } catch (error) {
-        console.error('Logout error:', error);
         navigate('/');
       }
     };

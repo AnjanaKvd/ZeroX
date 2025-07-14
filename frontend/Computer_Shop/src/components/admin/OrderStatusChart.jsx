@@ -26,7 +26,6 @@ const OrderStatusChart = ({ theme }) => {
           setError('No order data available');
         }
       } catch (error) {
-        console.error('Error fetching order data:', error);
         setError('Failed to load order data');
       } finally {
         setLoading(false);

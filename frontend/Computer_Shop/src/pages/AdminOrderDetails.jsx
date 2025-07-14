@@ -26,7 +26,6 @@ const AdminOrderDetails = () => {
       setNewStatus(data.status);
       setError(null);
     } catch (error) {
-      console.error('Error fetching order details:', error);
       setError('Failed to load order details. Please try again later.');
     } finally {
       setLoading(false);
@@ -42,7 +41,6 @@ const AdminOrderDetails = () => {
       setOrder({...order, status: newStatus});
       toast.success(`Order status updated to ${newStatus}`);
     } catch (error) {
-      console.error('Error updating status:', error);
       toast.error('Failed to update order status');
     } finally {
       setProcessing(false);
@@ -61,7 +59,6 @@ const AdminOrderDetails = () => {
       setNewStatus('CANCELLED');
       toast.success('Order has been cancelled');
     } catch (error) {
-      console.error('Error cancelling order:', error);
       toast.error('Failed to cancel order');
     } finally {
       setProcessing(false);

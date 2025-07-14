@@ -39,7 +39,6 @@ export const playSuccessBeep = () => {
     beep.volume = 0.5;
     beep.play().catch(e => console.error('Could not play scan sound', e));
   } catch (e) {
-    console.error('Could not create audio', e);
   }
 };
 

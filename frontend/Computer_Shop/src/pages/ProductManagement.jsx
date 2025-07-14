@@ -44,7 +44,6 @@ const ProductManagement = () => {
       setProducts(data.content || []);
       setTotalItems(data.totalElements || 0);
     } catch (err) {
-      console.error("Error fetching products:", err);
       setError(err.message || "Failed to load products");
       setProducts([]);
       setTotalItems(0);

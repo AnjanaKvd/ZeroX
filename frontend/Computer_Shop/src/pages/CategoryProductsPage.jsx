@@ -21,11 +21,8 @@ const CategoryProductsPage = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       if (!categoryId) {
-        console.log('No categoryId provided');
         return;
       }
-      
-      console.log(`Fetching products for category ID: ${categoryId}`);
       
       try {
         setLoading(true);
@@ -38,15 +35,11 @@ const CategoryProductsPage = () => {
           size: 100 // Default size, adjust as needed
         });
         
-        console.log('Products response:', response);
-        
         // The response should already be in the correct format
         const productsData = Array.isArray(response.content) ? response.content : [];
-        console.log(`Found ${productsData.length} products for category ${categoryId}`);
         setProducts(productsData);
         
       } catch (err) {
-        console.error('Error fetching category products:', err);
         setError('Failed to load products for this category');
         setProducts([]);
       } finally {
@@ -56,7 +49,6 @@ const CategoryProductsPage = () => {
 
     // Only fetch if we have a valid category ID and categories are loaded
     if (categoriesLoading) {
-      console.log('Categories still loading...');
       return;
     }
     
@@ -64,10 +56,8 @@ const CategoryProductsPage = () => {
       fetchCategoryProducts();
     } else if (categories.length > 0) {
       // If no categoryId but we have categories, redirect to the first one
-      console.log('No category ID in URL, redirecting to first category');
       navigate(`/categories/${categories[0].categoryId}`, { replace: true });
     } else {
-      console.log('No categories available');
       setError('No categories available');
       setLoading(false);
     }
@@ -75,10 +65,6 @@ const CategoryProductsPage = () => {
   
   // Debug logging
   useEffect(() => {
-    console.log('Category ID from URL:', categoryId);
-    console.log('Current category:', category);
-    console.log('Available categories:', categories);
-    console.log('Location state:', location.state);
   }, [categoryId, category, categories, location.state]);
 
   const filteredProducts = products.filter(product =>

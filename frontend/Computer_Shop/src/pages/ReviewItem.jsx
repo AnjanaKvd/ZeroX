@@ -16,7 +16,6 @@ const ReviewItem = ({ productId }) => {
       }
 
       try {
-        console.log("Fetching reviews for product ID:", productId);
         setLoading(true);
 
         const response = await fetch(
@@ -28,7 +27,6 @@ const ReviewItem = ({ productId }) => {
         }
 
         const data = await response.json();
-        console.log("Reviews data:", data);
 
 
         if (data.content) {
@@ -45,7 +43,6 @@ const ReviewItem = ({ productId }) => {
           setReviews([]);
         }
       } catch (err) {
-        console.error("Error fetching reviews:", err);
         setError("Failed to load reviews. Please try again later.");
       } finally {
         setLoading(false);

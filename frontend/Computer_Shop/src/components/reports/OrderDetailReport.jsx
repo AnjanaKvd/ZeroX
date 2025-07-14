@@ -93,8 +93,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
         const response = await api.get('/orders');
         const orders = response.data || [];
         
-        console.log('Fetched orders:', orders.length);
-        
         // Transform the order data into the format expected by the order report
         const transformedOrders = orders.map(order => {
           try {
@@ -125,7 +123,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
               shippingAddressId: order.shippingAddressId || null
             };
           } catch (err) {
-            console.error('Error transforming order:', err, order);
             // Return a minimal valid order object to prevent the entire process from failing
             return {
               orderId: order.orderId || 'unknown',
@@ -172,7 +169,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
             
             return true;
           } catch (err) {
-            console.error('Error filtering order:', err, order);
             return false; // Skip this order if filtering fails
           }
         });
@@ -185,7 +181,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
         
         setReportData(normalizedData);
       } catch (error) {
-        console.error('Failed to fetch order report:', error);
         setError('Failed to fetch order data. Please try again later.');
         setReportData([]);
       } finally {
@@ -208,7 +203,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       const lowercase = statusStr.toLowerCase();
       return lowercase.charAt(0).toUpperCase() + lowercase.slice(1);
     } catch (error) {
-      console.error('Error normalizing status:', error);
       return 'Pending';
     }
   };
@@ -285,7 +279,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
           }
         }));
       } catch (err) {
-        console.error('Error fetching shipping address:', err);
       }
     }
   };
@@ -492,7 +485,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToPdf('orders', filters);
       downloadBlob(blob, `order-detail-report-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
-      console.error('Failed to export PDF:', error);
     } finally {
       setLoading(false);
     }
@@ -505,7 +497,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToCsv('orders', filters);
       downloadBlob(blob, `order-detail-report-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
-      console.error('Failed to export CSV:', error);
     } finally {
       setLoading(false);
     }

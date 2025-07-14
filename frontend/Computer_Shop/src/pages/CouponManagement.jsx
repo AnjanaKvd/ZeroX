@@ -435,7 +435,6 @@ const UsageModal = ({ isOpen, onClose, couponId, couponCode }) => {
         setUsages(response.content || []);
         setTotalPages(response.totalPages || 1);
       } catch (err) {
-        console.error("Error fetching coupon usages:", err);
         setError("Failed to load coupon usage data");
       } finally {
         setLoading(false);
@@ -571,7 +570,6 @@ const CouponManagement = () => {
       setCoupons(response.content || []);
       setTotalPages(response.totalPages || 1);
     } catch (err) {
-      console.error("Error fetching coupons:", err);
       setError(err.message || "Failed to load coupons");
       setCoupons([]);
       setTotalPages(1);
@@ -590,7 +588,6 @@ const CouponManagement = () => {
       setCategories(categoriesResponse.content || []);
       setProducts(productsResponse.content || []);
     } catch (err) {
-      console.error("Error fetching categories or products:", err);
     }
   }, []);
 

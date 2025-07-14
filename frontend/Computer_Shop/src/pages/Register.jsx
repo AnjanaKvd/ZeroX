@@ -67,7 +67,6 @@ const Register = () => {
         setRegistrationError(result?.message || "Registration failed");
       }
     } catch (err) {
-      console.error("Registration error:", err);
       
       if (err.response) {
           const msg = err.response.data?.message;

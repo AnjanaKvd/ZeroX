@@ -55,11 +55,9 @@ const RepairsReport = ({ theme }) => {
           const data = JSON.parse(text);
           setReportData(data);
         } catch (jsonError) {
-          console.error('Repairs report API did not return valid JSON:', text);
           setReportData([]);
         }
       } catch (error) {
-        console.error('Failed to fetch repairs report:', error);
         setReportData([]);
       } finally {
         setLoading(false);

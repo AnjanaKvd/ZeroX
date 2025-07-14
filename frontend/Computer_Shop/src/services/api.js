@@ -24,9 +24,7 @@ api.interceptors.request.use(
       
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log(`[API] Added Authorization header to request: ${config.method?.toUpperCase()} ${config.url}`);
       } else {
-        console.warn(`[API] No auth token found for request: ${config.method?.toUpperCase()} ${config.url}`);
         // Don't throw here, let the server handle unauthorized requests
       }
     }
@@ -34,7 +32,6 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('[API] Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -42,7 +39,6 @@ api.interceptors.request.use(
 // Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`[API] Response ${response.status} from: ${response.config.method?.toUpperCase()} ${response.config.url}`);
     return response;
   },
   (error) => {
@@ -50,16 +46,9 @@ api.interceptors.response.use(
     const errorMessage = error.message || 'Unknown error';
     const status = response?.status;
     
-    console.error(`[API] Request failed: ${config?.method?.toUpperCase()} ${config?.url}`, {
-      status,
-      message: errorMessage,
-      response: response?.data,
-      headers: config?.headers
-    });
     
     // Handle specific status codes
     if (status === 401) {
-      console.warn('[API] Unauthorized - Redirecting to login');
       // You might want to redirect to login or refresh token here
     }
     

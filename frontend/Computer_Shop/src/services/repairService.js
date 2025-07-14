@@ -19,7 +19,6 @@ export const createRepairRequest = async (repairData) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error creating repair request:", error);
     throw error;
   }
 };
@@ -42,7 +41,6 @@ export const getUserRepairRequests = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching user repair requests:", error);
     throw error;
   }
 };
@@ -72,8 +70,6 @@ export const getAllRepairRequests = async (filters = {}) => {
     const queryString = queryParams.toString();
     const url = queryString ? `/repairs?${queryString}` : '/repairs';
 
-    console.log('API request URL:', url); // Debugging
-
     const response = await api.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -82,7 +78,6 @@ export const getAllRepairRequests = async (filters = {}) => {
     
     return response.data;
   } catch (error) {
-    console.error("Error fetching all repair requests:", error);
     throw error;
   }
 };
@@ -106,7 +101,6 @@ export const getRepairsByStatus = async (status) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching repairs by status:", error);
     throw error;
   }
 };
@@ -130,7 +124,6 @@ export const getRepairRequestById = async (repairId) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching repair request by ID:", error);
     throw error;
   }
 };
@@ -155,7 +148,6 @@ export const updateRepairStatus = async (repairId, status) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error updating repair status:", error);
     throw error;
   }
 };
@@ -206,7 +198,6 @@ export const updateRepairDetails = async (repairId, updateData) => {
     
     return response.data;
   } catch (error) {
-    console.error("Error updating repair details:", error);
     throw error;
   }
 };
@@ -229,7 +220,6 @@ export const getTechnicianRepairs = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching technician repairs:", error);
     throw error;
   }
 };
@@ -253,7 +243,6 @@ export const deleteRepairRequest = async (repairId) => {
     });
     return;
   } catch (error) {
-    console.error("Error deleting repair request:", error);
     throw error;
   }
 };

@@ -32,10 +32,8 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         setLoading(true);
         setCategoryError(null);
         const response = await getCategories();
-        console.log("Categories response:", response); // Debug: Check category structure
         setCategories(response || []);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         setCategoryError("Failed to load categories. Please try again.");
       } finally {
         setLoading(false);
@@ -176,7 +174,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
           submitFormData.append('keywords', formattedKeywords);
           
           // For debugging
-          console.log('Submitting keywords:', formattedKeywords);
         }
       } else if (formData[key] !== '') {
         if (['price', 'stockQuantity', 'lowStockThreshold', 'warrantyPeriodMonths'].includes(key)) {
@@ -192,7 +189,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
 
   // Handle barcode scanning - now just updates the form data with scanned code
   const handleScanBarcode = (scannedCode) => {
-    console.log('ProductModal received barcode:', scannedCode);
     
     // Set the SKU field with the scanned barcode
     if (scannedCode && scannedCode.trim()) {
@@ -224,7 +220,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
         }));
       }
     } catch (error) {
-      console.error('Error looking up product:', error);
       // Display error via toast or alert if needed
     }
   };
@@ -339,7 +334,6 @@ const ProductModal = ({ isOpen, onClose, onSubmit, product = null, mode = 'add' 
                   <BarcodeInput
                     value={formData.sku}
                     onChange={(value) => {
-                      console.log('SKU input changed:', value);
                       setFormData(prev => ({
                         ...prev,
                         sku: value

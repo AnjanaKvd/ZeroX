@@ -49,7 +49,6 @@ const Checkout = () => {
           populateAddressForm(defaultAddress);
         }
       } catch (err) {
-        console.error('Error fetching addresses:', err);
         // Silently fail - user can still enter address manually
       } finally {
         setLoadingAddresses(false);
@@ -124,10 +123,8 @@ const Checkout = () => {
           
           // Save the new address and get the address ID
           const newAddress = await createAddress(user.userId, addressData);
-          console.log("New address created:", newAddress);
           newAddressId = newAddress.addressId;
         } catch (addressErr) {
-          console.error('Error saving address:', addressErr);
           setError('Failed to save address. Please try again.');
           setLoading(false);
           return; // Stop the checkout process if address saving fails
@@ -153,13 +150,10 @@ const Checkout = () => {
         couponCode: couponCode || ""  // Include coupon code if available
       };
       
-      console.log("Submitting order:", orderData);
-      
       // Send order to API
       const order = await createOrder(orderData);
       
       // Log the order ID for debugging
-      console.log("Order created with ID:", order.orderId);
       
       // Clear cart after successful order
       clearCart();
@@ -167,11 +161,9 @@ const Checkout = () => {
       // Redirect to order confirmation with the order ID
       navigate(`/order-confirmation/${order.orderId}`);
     } catch (err) {
-      console.error('Error creating order:', err);
       setError(err.response?.data?.message || 'An error occurred while processing your order. Please try again.');
       // Show detailed error in console for debugging
       if (err.response) {
-        console.error('Error response:', err.response.data);
       }
     } finally {
       setLoading(false);

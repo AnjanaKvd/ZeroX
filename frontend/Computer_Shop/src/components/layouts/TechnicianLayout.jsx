@@ -13,7 +13,6 @@ const TechnicianLayout = () => {
       await logout();
       navigate('/login', { replace: true });
     } catch (err) {
-      console.error('Logout failed:', err);
     }
   };
 

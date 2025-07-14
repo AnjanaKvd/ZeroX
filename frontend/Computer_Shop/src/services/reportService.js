@@ -19,12 +19,9 @@ export const getSalesReport = async (params = {}) => {
       // Convert category to categoryId if present
       ...(params.category && { categoryId: params.category })
     };
-    
-    console.log('Fetching sales report with params:', queryParams);
     const response = await api.get('/reports/sales', { params: queryParams });
     return response.data;
   } catch (error) {
-    console.error('Error fetching sales report:', error);
     throw error;
   }
 };
@@ -45,11 +42,9 @@ export const getRepairsReport = async (params = {}) => {
       status: 'completed',
       ...(params.category && { categoryId: params.category })
     };
-    console.log('Fetching repairs report with params:', queryParams);
     const response = await api.get('/reports/repairs', { params: queryParams });
     return response.data;
   } catch (error) {
-    console.error('Error fetching repairs report:', error);
     throw error;
   }
 };
@@ -82,7 +77,6 @@ export const getOrderReport = async (params = {}) => {
       return response.data;
     }
   } catch (error) {
-    console.error('Error fetching order report:', error);
     throw error;
   }
 };
@@ -96,7 +90,6 @@ export const getOrderReport = async (params = {}) => {
  */
 export const getInventoryReport = async (params = {}) => {
   try {
-    console.log('Fetching inventory with params:', params);
     
     // Use the products API endpoint
     const apiParams = { 
@@ -109,7 +102,6 @@ export const getInventoryReport = async (params = {}) => {
     }
     
     const response = await api.get('/products', { params: apiParams });
-    console.log('Products API response:', response.data);
     
     // Transform the product data into the format expected by the inventory report
     const inventoryItems = (response.data.content || []).map(product => {
@@ -147,7 +139,6 @@ export const getInventoryReport = async (params = {}) => {
     
     return inventoryItems;
   } catch (error) {
-    console.error('Error fetching inventory report:', error);
     throw error;
   }
 };
@@ -164,7 +155,6 @@ export const getCustomerReport = async (params = {}) => {
     const response = await api.get('/reports/customers', { params });
     return response.data;
   } catch (error) {
-    console.error('Error fetching customer report:', error);
     throw error;
   }
 };
@@ -197,7 +187,6 @@ export const fetchSalesDataFromOrders = async (params = {}) => {
       rawOrders: orders
     };
   } catch (error) {
-    console.error('Error fetching sales data:', error);
     throw error;
   }
 };
@@ -344,7 +333,6 @@ const processSalesDataDetailed = (orders, filters) => {
  */
 export const exportReportToPdf = async (reportType, params = {}) => {
   try {
-    console.log(`Exporting ${reportType} report to PDF with params:`, params);
     
     // Special handling for inventory report - generate PDF from product data
     if (reportType === 'inventory') {
@@ -465,11 +453,9 @@ export const exportReportToPdf = async (reportType, params = {}) => {
     
     // Special handling for sales report
     if (reportType === 'sales') {
-      console.log('Generating sales PDF report...');
       
       // Fetch sales data from orders
       const salesData = await fetchSalesDataFromOrders(params);
-      console.log('Sales data fetched for PDF:', salesData);
       
       // Create a PDF using jsPDF library with autotable plugin
       const doc = new jsPDF();
@@ -597,8 +583,6 @@ export const exportReportToPdf = async (reportType, params = {}) => {
         }
       });
       
-      console.log('PDF generation completed');
-      
       // Return as a blob
       return doc.output('blob');
     }
@@ -647,11 +631,9 @@ export const exportReportToPdf = async (reportType, params = {}) => {
     
     // Special handling for order reports
     if (reportType === 'orders') {
-      console.log('Generating order PDF report...');
       
       // Fetch order data
       const orderData = await getOrderReport(params);
-      console.log('Order data fetched for PDF:', orderData);
       
       // Create a PDF using jsPDF library with autotable plugin
       const doc = new jsPDF();
@@ -749,17 +731,13 @@ export const exportReportToPdf = async (reportType, params = {}) => {
         }
       });
       
-      console.log('PDF generation completed');
-      
       // Return as a blob
       return doc.output('blob');
     }
     
     // If we get here, the report type isn't supported
-    console.error(`PDF export not implemented for report type: ${reportType}`);
     throw new Error(`PDF export not implemented for report type: ${reportType}`);
   } catch (error) {
-    console.error(`Error exporting ${reportType} report to PDF:`, error);
     throw error;
   }
 };
@@ -772,7 +750,6 @@ export const exportReportToPdf = async (reportType, params = {}) => {
  */
 export const exportReportToCsv = async (reportType, params = {}) => {
   try {
-    console.log(`Exporting ${reportType} report to CSV with params:`, params);
     
     // Special handling for inventory report - generate CSV from product data
     if (reportType === 'inventory') {
@@ -818,11 +795,9 @@ export const exportReportToCsv = async (reportType, params = {}) => {
     
     // Special handling for sales report
     if (reportType === 'sales') {
-      console.log('Generating sales CSV report...');
       
       // Fetch sales data from orders
       const salesData = await fetchSalesDataFromOrders(params);
-      console.log('Sales data fetched for CSV:', salesData);
       
       // Properly escape CSV values to handle commas, quotes, etc.
       const escapeCSV = (value) => {
@@ -877,8 +852,6 @@ export const exportReportToCsv = async (reportType, params = {}) => {
       // Combine both reports
       const fullCsvContent = summaryCsv + '\n' + detailedCsv;
       
-      console.log('CSV generation completed');
-      
       const blob = new Blob([fullCsvContent], { type: 'text/csv;charset=utf-8;' });
       return blob;
     }
@@ -908,11 +881,9 @@ export const exportReportToCsv = async (reportType, params = {}) => {
     
     // Special handling for order reports
     if (reportType === 'orders') {
-      console.log('Generating order CSV report...');
       
       // Fetch order data
       const orderData = await getOrderReport(params);
-      console.log('Order data fetched for CSV:', orderData);
       
       // Define headers
       const headers = ['Order ID', 'Date', 'Customer', 'Items', 'Amount (Rs)', 'Status'];
@@ -979,18 +950,14 @@ export const exportReportToCsv = async (reportType, params = {}) => {
         csvContent += `"${status}",${count}\n`;
       });
       
-      console.log('CSV generation completed');
-      
       // Create and return blob
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       return blob;
     }
     
     // If we get here, the report type isn't supported
-    console.error(`CSV export not implemented for report type: ${reportType}`);
     throw new Error(`CSV export not implemented for report type: ${reportType}`);
   } catch (error) {
-    console.error(`Error exporting ${reportType} report to CSV:`, error);
     throw error;
   }
 };
@@ -1002,7 +969,6 @@ export const exportReportToCsv = async (reportType, params = {}) => {
  */
 export const downloadBlob = (blob, fileName) => {
   try {
-    console.log(`Downloading blob as file: ${fileName}`);
     const url = window.URL.createObjectURL(new Blob([blob]));
     const link = document.createElement('a');
     link.href = url;
@@ -1011,9 +977,7 @@ export const downloadBlob = (blob, fileName) => {
     link.click();
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
-    console.log('Download completed');
   } catch (error) {
-    console.error('Error downloading blob as file:', error);
     throw error;
   }
 };

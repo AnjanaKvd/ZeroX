@@ -36,16 +36,11 @@ const SavedAddresses = () => {
         
         // Check if user exists and has id (not userId)
         if (!user?.id) {
-          console.log('User ID not available yet:', user);
           return;
         }
-        
-        console.log('Fetching addresses for user:', user.id);
         const addressData = await getUserAddresses(user.id);
-        console.log('Addresses fetched:', addressData);
         setAddresses(addressData);
       } catch (err) {
-        console.error('Error fetching addresses:', err);
         setError(err.message || 'Failed to load addresses. Please try again.');
       } finally {
         setIsLoading(false);
@@ -80,7 +75,6 @@ const SavedAddresses = () => {
       // Clear success message after 3 seconds
       setTimeout(() => setActionSuccess(''), 3000);
     } catch (err) {
-      console.error('Error saving address:', err);
       setError(err.message || 'Failed to save address. Please try again.');
     }
   };
@@ -101,7 +95,6 @@ const SavedAddresses = () => {
       // Clear success message after 3 seconds
       setTimeout(() => setActionSuccess(''), 3000);
     } catch (err) {
-      console.error('Error setting default address:', err);
       setError(err.message || 'Failed to set default address. Please try again.');
     }
   };
@@ -119,7 +112,6 @@ const SavedAddresses = () => {
       // Clear success message after 3 seconds
       setTimeout(() => setActionSuccess(''), 3000);
     } catch (err) {
-      console.error('Error deleting address:', err);
       setError(err.message || 'Failed to delete address. Please try again.');
     }
   };

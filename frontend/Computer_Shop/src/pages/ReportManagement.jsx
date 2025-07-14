@@ -26,7 +26,6 @@ const ReportManagement = () => {
         const response = await getCategories();
         setCategories(response);
       } catch (err) {
-        console.error('Failed to fetch categories:', err);
         setError('Failed to load categories. Some report filters may be limited.');
       } finally {
         setLoading(false);
@@ -43,7 +42,6 @@ const ReportManagement = () => {
       const blob = await exportReportToPdf(reportType, {});
       downloadBlob(blob, `${reportType}-report-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
-      console.error(`Failed to export ${reportType} report to PDF:`, error);
     } finally {
       setLoading(false);
     }
@@ -55,7 +53,6 @@ const ReportManagement = () => {
       const blob = await exportReportToCsv(reportType, {});
       downloadBlob(blob, `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
-      console.error(`Failed to export ${reportType} report to CSV:`, error);
     } finally {
       setLoading(false);
     }

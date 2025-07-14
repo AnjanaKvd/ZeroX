@@ -28,7 +28,6 @@ const OrderDetails = () => {
           const address = await getAddressById(order.shippingAddressId);
           setShippingAddress(address);
         } catch (err) {
-          console.error('Error fetching shipping address', err);
           // Don't show error to user as the order can still be displayed without address
         } finally {
           setLoadingAddress(false);
@@ -48,7 +47,6 @@ const OrderDetails = () => {
         setOrder(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching order details', err);
         setError('Unable to load order details. Please try again later.');
       } finally {
         setLoading(false);
@@ -75,7 +73,6 @@ const OrderDetails = () => {
       setOrder({...order, status: 'CANCELLED'});
       showToast('Order cancelled successfully', 'success');
     } catch (err) {
-      console.error('Error cancelling order:', err);
       showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setCancelling(false);

@@ -43,7 +43,6 @@ const Settings = () => {
       // const data = await response.json();
       // setSettings(data);
     } catch (error) {
-      console.error('Error fetching settings:', error);
       showToast('Failed to load settings', 'error');
     } finally {
       setLoading(false);
@@ -67,7 +66,6 @@ const Settings = () => {
       
       showToast('Settings saved successfully', 'success');
     } catch (error) {
-      console.error('Error saving settings:', error);
       showToast('Failed to save settings', 'error');
     } finally {
       setSaving(false);

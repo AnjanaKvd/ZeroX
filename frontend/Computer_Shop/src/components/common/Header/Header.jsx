@@ -97,7 +97,6 @@ const Header = () => {
       await logout();
       setIsSettingsOpen(false);
     } catch (error) {
-      console.error('Logout failed:', error);
     }
   };
 
@@ -718,53 +717,6 @@ const Header = () => {
                 {item.label}
               </NavLink>
             ))}
-          </div>
-
-          {/* Categories section */}
-          <div className="mt-6">
-            <div className={`text-sm font-semibold px-4 pb-2 border-b ${
-              isDark ? 'text-white border-white/10' : 'text-gray-900 border-gray-200'
-            }`}>
-              CATEGORIES
-            </div>
-            <div className="mt-2 space-y-1">
-              <Link 
-                to="/products?category=laptops" 
-                className={`block px-4 py-2 text-sm rounded-md ${
-                  isDark ? 'text-white/80 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Laptops & Computers
-              </Link>
-              <Link 
-                to="/products?category=accessories" 
-                className={`block px-4 py-2 text-sm rounded-md ${
-                  isDark ? 'text-white/80 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Computer Accessories
-              </Link>
-              <Link 
-                to="/products?category=storage" 
-                className={`block px-4 py-2 text-sm rounded-md ${
-                  isDark ? 'text-white/80 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Storage Devices
-              </Link>
-              <Link 
-                to="/products?category=networking" 
-                className={`block px-4 py-2 text-sm rounded-md ${
-                  isDark ? 'text-white/80 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Networking
-              </Link>
-            </div>
           </div>
           
           {/* Quick links */}

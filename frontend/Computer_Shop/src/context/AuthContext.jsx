@@ -53,7 +53,6 @@ export const AuthProvider = ({ children }) => {
 
   const handleAuthError = useCallback(
     (error) => {
-      console.error("Authentication Error:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("userData"); // Clear userData as well
       setUser(null);
@@ -100,7 +99,6 @@ export const AuthProvider = ({ children }) => {
           const parsedUserData = JSON.parse(storedUserData);
           return formatUserData(parsedUserData);
         } catch (e) {
-          console.error("Error parsing stored user data:", e);
           // Fall through to the API call
         }
       }
@@ -114,7 +112,6 @@ export const AuthProvider = ({ children }) => {
 
       return formattedUserData;
     } catch (error) {
-      console.error("Error in loadUserProfile:", error);
       handleAuthError(error);
       return null;
     }
@@ -135,10 +132,8 @@ export const AuthProvider = ({ children }) => {
 
       if (userData) {
         setUser(userData);
-        console.log("Authentication initialized with roles:", userData.roles);
       }
     } catch (error) {
-      console.error("Error initializing auth:", error);
       handleAuthError(error);
     } finally {
       setIsLoading(false);
@@ -185,11 +180,9 @@ export const AuthProvider = ({ children }) => {
         // Store user data in localStorage for persistence
         localStorage.setItem("userData", JSON.stringify(formattedUserData));
         setUser(formattedUserData);
-        console.log("User logged in with roles:", formattedUserData.roles);
 
         return { success: true };
       } catch (error) {
-        console.error("Login error:", error);
         handleAuthError(error);
         return { success: false, message: error.message };
       } finally {
@@ -237,7 +230,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       await apiLogout();
     } catch (error) {
-      console.error("Logout Error:", error);
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("userData");

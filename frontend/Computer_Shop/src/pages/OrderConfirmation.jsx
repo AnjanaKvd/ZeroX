@@ -17,8 +17,6 @@ const OrderConfirmation = () => {
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  console.log("Received order ID:", orderId);
-
   // Fetch shipping address when order is loaded or changes
   useEffect(() => {
     const fetchShippingAddress = async () => {
@@ -28,7 +26,6 @@ const OrderConfirmation = () => {
           const address = await getAddressById(order.shippingAddressId);
           setShippingAddress(address);
         } catch (err) {
-          console.error('Error fetching shipping address', err);
           // Don't show error to user as the order can still be displayed without address
         } finally {
           setLoadingAddress(false);
@@ -42,13 +39,10 @@ const OrderConfirmation = () => {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        console.log("Fetching order details for ID:", orderId);
         const data = await getOrderById(orderId);
-        console.log("Order details received:", data);
         setOrder(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching order details', err);
         setError('Unable to load order details. Please try again later.');
       } finally {
         setLoading(false);
@@ -58,7 +52,6 @@ const OrderConfirmation = () => {
     if (orderId) {
       fetchOrderDetails();
     } else {
-      console.error("No order ID provided");
       setError("No order ID provided");
       setLoading(false);
     }
@@ -80,7 +73,6 @@ const OrderConfirmation = () => {
       setOrder(updatedOrder);
 
     } catch (err) {
-      console.error('Error updating order status after payment', err);
       setError('Payment was successful but there was an error updating your order status. Please contact support.');
     } finally {
       setPaymentProcessing(false);
@@ -89,7 +81,6 @@ const OrderConfirmation = () => {
 
   // Handle payment error
   const handlePaymentError = (error) => {
-    console.error('Payment error:', error);
     setError(error.message || 'Payment failed. Please try again.');
   };
 

@@ -12,10 +12,8 @@ const DisplayRatingAndReviews = ({ productId, refresh, onViewAllReviews }) => {
     const fetchAverageRating = async () => {
       try {
         setLoading(true);
-        console.log("Fetching rating for product ID:", productId);
         
         if (!productId) {
-          console.error("Missing productId for rating fetch");
           setError("Unable to load ratings: Missing product ID");
           setLoading(false);
           return;
@@ -30,11 +28,9 @@ const DisplayRatingAndReviews = ({ productId, refresh, onViewAllReviews }) => {
         }
         
         const data = await response.json();
-        console.log("Rating data:", data);
         setAverageRating(data.averageRating || 0);
         setTotalVotes(data.numberOfReviews || 0);
       } catch (error) {
-        console.error("Error displaying average rating:", error);
         setError("Failed to load ratings. Please try again later.");
       } finally {
         setLoading(false);

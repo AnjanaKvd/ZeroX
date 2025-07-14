@@ -22,7 +22,6 @@ export const createPaymentIntent = async (paymentData) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Error creating payment intent:', error);
     throw error.response?.data?.message || 'Failed to create payment intent';
   }
 };
@@ -48,7 +47,6 @@ export const confirmPayment = async (paymentIntentId, orderId) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Error confirming payment:', error);
     throw error.response?.data?.message || 'Failed to confirm payment';
   }
 };

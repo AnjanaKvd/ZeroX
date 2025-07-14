@@ -49,7 +49,6 @@ const AdminDashboard = () => {
       setProducts(data.items || []);
       setTotalItems(data.totalCount || 0);
     } catch (err) {
-      console.error("Error fetching products:", err);
       setError(err.message || "Failed to load products");
       setProducts([]);
       setTotalItems(0);
@@ -63,7 +62,6 @@ const AdminDashboard = () => {
       // const stats = await getProductStats();
       setProductStats(stats);
     } catch (err) {
-      console.error("Error fetching product stats:", err);
     }
   }, []);
 

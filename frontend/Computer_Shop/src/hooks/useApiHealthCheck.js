@@ -12,7 +12,6 @@ export default function useApiHealthCheck() {
         const isConnected = await checkApiConnection();
         setApiConnected(isConnected);
       } catch (error) {
-        console.error("API Health Check Error:", error);
         setApiConnected(false);
       } finally {
         setApiCheckComplete(true);

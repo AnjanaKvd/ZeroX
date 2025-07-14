@@ -9,7 +9,6 @@ export const getDiscounts = async (page = 0, size = 10) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching discounts:', error);
     throw error;
   }
 };
@@ -22,7 +21,6 @@ export const getActiveDiscounts = async (page = 0, size = 10) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching active discounts:', error);
     throw error;
   }
 };
@@ -32,7 +30,6 @@ export const getAllActiveDiscounts = async () => {
     const response = await api.get('/discounts/active/all');
     return response.data;
   } catch (error) {
-    console.error('Error fetching all active discounts:', error);
     throw error;
   }
 };
@@ -43,7 +40,6 @@ export const getDiscountById = async (discountId) => {
     const response = await api.get(`/discounts/${discountId}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching discount with ID ${discountId}:`, error);
     throw error;
   }
 };
@@ -54,7 +50,6 @@ export const getDiscountsByProductId = async (productId) => {
     const response = await api.get(`/discounts/product/${productId}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching discounts for product ${productId}:`, error);
     throw error;
   }
 };
@@ -68,7 +63,6 @@ export const getActiveDiscountForProduct = async (productId) => {
     }
     return null;
   } catch (error) {
-    console.error(`Error fetching active discount for product ${productId}:`, error);
     throw error;
   }
 };
@@ -79,7 +73,6 @@ export const createDiscount = async (discountData) => {
     const response = await api.post('/discounts', discountData);
     return response.data;
   } catch (error) {
-    console.error('Error creating discount:', error);
     throw error;
   }
 };
@@ -90,7 +83,6 @@ export const updateDiscount = async (discountId, discountData) => {
     const response = await api.put(`/discounts/${discountId}`, discountData);
     return response.data;
   } catch (error) {
-    console.error(`Error updating discount ${discountId}:`, error);
     throw error;
   }
 };
@@ -101,7 +93,6 @@ export const deleteDiscount = async (discountId) => {
     await api.delete(`/discounts/${discountId}`);
     return true;
   } catch (error) {
-    console.error(`Error deleting discount ${discountId}:`, error);
     throw error;
   }
 };

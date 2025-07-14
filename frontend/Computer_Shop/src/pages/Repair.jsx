@@ -40,14 +40,11 @@ const Repair = () => {
         problemDescription: data.problemDescription.trim(),
         additionalNotes: data.additionalNotes.trim() || null
       };
-
-      console.log("Submitting repair request payload:", requestData);
       await createRepairRequest(requestData);
 
       setSuccess(true);
       setTimeout(() => navigate("/repair-history"), 1500);
     } catch (err) {
-      console.error("Submission error:", err);
       setError(err.message || "Failed to submit repair request. Please try again.");
     } finally {
       setLoading(false);

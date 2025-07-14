@@ -87,17 +87,13 @@ const Home = () => {
         
         return !isNaN(productPrice) && productPrice >= min && productPrice <= max;
       });
-      
-      console.log(`Filtered products by price (${min}-${max}): ${state.products.length} → ${filtered.length}`);
     }
     
     // Then sort the filtered results
     let sorted = [...filtered];
     try {
       sorted = sortProducts(filtered, sortBy, sortOrder);
-      console.log(`Sorted ${filtered.length} products by ${sortBy} (${sortOrder})`);
     } catch (error) {
-      console.error('Error sorting products:', error);
     }
     
     setState(prev => ({
@@ -128,7 +124,6 @@ const Home = () => {
       
       // Products will be processed by processDataFlow effect
     } catch (err) {
-      console.error('Data fetch error:', err);
       setState(prev => ({
         ...prev,
         error: 'Failed to load data. Please try again later.',
@@ -142,7 +137,6 @@ const Home = () => {
     const isLoggedIn = localStorage.getItem('token') || false;
     
     if (isLoggedIn) {
-      console.log("User is logged in - fetching featured products");
       fetchData();
     } else {
       // If not logged in, still show something (e.g., popular products)
@@ -160,8 +154,6 @@ const Home = () => {
       const { minPrice, maxPrice } = state.filters;
       const min = minPrice ? parseFloat(minPrice) : 0;
       const max = maxPrice ? parseFloat(maxPrice) : Number.MAX_VALUE;
-      
-      console.log(`Filtering featured products by price range: $${min}-$${max}`);
       
       // Filter the products using our existing price filter logic
       filtered = filtered.filter(product => {
@@ -183,8 +175,6 @@ const Home = () => {
           isFiltered: true
         }
       }));
-      
-      console.log(`Filtered featured products: ${state.products ? state.products.length : 0} → ${filtered.length}`);
     }
     
     // Apply current sorting to filtered products
@@ -194,10 +184,8 @@ const Home = () => {
     try {
       if (filtered.length > 0) {
         sorted = sortProducts(filtered, sortBy, sortOrder);
-        console.log(`Sorted filtered featured products by ${sortBy} (${sortOrder})`);
       }
     } catch (error) {
-      console.error('Error sorting filtered featured products:', error);
     }
     
     // Return both the filtered products (for future sorting) and sorted products (for display)
@@ -221,14 +209,12 @@ const Home = () => {
           sortedProducts: sorted || []
         }));
       } catch (error) {
-        console.error('Error filtering featured products:', error);
       }
     }
   }, [state.products, state.filters.minPrice, state.filters.maxPrice, state.filters.isSearchResults]);
 
   // Handle sort change for both search results and featured products
   const handleSortChange = (sortBy, sortOrder) => {
-    console.log(`Sort changed to: ${sortBy} ${sortOrder}`);
     
     // Update state with new sort options
     setState(prev => {
@@ -250,12 +236,9 @@ const Home = () => {
       try {
         if (productsToSort && productsToSort.length > 0) {
           sortedProducts = sortProducts(productsToSort, sortBy, sortOrder);
-          console.log(`Sorted ${productsToSort.length} ${prev.filters.isSearchResults ? 'search results' : 'featured products'} by ${sortBy} (${sortOrder})`);
         } else {
-          console.log('No products to sort');
         }
       } catch (error) {
-        console.error('Error sorting in handler:', error);
       }
       
       return {
@@ -276,14 +259,12 @@ const Home = () => {
       const { sortBy, sortOrder } = state.filters;
       try {
         const sorted = sortProducts(state.products, sortBy, sortOrder);
-        console.log(`Sorted ${state.products.length} search results by ${sortBy} (${sortOrder})`);
         
         setState(prev => ({
           ...prev,
           sortedProducts: sorted
         }));
       } catch (error) {
-        console.error('Error sorting search results:', error);
       }
     }
   }, [state.products, state.filters.sortBy, state.filters.sortOrder, state.filters.isSearchResults]);
@@ -295,14 +276,12 @@ const Home = () => {
       const { sortBy, sortOrder } = state.filters;
       try {
         const sorted = sortProducts(state.filteredProducts, sortBy, sortOrder);
-        console.log(`Sorted ${state.filteredProducts.length} featured products by ${sortBy} (${sortOrder})`);
         
         setState(prev => ({
           ...prev,
           sortedProducts: sorted
         }));
       } catch (error) {
-        console.error('Error sorting featured products:', error);
       }
     }
   }, [state.filteredProducts, state.filters.sortBy, state.filters.sortOrder, state.filters.isSearchResults]);
@@ -311,7 +290,6 @@ const Home = () => {
   const handleFilterChange = (name, value) => {
     // Special handling for search results - must come before the regular state update
     if (name === 'searchResults' && Array.isArray(value)) {
-      console.log(`Received ${value.length} search results`);
       
       // Update products and set search mode
       setState(prev => ({
@@ -382,7 +360,6 @@ const Home = () => {
         }));
       }
     } catch (err) {
-      console.error('Products fetch error:', err);
       setState(prev => ({
         ...prev,
         error: 'Failed to load products. Please try again later.',
@@ -451,8 +428,6 @@ const Home = () => {
       const min = minPrice ? parseFloat(minPrice) : 0;
       const max = maxPrice ? parseFloat(maxPrice) : Number.MAX_VALUE;
       
-      console.log(`Filtering products by price range: $${min}-$${max}`);
-      
       processed = processed.filter(product => {
         if (!product) return false;
         
@@ -462,8 +437,6 @@ const Home = () => {
         
         return !isNaN(productPrice) && productPrice >= min && productPrice <= max;
       });
-      
-      console.log(`Price filtered: ${originalProducts.length} → ${processed.length} products`);
       
       // Update isPriceFiltered flag
       setState(prev => ({
@@ -482,10 +455,8 @@ const Home = () => {
     try {
       if (processed.length > 0) {
         sorted = sortProducts(processed, sortBy, sortOrder);
-        console.log(`Sorted by ${sortBy} (${sortOrder}): ${processed.length} products`);
       }
     } catch (error) {
-      console.error('Error sorting products:', error);
     }
     
     // 4. Update the state with both filtered and sorted results

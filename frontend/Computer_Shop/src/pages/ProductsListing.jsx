@@ -103,7 +103,6 @@ const ProductsListing = () => {
           }));
         }
       } catch (err) {
-        console.error('Error fetching products:', err);
         setState(prev => ({
           ...prev,
           error: 'Failed to load products. Please try again later.',
@@ -141,7 +140,6 @@ const ProductsListing = () => {
     try {
       sorted = sortProducts(filtered, sortBy, sortOrder);
     } catch (error) {
-      console.error('Error sorting products:', error);
     }
     
     setState(prev => ({
@@ -155,7 +153,6 @@ const ProductsListing = () => {
   const handleFilterChange = (name, value) => {
     // Special handling for search results
     if (name === 'searchResults' && Array.isArray(value)) {
-      console.log(`Received ${value.length} search results`);
       
       // Update products and set search mode
       setState(prev => ({

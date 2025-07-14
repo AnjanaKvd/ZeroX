@@ -52,11 +52,9 @@ const CustomerReport = ({ theme }) => {
           const data = JSON.parse(text);
           setReportData(data);
         } catch (jsonError) {
-          console.error('Customer report API did not return valid JSON:', text);
           setReportData([]);
         }
       } catch (error) {
-        console.error('Failed to fetch customer report:', error);
         setReportData([]);
       } finally {
         setLoading(false);

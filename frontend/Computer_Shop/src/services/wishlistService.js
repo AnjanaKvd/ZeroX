@@ -9,7 +9,6 @@ export const getWishlist = async () => {
     const response = await api.get('/wishlist');
     return response.data;
   } catch (error) {
-    console.error('Error fetching wishlist:', error);
     throw error;
   }
 };
@@ -24,7 +23,6 @@ export const addToWishlist = async (productId) => {
     const response = await api.post('/wishlist', { productId });
     return response.data;
   } catch (error) {
-    console.error('Error adding to wishlist:', error);
     throw error;
   }
 };
@@ -39,7 +37,6 @@ export const removeFromWishlist = async (productId) => {
     const response = await api.delete(`/wishlist/${productId}`);
     return response.data;
   } catch (error) {
-    console.error('Error removing from wishlist:', error);
     throw error;
   }
 };
@@ -54,7 +51,6 @@ export const checkInWishlist = async (productId) => {
     const response = await api.get(`/wishlist/check/${productId}`);
     return response.data;
   } catch (error) {
-    console.error('Error checking wishlist status:', error);
     throw error;
   }
 };

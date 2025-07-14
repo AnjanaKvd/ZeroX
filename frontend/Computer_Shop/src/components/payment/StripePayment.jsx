@@ -26,7 +26,6 @@ const StripePayment = ({ orderId, amount, onPaymentSuccess, onPaymentError }) =>
         });
         setClientSecret(clientSecret);
       } catch (err) {
-        console.error('Error creating payment intent:', err);
         setError('Failed to initialize payment. Please try again.');
         onPaymentError && onPaymentError(err);
       } finally {
@@ -79,7 +78,6 @@ const StripePayment = ({ orderId, amount, onPaymentSuccess, onPaymentError }) =>
         throw new Error('Payment was not successful');
       }
     } catch (err) {
-      console.error('Payment error:', err);
       const errorMessage = err.message || 'An unexpected error occurred. Please try again.';
       setError(errorMessage);
       onPaymentError && onPaymentError(new Error(errorMessage));

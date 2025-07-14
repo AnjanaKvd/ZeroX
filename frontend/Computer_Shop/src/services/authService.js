@@ -37,7 +37,6 @@ export const logout = async () => {
     await api.post('/auth/logout');
     return { success: true };
   } catch (error) {
-    console.error('Logout error:', error);
     return { success: false, error };
   }
 };
@@ -47,7 +46,6 @@ export const getUserCount = async () => {
     const response = await api.get('/auth/users/count');
     return response.data.count;
   } catch (error) {
-    console.error('Error fetching user count:', error);
     return 0; // Return 0 as a fallback
   }
 };
@@ -57,7 +55,6 @@ export const getAllUsers = async (params = {}) => {
     const response = await api.get('/auth/users', { params });
     return response.data;
   } catch (error) {
-    console.error('Error fetching all users:', error);
     // Return empty array as fallback
     return { content: [] };
   }
@@ -144,7 +141,6 @@ export const getCustomerCount = async () => {
     }).length;
     return customerCount;
   } catch (error) {
-    console.error('Error calculating customer count:', error);
     return 0;
   }
 }; 

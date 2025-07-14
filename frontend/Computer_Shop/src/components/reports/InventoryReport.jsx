@@ -67,7 +67,6 @@ const InventoryReport = ({ theme, categories = [] }) => {
       const response = await getInventoryReport(activeFilters);
       setReportData(response);
     } catch (error) {
-      console.error('Failed to fetch inventory report:', error);
     } finally {
       setLoading(false);
     }
@@ -180,7 +179,6 @@ const InventoryReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToPdf('inventory', activeFilters);
       downloadBlob(blob, `inventory-report-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
-      console.error('Failed to export PDF:', error);
     } finally {
       setLoading(false);
     }
@@ -193,7 +191,6 @@ const InventoryReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToCsv('inventory', activeFilters);
       downloadBlob(blob, `inventory-report-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
-      console.error('Failed to export CSV:', error);
     } finally {
       setLoading(false);
     }

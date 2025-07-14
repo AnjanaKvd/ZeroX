@@ -75,7 +75,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
           revenue: stats.revenue || 0
         });
       } catch (error) {
-        console.error('Failed to fetch dashboard stats:', error);
       }
     };
     
@@ -110,7 +109,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      console.log('Fetching orders with filters:', filters);
       
       // Build query parameters
       const queryParams = {
@@ -131,13 +129,9 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
         queryParams.categoryId = filters.category;
       }
       
-      console.log('Query params:', queryParams);
-      
       const response = await api.get('/orders', { params: queryParams });
-      console.log('Orders API response:', response.data);
       
       let ordersData = response.data.content || [];
-      console.log('Initial orders count:', ordersData.length);
       
       // Apply client-side date filtering as a safety measure
       if (filters.startDate || filters.endDate) {
@@ -146,7 +140,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
           const orderDate = order.createdAt.split('T')[0];
           return isDateInRange(orderDate, filters.startDate, filters.endDate);
         });
-        console.log('Orders after client-side date filtering:', ordersData.length);
       }
       
       // Apply client-side category filtering if needed
@@ -154,12 +147,10 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
         ordersData = ordersData.filter(order => {
           return order.items.some(item => item.categoryId === filters.category);
         });
-        console.log('Orders after category filtering:', ordersData.length);
       }
       
       setOrders(ordersData);
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
     } finally {
       setLoading(false);
     }
@@ -264,13 +255,11 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
   
   // Handle filter changes
   const handleFilterChange = (name, value) => {
-    console.log(`Filter changed: ${name} = ${value}`);
     setFilters(prev => ({ ...prev, [name]: value }));
   };
   
   // Handle Apply Filters button click
   const handleApplyFilters = () => {
-    console.log('Applying filters:', filters);
     setFiltersApplied(true); // Set flag to trigger fetch in useEffect
   };
   
@@ -396,7 +385,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
   // Handle export to PDF
   const handleExportPdf = async () => {
     try {
-      console.log('Exporting sales report to PDF');
       setLoading(true);
       
       // Create a PDF using jsPDF library
@@ -454,7 +442,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
       
       // Check if autoTable is available
       if (typeof doc.autoTable === 'function') {
-        console.log('Using autoTable plugin for PDF generation');
         // Create table with autotable
         if (viewMode === 'summary') {
           doc.autoTable({
@@ -515,7 +502,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
           });
         }
       } else {
-        console.log('autoTable plugin not available, using manual table drawing');
         // Fallback to manual table drawing if autoTable is not available
         // Manual table header
         doc.setFillColor(41, 128, 185);
@@ -650,11 +636,8 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
       }
       
       // Save the PDF directly
-      console.log('PDF generation completed, saving file...');
       doc.save(`sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
-      console.log('PDF export completed successfully');
     } catch (error) {
-      console.error('Failed to export PDF:', error);
       alert('Failed to generate PDF report. Please try again later.');
     } finally {
       setLoading(false);
@@ -664,7 +647,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
   // Handle export to CSV
   const handleExportCsv = async () => {
     try {
-      console.log('Exporting sales report to CSV');
       setLoading(true);
       
       // Properly escape CSV values to handle commas, quotes, etc.
@@ -721,7 +703,6 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
       }
       
       // Create blob and download it
-      console.log('CSV generation completed, creating download...');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -735,10 +716,7 @@ const SalesReport = ({ theme, categories: propCategories = [] }) => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
-      
-      console.log('CSV export completed successfully');
     } catch (error) {
-      console.error('Failed to export CSV:', error);
       alert('Failed to generate CSV report. Please try again later.');
     } finally {
       setLoading(false);

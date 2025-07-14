@@ -38,11 +38,8 @@ const WishlistPage = () => {
 
   // Refresh wishlist on component mount and when auth state changes
   useEffect(() => {
-    console.log('WishlistPage mounted, isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
-      console.log('Refreshing wishlist...');
       refreshWishlist().catch(err => {
-        console.error('Error refreshing wishlist:', err);
       });
     }
   }, [isAuthenticated, refreshWishlist]);
@@ -62,15 +59,12 @@ const WishlistPage = () => {
         // Include any other required fields that your cart might expect
         ...item
       };
-      
-      console.log('Adding to cart:', productToAdd);
       await addToCart(productToAdd);
       
       // Show success message or handle as needed
       // Optionally remove from wishlist after adding to cart:
       // await removeFromWishlist(item.productId);
     } catch (error) {
-      console.error('Failed to add to cart:', error);
       // You might want to show an error toast here
     }
   };

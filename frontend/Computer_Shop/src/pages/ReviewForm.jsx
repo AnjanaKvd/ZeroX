@@ -32,7 +32,6 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
     setIsSubmitting(true);
 
     try {
-      console.log("Submitting review for product ID:", productId);
 
       const response = await fetch("/api/reviews", {
         method: "POST",
@@ -80,7 +79,6 @@ const ReviewForm = ({ productId, onReviewSubmit }) => {
       }
     } catch (err) {
       // Catching fetch or network errors
-      console.error("Submit Error:", err);
       setError("Network error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

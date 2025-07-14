@@ -63,7 +63,6 @@ const RepairManagement = () => {
       setTotalItems(data.totalElements || (Array.isArray(data) ? data.length : 0));
       setError(null);
     } catch (err) {
-      console.error("Error fetching repairs:", err);
       setError(err.message || "Failed to load repair requests");
       setRepairs([]);
       setTotalItems(0);
@@ -368,8 +367,6 @@ const RepairEditModal = ({ isOpen, onClose, repair, onUpdate }) => {
           : null
       };
       
-      console.log('Updating repair with data:', updateData);
-      
       // Use full update method that can handle both status and other details
       await updateRepairDetails(repair.repairId, updateData);
       
@@ -378,7 +375,6 @@ const RepairEditModal = ({ isOpen, onClose, repair, onUpdate }) => {
       onUpdate(updatedRepair);
       onClose();
     } catch (err) {
-      console.error('Error updating repair:', err);
       setError(err.response?.data?.message || err.message || "An error occurred while updating the repair");
     } finally {
       setLoading(false);

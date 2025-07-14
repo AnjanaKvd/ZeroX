@@ -6,7 +6,6 @@ export const getUserRewards = async(userId) => {
         const response = await api.get(`/rewards/user/${userId}`);
         return response.data;
     } catch (error) {
-        console.error("Error fetching user rewards:", error);
         throw error;
     }
 };
@@ -14,14 +13,11 @@ export const getUserRewards = async(userId) => {
 // Get delivered items (for rewards) of the user
 export const getDeliveredItems = async(userId) => {
     try {
-        console.log(`Fetching delivered items for user ID: ${userId}`);
         const response = await api.get(`/orders/user/${userId}`, {
             params: { status: "DELIVERED" },
         });
-        console.log("Delivered items response:", response.data);
         return response.data;
     } catch (error) {
-        console.error("Error fetching delivered items:", error);
         throw error;
     }
 };
@@ -35,7 +31,6 @@ export const earnReward = async(userId, orderId) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Error earning reward:", error);
         throw error;
     }
 };
@@ -49,7 +44,6 @@ export const claimRewards = async(userId, rewardIds) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Error claiming rewards:", error);
         throw error;
     }
 };
@@ -60,7 +54,6 @@ export const redeemPoints = async(pointsToRedeem) => {
         const response = await api.post("/rewards/redeem", { pointsToRedeem });
         return response.data;
     } catch (error) {
-        console.error("Error redeeming points:", error);
         throw error;
     }
 };
@@ -71,7 +64,6 @@ export const processUserOrders = async(userId) => {
         const response = await api.post(`/rewards/process/${userId}`);
         return response.data;
     } catch (error) {
-        console.error("Error processing user orders:", error);
         throw error;
     }
 };
@@ -82,7 +74,6 @@ export const generatePointsForOrder = async(orderId) => {
         const response = await api.post(`/rewards/orders/${orderId}`);
         return response.data;
     } catch (error) {
-        console.error("Error generating points for order:", error);
         throw error;
     }
 };
