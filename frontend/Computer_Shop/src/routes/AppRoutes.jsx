@@ -84,6 +84,7 @@ const AppRoutes = () => {
             <Route path="contact" element={<ContactPage />} />
             <Route path="pc-building-guides" element={<PCBuildingGuides />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="stores" element={<Stores />} />
           </Route>
 
           {/* Auth routes with proper layout */}
