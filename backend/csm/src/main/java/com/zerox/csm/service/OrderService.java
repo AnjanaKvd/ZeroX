@@ -41,6 +41,7 @@ public class OrderService {
     private final CouponRepository couponRepository;
     private final CouponService couponService;
     private final ProductDiscountService productDiscountService;
+    private final EmailService emailService;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
@@ -126,7 +127,20 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // 7. Record coupon usage if used
+        // 7. Send order confirmation email
+        String orderDetails = "Items Ordered:\n";
+        for (OrderItem item : savedOrder.getItems()) {
+            orderDetails += "- " + item.getProduct().getName() + " x " + item.getQuantity() + "\n";
+        }
+        orderDetails += "\nTotal Amount: " + savedOrder.getTotalAmount() + "\n";
+        if (savedOrder.getDiscountAmount() != null) {
+            orderDetails += "Discount: " + savedOrder.getDiscountAmount() + "\n";
+        }
+        orderDetails += "Final Amount: " + savedOrder.getFinalAmount();
+
+        emailService.sendOrderConfirmationEmail(user.getEmail(), savedOrder.getOrderId().toString(), orderDetails);
+
+        // 8. Record coupon usage if used
         if (coupon != null) {
             couponService.recordCouponUsage(coupon, user, savedOrder, discountAmount);
         }
