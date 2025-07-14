@@ -183,6 +183,7 @@ public class OrderService {
                 order.getStatus(),
                 order.getPaymentMethod(),
                 order.getPaymentId(),
+                order.getShippingAddress() != null ? order.getShippingAddress().getAddressId() : null,
                 order.getCreatedAt()
         );
     }

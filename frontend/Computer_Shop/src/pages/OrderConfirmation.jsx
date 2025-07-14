@@ -1,24 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getOrderById, updateOrderStatus } from '../services/orderService';
+import { getAddressById } from '../services/addressService';
 import LoadingSpinner from '../components/common/LoadingSpinner/LoadingSpinner';
 import PriceDisplay from '../components/common/PriceDisplay';
+import { StripePaymentWrapper } from '../components/payment/StripePayment';
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [shippingAddress, setShippingAddress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAddress, setLoadingAddress] = useState(false);
   const [error, setError] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [cardName, setCardName] = useState('');
-  
+
   console.log("Received order ID:", orderId);
-  
+
+  // Fetch shipping address when order is loaded or changes
+  useEffect(() => {
+    const fetchShippingAddress = async () => {
+      if (order?.shippingAddressId) {
+        try {
+          setLoadingAddress(true);
+          const address = await getAddressById(order.shippingAddressId);
+          setShippingAddress(address);
+        } catch (err) {
+          console.error('Error fetching shipping address', err);
+          // Don't show error to user as the order can still be displayed without address
+        } finally {
+          setLoadingAddress(false);
+        }
+      }
+    };
+
+    fetchShippingAddress();
+  }, [order?.shippingAddressId]);
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
@@ -34,7 +54,7 @@ const OrderConfirmation = () => {
         setLoading(false);
       }
     };
-    
+
     if (orderId) {
       fetchOrderDetails();
     } else {
@@ -43,41 +63,36 @@ const OrderConfirmation = () => {
       setLoading(false);
     }
   }, [orderId]);
-  
-  // Function to process payment
-  const processPayment = async () => {
-    setPaymentProcessing(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mark payment as completed
-    setPaymentStatus('completed');
-    
-    // Update order status in backend
+
+  // Handle successful payment
+  const handlePaymentSuccess = async (paymentIntent) => {
     try {
-      // Use the proper status values from the API docs: PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+      setPaymentProcessing(true);
+
+      // Update order status to PROCESSING after successful payment
       await updateOrderStatus(orderId, 'PROCESSING');
+
+      // Mark payment as completed
+      setPaymentStatus('completed');
+
       // Refresh order data
       const updatedOrder = await getOrderById(orderId);
       setOrder(updatedOrder);
+
     } catch (err) {
-      console.error('Error updating order status', err);
+      console.error('Error updating order status after payment', err);
+      setError('Payment was successful but there was an error updating your order status. Please contact support.');
+    } finally {
+      setPaymentProcessing(false);
     }
-    
-    setPaymentProcessing(false);
   };
-  
-  // Validate credit card form
-  const validateCreditCardForm = () => {
-    return (
-      cardNumber.replace(/\s/g, '').length === 16 &&
-      expiryDate.length === 5 &&
-      cvv.length === 3 &&
-      cardName.trim().length > 0
-    );
+
+  // Handle payment error
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error);
+    setError(error.message || 'Payment failed. Please try again.');
   };
-  
+
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -87,7 +102,7 @@ const OrderConfirmation = () => {
       </div>
     );
   }
-  
+
   if (error || !order) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -104,7 +119,7 @@ const OrderConfirmation = () => {
       </div>
     );
   }
-  
+
   // Render payment gateway based on payment method
   const renderPaymentGateway = () => {
     if (paymentStatus === 'completed') {
@@ -117,139 +132,53 @@ const OrderConfirmation = () => {
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-green-800">Payment Successful!</h3>
+              <h3 className="text-lg font-medium text-green-800">Payment Successful</h3>
               <p className="text-green-700">Your payment has been processed successfully.</p>
             </div>
           </div>
         </div>
       );
     }
-    
+
     switch (order.paymentMethod) {
       case 'CREDIT_CARD':
         return (
-          <div className="border border-gray-200 rounded-md p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Complete Payment</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Card Number
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="1234 5678 9012 3456"
-                  maxLength="19"
-                  value={cardNumber}
-                  onChange={(e) => {
-                    const input = e.target.value.replace(/\D/g, '');
-                    const formatted = input.replace(/(\d{4})/g, '$1 ').trim();
-                    setCardNumber(formatted);
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Expiry Date
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="MM/YY"
-                    maxLength="5"
-                    value={expiryDate}
-                    onChange={(e) => {
-                      let input = e.target.value.replace(/\D/g, '');
-                      if (input.length > 2) {
-                        input = input.substring(0, 2) + '/' + input.substring(2);
-                      }
-                      setExpiryDate(input);
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    CVV
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="123"
-                    maxLength="3"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Cardholder Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="John Doe"
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value)}
-                />
-              </div>
-              <button
-                onClick={processPayment}
-                disabled={!validateCreditCardForm() || paymentProcessing}
-                className={`w-full py-2 px-4 rounded-md font-medium transition ${
-                  validateCreditCardForm() && !paymentProcessing
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {paymentProcessing ? 'Processing...' : `Pay `} <PriceDisplay amount={order.totalAmount} />
-              </button>
-            </div>
+          <div className="mt-6 p-6 border rounded-lg">
+            <h3 className="text-lg font-medium mb-4">Pay with Credit Card</h3>
+            <StripePaymentWrapper 
+              orderId={orderId} 
+              amount={order.totalAmount} 
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+            />
           </div>
         );
-        
+
       case 'CASH_ON_DELIVERY':
         return (
-          <div className="border border-gray-200 rounded-md p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Cash on Delivery</h3>
-            <div className="flex items-center mb-4">
-              <div className="bg-yellow-100 text-yellow-800 rounded-full h-10 w-10 flex items-center justify-center mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-700">Your order will be delivered soon. Please have the payment amount ready when the courier arrives.</p>
-                <p className="text-gray-700 mt-1">Amount to pay: <span className="font-bold">
-  <PriceDisplay amount={order.totalAmount} />
-</span></p>
-              </div>
+          <div className="mt-6 p-6 border rounded-lg bg-blue-50">
+            <h3 className="text-lg font-medium text-blue-800 mb-2">Cash on Delivery</h3>
+            <p className="text-blue-700">
+              You'll pay when you receive your order. Our delivery agent will collect the payment at the time of delivery.
+            </p>
+            <div className="mt-4 p-4 bg-white rounded border border-blue-200">
+              <p className="text-sm text-blue-600">
+                <strong>Note:</strong> Please have the exact amount ready for the delivery person.
+              </p>
             </div>
-            <button
-              onClick={() => navigate('/')}
-              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition"
-            >
-              Continue Shopping
-            </button>
           </div>
         );
-        
+
       default:
         return (
-          <div className="border border-gray-200 rounded-md p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Complete Payment</h3>
-            <p className="text-gray-700">Please proceed with payment using your selected payment method.</p>
+          <div className="mt-6 p-6 border border-yellow-200 bg-yellow-50 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Payment Method Not Supported</h3>
+            <p className="text-gray-700">The selected payment method is not supported. Please contact support for assistance.</p>
             <button
-              onClick={processPayment}
-              disabled={paymentProcessing}
-              className={`w-full mt-4 py-2 px-4 rounded-md font-medium transition ${
-                paymentProcessing
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              onClick={() => navigate('/')}
+              className="w-full mt-4 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition"
             >
-              {paymentProcessing ? 'Processing...' : `Pay $${order.totalAmount.toFixed(2)}`}
+              Return to Home
             </button>
           </div>
         );
@@ -351,13 +280,7 @@ const OrderConfirmation = () => {
                   <p>{order.address.country}</p>
                 </>
               ) : order.shippingAddress ? (
-                <>
-                  <p className="font-medium">{order.shippingAddress.fullName}</p>
-                  <p>{order.shippingAddress.addressLine1}</p>
-                  {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
-                  <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
-                  <p>{order.shippingAddress.country}</p>
-                </>
+                renderShippingAddress()
               ) : (
                 // Fallback to manually construct address if available in a different format
                 <div>

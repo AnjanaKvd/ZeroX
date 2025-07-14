@@ -50,7 +50,8 @@ public class SecurityConfig {
                                 "/api/rewards/**",
                                 "/api/repairs/**",
                                 "/api/wishlist/**",
-                                "api/report/**"
+                                "api/report/**",
+                                "/api/payments/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -16,6 +16,8 @@
     "@hookform/resolvers": "^5.1.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.4.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "axios": "^1.6.7",
