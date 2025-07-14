@@ -35,7 +35,7 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'TECHNICIAN')")
     public ResponseEntity<OrderResponse> getOrder(
             @PathVariable UUID orderId,
             @AuthenticationPrincipal UserDetails userDetails
@@ -45,7 +45,7 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'TECHNICIAN')")
     public ResponseEntity<Page<OrderResponse>> getUserOrders(
             @PathVariable UUID userId,
             @RequestParam(defaultValue = "0") int page,
@@ -57,7 +57,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<Page<OrderResponse>> getAllOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
@@ -67,7 +67,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<OrderResponse> updateOrderStatus(
             @PathVariable UUID orderId,
             @Valid @RequestBody OrderStatusUpdateRequest request
@@ -76,7 +76,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'TECHNICIAN')")
     public ResponseEntity<Void> cancelOrder(
             @PathVariable UUID orderId,
             @AuthenticationPrincipal UserDetails userDetails
