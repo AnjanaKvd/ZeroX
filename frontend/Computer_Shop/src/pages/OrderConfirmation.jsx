@@ -267,32 +267,30 @@ const OrderConfirmation = () => {
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-lg font-semibold mb-2">Shipping Address</h2>
             <div className="border border-gray-200 rounded-md p-4">
-              {/* Log the data to see what's available */}
-              {console.log("Order data:", order)}
-              
-              {/* Try multiple possible address properties the API might return */}
-              {order.address ? (
+              {loadingAddress ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                </div>
+              ) : shippingAddress ? (
                 <>
-                  <p className="font-medium">{order.address.fullName}</p>
-                  <p>{order.address.addressLine1}</p>
-                  {order.address.addressLine2 && <p>{order.address.addressLine2}</p>}
-                  <p>{order.address.city}, {order.address.state} {order.address.zipCode}</p>
-                  <p>{order.address.country}</p>
+                  <p className="font-medium">{shippingAddress.fullName}</p>
+                  <p>{shippingAddress.addressLine1}</p>
+                  {shippingAddress.addressLine2 && <p>{shippingAddress.addressLine2}</p>}
+                  <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}</p>
+                  <p>{shippingAddress.country}</p>
                 </>
-              ) : order.shippingAddress ? (
-                renderShippingAddress()
               ) : (
-                // Fallback to manually construct address if available in a different format
                 <div>
                   <p className="text-gray-700">We're getting your order ready to ship to:</p>
                   <p className="mt-2">
-                    {/* Try to display any available address information */}
                     {order.customerName || order.customer?.name || ""}
                     <br />
                     {order.customerEmail || ""}
                   </p>
                   <p className="text-gray-500 mt-2">
-                    Full address details will be available when your order is processed.
+                    {order.shippingAddressId 
+                      ? "Unable to load shipping address. Please contact support if this issue persists."
+                      : "No shipping address provided. Please contact support for assistance."}
                   </p>
                 </div>
               )}

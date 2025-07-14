@@ -124,7 +124,7 @@ const StripePayment = ({ orderId, amount, onPaymentSuccess, onPaymentError }) =>
           disabled={!stripe || processing || !clientSecret}
           className={`w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${(!stripe || processing) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {processing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
+          {processing ? 'Processing...' : `Pay LKR${amount.toFixed(2)}`}
         </button>
         
         {/* <div className="text-xs text-gray-500 mt-2">

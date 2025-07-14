@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getOrderById, cancelOrder } from '../services/orderService';
+import { getAddressById } from '../services/addressService';
 import { ToastContext } from '../context/ToastContext';
 import Header from '../components/common/Header/Header';
 import Footer from '../components/common/Footer/Footer';
@@ -12,10 +13,34 @@ const OrderDetails = () => {
   const navigate = useNavigate();
   const { showToast } = useContext(ToastContext);
   const [order, setOrder] = useState(null);
+  const [shippingAddress, setShippingAddress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAddress, setLoadingAddress] = useState(false);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
-  
+
+  // Fetch shipping address when order is loaded or changes
+  useEffect(() => {
+    const fetchShippingAddress = async () => {
+      if (order?.shippingAddressId) {
+        try {
+          setLoadingAddress(true);
+          const address = await getAddressById(order.shippingAddressId);
+          setShippingAddress(address);
+        } catch (err) {
+          console.error('Error fetching shipping address', err);
+          // Don't show error to user as the order can still be displayed without address
+        } finally {
+          setLoadingAddress(false);
+        }
+      }
+    };
+
+    if (order?.shippingAddressId) {
+      fetchShippingAddress();
+    }
+  }, [order?.shippingAddressId]);
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
@@ -29,21 +54,21 @@ const OrderDetails = () => {
         setLoading(false);
       }
     };
-    
+
     fetchOrderDetails();
   }, [orderId]);
-  
+
   const handleCancelOrder = async () => {
     // Only allow cancellation of pending orders
     if (order.status !== 'PENDING') {
       showToast('Only pending orders can be cancelled', 'error');
       return;
     }
-    
+
     if (!window.confirm('Are you sure you want to cancel this order?')) {
       return;
     }
-    
+
     setCancelling(true);
     try {
       await cancelOrder(orderId);
@@ -56,7 +81,7 @@ const OrderDetails = () => {
       setCancelling(false);
     }
   };
-  
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'PENDING':
@@ -73,7 +98,7 @@ const OrderDetails = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -83,7 +108,7 @@ const OrderDetails = () => {
       </div>
     );
   }
-  
+
   if (error || !order) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -100,17 +125,16 @@ const OrderDetails = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="flex flex-col min-h-screen">
-      
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-6">
           <Link to="/order-history" className="text-blue-600 hover:underline">
             ← Back to Orders
           </Link>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
@@ -118,7 +142,7 @@ const OrderDetails = () => {
               {order.status}
             </span>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <h2 className="text-lg font-semibold mb-3">Order Information</h2>
@@ -147,21 +171,31 @@ const OrderDetails = () => {
                 )}
               </div>
             </div>
-            
+
             <div>
               <h2 className="text-lg font-semibold mb-3">Shipping Information</h2>
               <div className="border border-gray-200 rounded-md p-4">
-                <p className="font-medium">{order.shippingAddress?.fullName}</p>
-                <p>{order.shippingAddress?.addressLine1}</p>
-                {order.shippingAddress?.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
-                <p>
-                  {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zipCode}
-                </p>
-                <p>{order.shippingAddress?.country}</p>
+                {loadingAddress ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : shippingAddress ? (
+                  <>
+                    <p className="font-medium">{shippingAddress.fullName}</p>
+                    <p>{shippingAddress.addressLine1}</p>
+                    {shippingAddress.addressLine2 && <p>{shippingAddress.addressLine2}</p>}
+                    <p>
+                      {shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}
+                    </p>
+                    <p>{shippingAddress.country}</p>
+                  </>
+                ) : (
+                  <p className="text-gray-500">No shipping address provided</p>
+                )}
               </div>
             </div>
           </div>
-          
+
           <h2 className="text-lg font-semibold mb-3">Order Items</h2>
           <div className="border border-gray-200 rounded-md overflow-hidden mb-6">
             <table className="w-full">
