@@ -219,7 +219,7 @@ export const searchProducts = async (query, filters = {}) => {
             !imageUrl.startsWith("data:") &&
             !imageUrl.startsWith("http")
           ) {
-            imageUrl = `http://localhost:8080${imageUrl}`;
+            imageUrl = `${import.meta.env.VITE_API_BASE_URL}${imageUrl}`;
           }
 
           return {
@@ -237,7 +237,7 @@ export const searchProducts = async (query, filters = {}) => {
     // Format 2: Direct fetch to the absolute URL
     try {
       // Build query parameters with both search term and price filters
-      let url = `http://localhost:8080/api/productssearch/item?`;
+      let url = `${import.meta.env.VITE_API_BASE_URL}/api/productssearch/item?`;
       let params = [];
 
       if (query) {
@@ -294,7 +294,7 @@ export const searchProducts = async (query, filters = {}) => {
             !imageUrl.startsWith("data:") &&
             !imageUrl.startsWith("http")
           ) {
-            imageUrl = `http://localhost:8080${imageUrl}`;
+            imageUrl = `${import.meta.env.VITE_API_BASE_URL}${imageUrl}`;
           }
 
           return {
@@ -372,7 +372,7 @@ export const searchProducts = async (query, filters = {}) => {
             !imageUrl.startsWith("data:") &&
             !imageUrl.startsWith("http")
           ) {
-            imageUrl = `http://localhost:8080${imageUrl}`;
+            imageUrl = `${import.meta.env.VITE_API_BASE_URL}${imageUrl}`;
           }
 
           return {

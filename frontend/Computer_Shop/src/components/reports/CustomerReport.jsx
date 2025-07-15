@@ -39,7 +39,7 @@ const CustomerReport = ({ theme }) => {
         if (filters.endDate) params.push(`endDate=${filters.endDate}`);
         const query = params.length > 0 ? `?${params.join('&')}` : '';
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/report/customers${query}`,
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/report/customers${query}`,
           {
             headers: {
               'Authorization': token ? `Bearer ${token}` : undefined,
