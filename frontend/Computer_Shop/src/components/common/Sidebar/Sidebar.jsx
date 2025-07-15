@@ -32,7 +32,6 @@ const Sidebar = ({ isOpen, onToggle, isVisible = true }) => {
         setCategories(data || []);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch categories:', err);
         setError('Failed to load categories');
       } finally {
         setLoading(false);

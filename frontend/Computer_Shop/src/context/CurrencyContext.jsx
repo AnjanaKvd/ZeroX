@@ -17,7 +17,6 @@ export const CurrencyProvider = ({ children }) => {
       const currencyData = await getCurrentCurrency();
       setCurrency(currencyData.currency || 'USD');
     } catch (error) {
-      console.error('Error fetching currency settings:', error);
       // Default to USD in case of error
       setCurrency('USD');
     } finally {

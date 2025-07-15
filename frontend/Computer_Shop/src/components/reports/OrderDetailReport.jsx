@@ -4,7 +4,9 @@ import ReportFilters from './ReportFilters';
 import ReportTable from './ReportTable';
 import ReportChart from './ReportChart';
 import { exportReportToPdf, exportReportToCsv, downloadBlob } from '../../services/reportService';
+import { getAddressById } from '../../services/addressService';
 import api from '../../services/api';
+import LoadingSpinner from '../common/LoadingSpinner/LoadingSpinner';
 
 const OrderDetailReport = ({ theme, categories = [] }) => {
   const [loading, setLoading] = useState(false);
@@ -21,7 +23,8 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
     direction: 'desc'
   });
   const [expandedRowId, setExpandedRowId] = useState(null);
-  
+  const [expandedRowData, setExpandedRowData] = useState({});
+
   // Define status options for the filter
   const statusOptions = [
     { value: '', label: 'All Statuses' },
@@ -31,7 +34,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
     { value: 'Delivered', label: 'Delivered' },
     { value: 'Cancelled', label: 'Cancelled' }
   ];
-  
+
   // Prepare table columns for order report
   const columns = [
     { key: 'orderDate', label: 'Order Date', sortable: true, 
@@ -40,7 +43,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       format: (value, row) => (
         <button
           className="text-blue-600 underline hover:text-blue-800 focus:outline-none"
-          onClick={() => setExpandedRowId(expandedRowId === row.orderId ? null : row.orderId)}
+          onClick={() => handleRowExpand(row)}
         >
           {value}
         </button>
@@ -60,7 +63,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
     { key: 'deliveryDate', label: 'Delivery Date', sortable: true,
       format: (value) => value ? new Date(value).toLocaleDateString() : 'N/A' },
   ];
-  
+
   // Helper function to get status color
   const getStatusColor = (status) => {
     switch(status) {
@@ -78,7 +81,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   // Load report data when filters change
   useEffect(() => {
     const fetchReportData = async () => {
@@ -89,8 +92,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
         // Use direct API endpoint as requested
         const response = await api.get('/orders');
         const orders = response.data || [];
-        
-        console.log('Fetched orders:', orders.length);
         
         // Transform the order data into the format expected by the order report
         const transformedOrders = orders.map(order => {
@@ -119,10 +120,9 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
               status: order.status || 'Pending',
               deliveryDate: deliveryDate,
               items: order.items || [],
-              shippingAddress: order.shippingAddress || null
+              shippingAddressId: order.shippingAddressId || null
             };
           } catch (err) {
-            console.error('Error transforming order:', err, order);
             // Return a minimal valid order object to prevent the entire process from failing
             return {
               orderId: order.orderId || 'unknown',
@@ -169,7 +169,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
             
             return true;
           } catch (err) {
-            console.error('Error filtering order:', err, order);
             return false; // Skip this order if filtering fails
           }
         });
@@ -182,7 +181,6 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
         
         setReportData(normalizedData);
       } catch (error) {
-        console.error('Failed to fetch order report:', error);
         setError('Failed to fetch order data. Please try again later.');
         setReportData([]);
       } finally {
@@ -192,7 +190,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
     
     fetchReportData();
   }, [filters]);
-  
+
   // Helper function to normalize status values
   const normalizeStatus = (status) => {
     try {
@@ -205,11 +203,10 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       const lowercase = statusStr.toLowerCase();
       return lowercase.charAt(0).toUpperCase() + lowercase.slice(1);
     } catch (error) {
-      console.error('Error normalizing status:', error);
       return 'Pending';
     }
   };
-  
+
   // Debounce function to prevent excessive API calls
   const debounce = (func, delay) => {
     let timeoutId;
@@ -228,7 +225,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
     }, 300),
     []
   );
-  
+
   // Apply sorting
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -236,7 +233,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
   };
-  
+
   // Sort data based on sortConfig
   const sortedData = useMemo(() => {
     if (!reportData || reportData.length === 0) return [];
@@ -264,32 +261,99 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       }
     });
   }, [reportData, sortConfig]);
-  
-  // Helper function to calculate processing time in days
-  const calculateProcessingTime = (order) => {
-    try {
-      if (!order || !order.deliveryDate || !order.orderDate) return null;
-      
-      // Validate dates
-      const orderDate = new Date(order.orderDate);
-      const deliveryDate = new Date(order.deliveryDate);
-      
-      // Check if dates are valid
-      if (isNaN(orderDate.getTime()) || isNaN(deliveryDate.getTime())) {
-        console.warn('Invalid date detected in order:', order.orderId);
-        return null;
+
+  // Handle row expansion
+  const handleRowExpand = async (row) => {
+    const orderId = row.orderId;
+    setExpandedRowId(expandedRowId === orderId ? null : orderId);
+    
+    // If we're expanding and don't have the full data yet, fetch it
+    if (expandedRowId !== orderId && row.shippingAddressId && !expandedRowData[orderId]?.shippingAddress) {
+      try {
+        const address = await getAddressById(row.shippingAddressId);
+        setExpandedRowData(prev => ({
+          ...prev,
+          [orderId]: {
+            ...prev[orderId],
+            shippingAddress: address
+          }
+        }));
+      } catch (err) {
       }
-      
-      const diffTime = Math.abs(deliveryDate - orderDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      return diffDays;
-    } catch (error) {
-      console.error('Error calculating processing time:', error, order);
-      return null;
     }
   };
-  
+
+  // Render expanded row content
+  const renderExpandedRow = (row) => {
+    if (!expandedRowId || expandedRowId !== row.orderId) return null;
+    
+    const addressData = expandedRowData[row.orderId]?.shippingAddress;
+    const isLoadingAddress = row.shippingAddressId && !addressData;
+    
+    return (
+      <div className="bg-gray-50 p-4 border-t border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <h4 className="font-medium text-gray-700 mb-2">Order Items</h4>
+            <div className="space-y-2">
+              {row.items.map((item, idx) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span>{item.productName} × {item.quantity}</span>
+                  <span>${(item.priceAtPurchase * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-gray-700 mb-2">Order Summary</h4>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span>Subtotal:</span>
+                <span>${row.totalAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <span className={`${getStatusColor(row.status)} px-2 py-0.5 rounded-full text-xs`}>
+                  {row.status}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Order Date:</span>
+                <span>{new Date(row.orderDate).toLocaleString()}</span>
+              </div>
+              {row.deliveryDate && (
+                <div className="flex justify-between">
+                  <span>Delivery Date:</span>
+                  <span>{new Date(row.deliveryDate).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-gray-700 mb-2">Shipping Address</h4>
+            {isLoadingAddress ? (
+              <div className="flex items-center justify-center py-2">
+                <LoadingSpinner size="small" />
+              </div>
+            ) : addressData ? (
+              <div className="text-sm space-y-1">
+                <p className="font-medium">{addressData.fullName}</p>
+                <p>{addressData.addressLine1}</p>
+                {addressData.addressLine2 && <p>{addressData.addressLine2}</p>}
+                <p>{addressData.city}, {addressData.state} {addressData.zipCode}</p>
+                <p>{addressData.country}</p>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No shipping address available</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Prepare chart data - orders by status
   const statusChartData = useMemo(() => {
     if (!sortedData || sortedData.length === 0) return {};
@@ -385,7 +449,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       datasets
     };
   }, [sortedData]);
-  
+
   // Calculate summary metrics
   const getSummaryMetrics = () => {
     if (!reportData || reportData.length === 0) return {
@@ -413,7 +477,7 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       processingCount
     };
   };
-  
+
   // Handle export to PDF
   const handleExportPdf = async () => {
     try {
@@ -421,12 +485,11 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToPdf('orders', filters);
       downloadBlob(blob, `order-detail-report-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
-      console.error('Failed to export PDF:', error);
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Handle export to CSV
   const handleExportCsv = async () => {
     try {
@@ -434,81 +497,13 @@ const OrderDetailReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToCsv('orders', filters);
       downloadBlob(blob, `order-detail-report-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
-      console.error('Failed to export CSV:', error);
     } finally {
       setLoading(false);
     }
   };
-  
+
   const metrics = getSummaryMetrics();
-  
-  // Add renderExpandedRow function
-  const renderExpandedRow = (order) => {
-    if (!order.items || order.items.length === 0) {
-      return (
-        <div className="p-4 text-gray-500">No item details available for this order.</div>
-      );
-    }
-    return (
-      <div className="p-4 bg-gray-50 dark:bg-gray-900">
-        <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-200">Order Items</h4>
-        <table className="min-w-full text-sm border">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-800">
-              <th className="px-3 py-2 border">Product</th>
-              <th className="px-3 py-2 border">Quantity</th>
-              <th className="px-3 py-2 border">Price</th>
-              <th className="px-3 py-2 border">Subtotal</th>
-              <th className="px-3 py-2 border">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items.map((item, idx) => (
-              <tr key={idx}>
-                <td className="px-3 py-2 border">{item.productName || item.name}</td>
-                <td className="px-3 py-2 border">{item.quantity}</td>
-                <td className="px-3 py-2 border">Rs {parseFloat(item.price).toFixed(2)}</td>
-                <td className="px-3 py-2 border">Rs {parseFloat(item.price * item.quantity).toFixed(2)}</td>
-                <td className="px-3 py-2 border">
-                  <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(item.status || order.status)}`}>
-                    {item.status || order.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="bg-gray-100 dark:bg-gray-800">
-              <td colSpan="3" className="px-3 py-2 border font-semibold text-right">Total:</td>
-              <td className="px-3 py-2 border font-semibold">Rs {parseFloat(order.totalAmount).toFixed(2)}</td>
-              <td className="px-3 py-2 border"></td>
-            </tr>
-          </tfoot>
-        </table>
-        
-        {order.shippingAddress && (
-          <div className="mt-4">
-            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-200">Shipping Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-3 border rounded dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Shipping Address:</p>
-                <p className="text-sm">
-                  {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
-                </p>
-              </div>
-              <div className="p-3 border rounded dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Contact Information:</p>
-                <p className="text-sm">{order.customerName}</p>
-                <p className="text-sm">{order.customerEmail}</p>
-                <p className="text-sm">{order.customerPhone}</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-  
+
   return (
     <div>
       <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>

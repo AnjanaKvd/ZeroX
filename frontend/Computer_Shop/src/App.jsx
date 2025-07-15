@@ -19,7 +19,6 @@ const App = () => {
   // Add global error handler
   useEffect(() => {
     const handleGlobalError = (event) => {
-      console.error('Global error:', event.error);
       setAppError('An unexpected error occurred. Please refresh the page.');
     };
 
@@ -51,7 +50,7 @@ const App = () => {
                   <div className="flex flex-col min-h-screen">
                     {/* API Connection Warning */}
                     {!apiConnected && apiCheckComplete && (
-                      console.log("API Connection Warning")
+                      console.log("Connection issue")
                     )}
 
                     {/* Main Application Routes */}

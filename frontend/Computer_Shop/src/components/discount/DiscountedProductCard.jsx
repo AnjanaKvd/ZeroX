@@ -25,7 +25,6 @@ const DiscountedProductCard = ({ discount }) => {
         const productData = await getProductById(discount.productId);
         setProduct(productData);
       } catch (err) {
-        console.error('Error fetching product details:', err);
       } finally {
         setLoading(false);
       }

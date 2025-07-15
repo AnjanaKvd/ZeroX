@@ -64,7 +64,6 @@ const Cart = () => {
     }
     
     // Log user object to verify we have userId
-    console.log('User object for coupon validation:', user);
     
     setValidatingCoupon(true);
     setCouponMessage(null);
@@ -92,7 +91,6 @@ const Cart = () => {
         });
       }
     } catch (error) {
-      console.error('Error validating coupon:', error);
       setCouponMessage({ 
         type: 'error', 
         text: error.response?.data?.message || 'Error validating coupon'

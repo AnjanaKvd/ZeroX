@@ -116,7 +116,6 @@ const UserManagement = () => {
         totalPages: data.totalPages || 0
       }));
     } catch (error) {
-      console.error('Error fetching users:', error);
       const errorMessage = error.response?.data?.message || 'Failed to fetch users';
       toast.error(errorMessage);
       setUsers([]);
@@ -142,7 +141,6 @@ const UserManagement = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching user stats:', error);
       // Don't show error toast for stats as it's not critical
       setStats({
         totalUsers: 0,
@@ -160,7 +158,6 @@ const UserManagement = () => {
       fetchUsers();
       fetchUserStats();
     } catch (error) {
-      console.error('Error updating user status:', error);
       toast.error('Failed to update user status');
     }
   };
@@ -172,7 +169,6 @@ const UserManagement = () => {
       setShowEditModal(false);
       fetchUsers();
     } catch (error) {
-      console.error('Error updating user role:', error);
       toast.error('Failed to update user role');
     }
   };
@@ -184,7 +180,6 @@ const UserManagement = () => {
       setShowEditModal(false);
       fetchUsers();
     } catch (error) {
-      console.error('Error updating email:', error);
       toast.error('Failed to update email');
     }
   };
@@ -199,7 +194,6 @@ const UserManagement = () => {
       fetchUsers();
       fetchUserStats();
     } catch (error) {
-      console.error('Error deleting user:', error);
       toast.error('Failed to delete user');
     }
   };

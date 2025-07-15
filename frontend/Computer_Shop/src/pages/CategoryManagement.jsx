@@ -34,10 +34,8 @@ const CategoryManagement = () => {
       setLoading(true);
       setError(null);
       const data = await categoryService.getCategories();
-      console.log('Categories fetched:', data); // Debug: Show category structure
       setCategories(data || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
       setError('Failed to load categories. Please try again.');
     } finally {
       setLoading(false);
@@ -51,7 +49,6 @@ const CategoryManagement = () => {
       await fetchCategories();
       closeModal();
     } catch (error) {
-      console.error('Error creating category:', error);
       setError('Failed to create category. Please try again.');
     } finally {
       setLoading(false);
@@ -64,14 +61,11 @@ const CategoryManagement = () => {
       if (!categoryId) {
         throw new Error('No category ID found');
       }
-      
-      console.log('Updating category with ID:', categoryId, formData); // Debug log
       setLoading(true);
       await categoryService.updateCategory(categoryId, formData);
       await fetchCategories();
       closeModal();
     } catch (error) {
-      console.error('Error updating category:', error);
       setError('Failed to update category. Please try again.');
     } finally {
       setLoading(false);
@@ -84,14 +78,11 @@ const CategoryManagement = () => {
       if (!categoryId) {
         throw new Error('No category ID found');
       }
-      
-      console.log('Deleting category with ID:', categoryId); // Debug log
       setLoading(true);
       await categoryService.deleteCategory(categoryId);
       await fetchCategories();
       closeModal();
     } catch (error) {
-      console.error('Error deleting category:', error);
       setError('Failed to delete category. Please try again.');
     } finally {
       setLoading(false);
@@ -113,7 +104,6 @@ const CategoryManagement = () => {
           : cat
       ));
     } catch (error) {
-      console.error('Error updating sidebar status:', error);
       setError('Failed to update sidebar status. Please try again.');
     } finally {
       setLoading(false);
@@ -129,7 +119,6 @@ const CategoryManagement = () => {
   };
 
   const openEditModal = (category) => {
-    console.log('Edit category:', category); // Debug log
     setModalState({
       ...modalState,
       showEdit: true,
@@ -138,7 +127,6 @@ const CategoryManagement = () => {
   };
 
   const openDeleteModal = (category) => {
-    console.log('Delete category:', category); // Debug log
     setModalState({
       ...modalState,
       showDelete: true,

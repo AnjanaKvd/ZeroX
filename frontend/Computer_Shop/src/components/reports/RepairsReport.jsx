@@ -42,7 +42,7 @@ const RepairsReport = ({ theme }) => {
         if (filters.endDate) params.push(`endDate=${filters.endDate}`);
         const query = params.length > 0 ? `?${params.join('&')}` : '';
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/report/repairs${query}`,
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/report/repairs${query}`,
           {
             headers: {
               'Authorization': token ? `Bearer ${token}` : undefined,
@@ -55,11 +55,9 @@ const RepairsReport = ({ theme }) => {
           const data = JSON.parse(text);
           setReportData(data);
         } catch (jsonError) {
-          console.error('Repairs report API did not return valid JSON:', text);
           setReportData([]);
         }
       } catch (error) {
-        console.error('Failed to fetch repairs report:', error);
         setReportData([]);
       } finally {
         setLoading(false);

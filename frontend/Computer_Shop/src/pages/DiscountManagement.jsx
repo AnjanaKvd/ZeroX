@@ -44,7 +44,6 @@ const DiscountManagement = () => {
       const response = await getDiscounts(filters.page - 1, filters.size);
       setDiscounts(response.content || []);
     } catch (err) {
-      console.error("Error fetching discounts:", err);
       setError(err.message || "Failed to load discounts");
       setDiscounts([]);
     } finally {
@@ -58,7 +57,6 @@ const DiscountManagement = () => {
       const response = await getProducts();
       setProducts(response.content || []);
     } catch (err) {
-      console.error("Error fetching products:", err);
     }
   }, []);
 

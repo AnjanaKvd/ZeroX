@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 //@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/report")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
 public class ReportController {
     @Autowired
     private OrderRepository orderRepository;
@@ -75,6 +75,7 @@ public class ReportController {
                 order.getStatus(),
                 order.getPaymentMethod(),
                 order.getPaymentId(),
+                order.getShippingAddress() != null ? order.getShippingAddress().getAddressId() : null,
                 order.getCreatedAt()
             )
         ).collect(Collectors.toList());

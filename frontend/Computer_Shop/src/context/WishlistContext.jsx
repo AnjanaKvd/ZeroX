@@ -24,18 +24,15 @@ export const WishlistProvider = ({ children }) => {
 
   // Load wishlist from the server
   const loadWishlist = useCallback(async () => {
-    console.log('Loading wishlist...');
     setIsLoading(true);
     setError(null);
     
     try {
       const items = await fetchWishlist();
-      console.log('Fetched wishlist items:', items);
       setWishlist(items || []);
       return items || [];
     } catch (err) {
-      console.error('Failed to load wishlist:', err);
-      const errorMsg = err.response?.data?.message || 'Failed to load wishlist';
+      const errorMsg = err.response?.data?.message;
       setError(errorMsg);
       showError(errorMsg);
       return [];
@@ -82,7 +79,6 @@ export const WishlistProvider = ({ children }) => {
       success('Item removed from wishlist');
       return { success: true };
     } catch (err) {
-      console.error('Failed to remove from wishlist:', err);
       const errorMsg = err.response?.data?.message || 'Failed to remove from wishlist';
       showError(errorMsg);
       return { success: false, error: errorMsg };
@@ -105,7 +101,6 @@ export const WishlistProvider = ({ children }) => {
         return await addToWishlist(productId);
       }
     } catch (err) {
-      console.error('Failed to toggle wishlist item:', err);
       const errorMsg = err.response?.data?.message || 'Failed to update wishlist';
       showError(errorMsg);
       return { success: false, error: errorMsg };

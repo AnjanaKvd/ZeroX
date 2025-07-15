@@ -20,7 +20,6 @@ const DiscountedProducts = () => {
         setDiscountedProducts(data || []);
         setError(null);
       } catch (err) {
-        console.error('Error fetching discounted products:', err);
         setError('Failed to load discounted products. Please try again later.');
       } finally {
         setLoading(false);

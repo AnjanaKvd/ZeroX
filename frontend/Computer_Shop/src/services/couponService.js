@@ -8,7 +8,6 @@ export const getCoupons = async (page = 0, size = 20, sortBy = "code", sortDir =
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching coupons:', error);
     throw error;
   }
 };
@@ -19,7 +18,6 @@ export const getCouponById = async (couponId) => {
     const response = await api.get(`/coupons/${couponId}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching coupon with ID ${couponId}:`, error);
     throw error;
   }
 };
@@ -30,7 +28,6 @@ export const getCouponByCode = async (code) => {
     const response = await api.get(`/coupons/code/${code}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching coupon with code ${code}:`, error);
     throw error;
   }
 };
@@ -43,7 +40,6 @@ export const getActiveCoupons = async (page = 0, size = 20) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching active coupons:', error);
     throw error;
   }
 };
@@ -56,7 +52,6 @@ export const getValidCoupons = async (page = 0, size = 20) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching valid coupons:', error);
     throw error;
   }
 };
@@ -67,7 +62,6 @@ export const searchCoupons = async (params) => {
     const response = await api.get('/coupons/search', { params });
     return response.data;
   } catch (error) {
-    console.error('Error searching coupons:', error);
     throw error;
   }
 };
@@ -78,7 +72,6 @@ export const createCoupon = async (couponData) => {
     const response = await api.post('/coupons', couponData);
     return response.data;
   } catch (error) {
-    console.error('Error creating coupon:', error);
     throw error;
   }
 };
@@ -89,7 +82,6 @@ export const updateCoupon = async (couponId, couponData) => {
     const response = await api.put(`/coupons/${couponId}`, couponData);
     return response.data;
   } catch (error) {
-    console.error(`Error updating coupon ${couponId}:`, error);
     throw error;
   }
 };
@@ -100,7 +92,6 @@ export const deleteCoupon = async (couponId) => {
     await api.delete(`/coupons/${couponId}`);
     return true;
   } catch (error) {
-    console.error(`Error deleting coupon ${couponId}:`, error);
     throw error;
   }
 };
@@ -109,11 +100,9 @@ export const deleteCoupon = async (couponId) => {
 export const validateCoupon = async (code, orderAmount, userId) => {
   try {
     // Log the request data to verify userId is being included
-    console.log('Validating coupon with data:', { code, orderAmount, userId });
     
     // Make sure we have a valid userId
     if (!userId) {
-      console.warn('No userId provided for coupon validation');
     }
     
     // Create the request body with all required fields
@@ -127,11 +116,9 @@ export const validateCoupon = async (code, orderAmount, userId) => {
     const response = await api.post('/coupons/validate', requestData);
     
     // Log the response for debugging
-    console.log('Coupon validation response:', response.data);
     
     return response.data;
   } catch (error) {
-    console.error('Error validating coupon:', error);
     throw error;
   }
 };
@@ -144,7 +131,6 @@ export const getCouponUsages = async (couponId, page = 0, size = 20) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching usages for coupon ${couponId}:`, error);
     throw error;
   }
 };
@@ -157,7 +143,6 @@ export const getUserCouponUsages = async (userId, page = 0, size = 20) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching coupon usages for user ${userId}:`, error);
     throw error;
   }
 }; 

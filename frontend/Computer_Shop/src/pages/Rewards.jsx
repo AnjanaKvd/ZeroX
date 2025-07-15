@@ -43,7 +43,6 @@ const Rewards = () => {
 
       setRewardCoupons(data);
     } catch (err) {
-      console.error(err);
     }
   };
 
@@ -86,7 +85,6 @@ const Rewards = () => {
       setPointsToSpend("");
       setSuccessMessage(`Generated coupon: ${result.code}`);
     } catch (err) {
-      console.error(err);
       setError(err.message || "Failed to generate coupon");
     }
   };
@@ -100,7 +98,6 @@ const Rewards = () => {
       setRewardsData(data);
       setError(null);
     } catch (err) {
-      console.error("Error loading rewards data:", err);
       setError(err.message || "Something went wrong while fetching rewards.");
     } finally {
       setIsLoading(false);
@@ -129,7 +126,6 @@ const Rewards = () => {
         setError("No new orders to generate points!");
       }
     } catch (error) {
-      console.error("Failed to process orders:", error);
       setError(error.message || "Failed to process orders");
     } finally {
       setIsProcessing(false);
@@ -157,7 +153,6 @@ const Rewards = () => {
       setSelectedRewards([]);
       setSuccessMessage(`Successfully claimed ${result.pointsClaimed} points!`);
     } catch (error) {
-      console.error("Failed to claim rewards:", error);
       setError(error.message || "Failed to claim rewards");
     } finally {
       setIsClaiming(false);

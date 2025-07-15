@@ -26,10 +26,8 @@ const ReportFilters = ({
         setLoading(true);
         setCategoryError(null);
         const response = await getCategories();
-        console.log("Categories response:", response); // Debug: Check category structure
         setCategories(response || []);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         setCategoryError("Failed to load categories. Please try again.");
       } finally {
         setLoading(false);

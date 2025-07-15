@@ -36,7 +36,6 @@ const RepairHistory = () => {
         const data = await getUserRepairRequests();
         setRepairs(data);
       } catch (err) {
-        console.error("Error fetching repair history:", err);
         setError("Failed to fetch repair history.");
       } finally {
         setLoading(false);

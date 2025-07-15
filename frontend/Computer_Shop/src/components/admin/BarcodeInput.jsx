@@ -23,14 +23,12 @@ const BarcodeInput = ({ value, onChange, required = false }) => {
     setTimeout(async () => {
       try {
         if (videoRef.current) {
-          console.log('Starting video stream...');
           
           // Get device ID for back camera if available
           let selectedDeviceId = undefined; // Use default device
           
           try {
             const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
-            console.log('Available devices:', videoInputDevices);
             
             // Try to find back camera
             const backCamera = videoInputDevices.find(device => 
@@ -38,14 +36,12 @@ const BarcodeInput = ({ value, onChange, required = false }) => {
             );
             
             if (backCamera) {
-              console.log('Found back camera:', backCamera.label);
               selectedDeviceId = backCamera.deviceId;
             } else if (videoInputDevices.length > 0) {
               // Just use the first device
               selectedDeviceId = videoInputDevices[0].deviceId;
             }
           } catch (deviceErr) {
-            console.warn('Error listing devices, using default camera:', deviceErr);
             // Continue with default camera
           }
           
@@ -56,12 +52,10 @@ const BarcodeInput = ({ value, onChange, required = false }) => {
             (result, err) => {
               // When camera feed is active, set ready state
               if (!cameraReady) {
-                console.log('Camera is now ready');
                 setCameraReady(true);
               }
               
               if (result) {
-                console.log('Barcode detected:', result.getText());
                 // Play beep sound for feedback
                 try {
                   const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
@@ -79,14 +73,12 @@ const BarcodeInput = ({ value, onChange, required = false }) => {
               
               // Only log errors that aren't expected during normal scanning
               if (err && err.name !== 'NotFoundException') {
-                console.error('Scanner error:', err);
               }
             }
           );
           
         }
       } catch (err) {
-        console.error('Failed to start scanner:', err);
         setError(`Camera error: ${err.message || 'Could not access camera'}`);
         setCameraReady(false);
       }
@@ -96,11 +88,9 @@ const BarcodeInput = ({ value, onChange, required = false }) => {
   // Stop the scanner and clean up
   const stopScanner = () => {
     if (codeReaderRef.current) {
-      console.log('Stopping scanner...');
       try {
         codeReaderRef.current.reset();
       } catch (err) {
-        console.error('Error resetting scanner:', err);
       }
     }
     setShowScanner(false);
@@ -114,7 +104,6 @@ const BarcodeInput = ({ value, onChange, required = false }) => {
         try {
           codeReaderRef.current.reset();
         } catch (err) {
-          console.error('Error cleaning up scanner:', err);
         }
       }
     };

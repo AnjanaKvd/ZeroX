@@ -15,7 +15,6 @@ export const CategoriesProvider = ({ children }) => {
       setCategories(response.data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching categories:', err);
       setError('Failed to load categories');
       setCategories([]);
     } finally {

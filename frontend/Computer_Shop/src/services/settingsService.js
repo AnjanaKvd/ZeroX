@@ -6,7 +6,6 @@ export const getAllSettings = async () => {
     const response = await api.get('/admin/settings');
     return response.data;
   } catch (error) {
-    console.error('Error fetching settings:', error);
     throw error;
   }
 };
@@ -17,7 +16,6 @@ export const getPublicSettings = async () => {
     const response = await api.get('/settings/public');
     return response.data;
   } catch (error) {
-    console.error('Error fetching public settings:', error);
     throw error;
   }
 };
@@ -28,7 +26,6 @@ export const getCurrentCurrency = async () => {
     const response = await api.get('/settings/currency');
     return response.data;
   } catch (error) {
-    console.error('Error fetching currency:', error);
     throw error;
   }
 };
@@ -39,7 +36,6 @@ export const updateSetting = async (key, settingData) => {
     const response = await api.put(`/admin/settings/${key}`, settingData);
     return response.data;
   } catch (error) {
-    console.error(`Error updating setting ${key}:`, error);
     throw error;
   }
 };
@@ -50,7 +46,6 @@ export const createSetting = async (settingData) => {
     const response = await api.post('/admin/settings', settingData);
     return response.data;
   } catch (error) {
-    console.error('Error creating setting:', error);
     throw error;
   }
 }; 

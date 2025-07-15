@@ -92,11 +92,9 @@ const OrderReport = ({ theme, categories = [] }) => {
           const data = JSON.parse(text);
           setReportData(data);
         } catch (jsonError) {
-          console.error('Order report API did not return valid JSON:', text);
           throw new Error('Order report API did not return valid JSON');
         }
       } catch (error) {
-        console.error('Failed to fetch order report:', error);
       } finally {
         setLoading(false);
       }
@@ -194,7 +192,6 @@ const OrderReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToPdf('orders', filters);
       downloadBlob(blob, `order-report-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
-      console.error('Failed to export PDF:', error);
     } finally {
       setLoading(false);
     }
@@ -207,7 +204,6 @@ const OrderReport = ({ theme, categories = [] }) => {
       const blob = await exportReportToCsv('orders', filters);
       downloadBlob(blob, `order-report-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
-      console.error('Failed to export CSV:', error);
     } finally {
       setLoading(false);
     }

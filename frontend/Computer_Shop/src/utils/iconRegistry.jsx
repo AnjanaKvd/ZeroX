@@ -39,7 +39,6 @@ export const IconRenderer = ({ iconName, className = "w-6 h-6" }) => {
   const IconComponent = iconRegistry[iconName];
   
   if (!IconComponent) {
-    console.warn(`Icon not found in registry: ${iconName}`);
     // Fallback to a placeholder or first letter
     return (
       <div className={`${className} bg-gray-200 rounded-full flex items-center justify-center text-gray-500`}>

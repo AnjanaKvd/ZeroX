@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import MainLayout from "../components/layouts/MainLayout";
 import AdminLayout from "../components/layouts/AdminLayout";
+import TechnicianLayout from "../components/layouts/TechnicianLayout";
 import AuthLayout from "../components/layouts/AuthLayout";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import ErrorBoundary from "../components/common/ErrorBoundary";
@@ -31,6 +32,7 @@ const ReportManagement = lazy(() => import('../pages/ReportManagement'));
 const Settings = lazy(() => import("../pages/Settings"));
 const Logout = lazy(() => import("../pages/Logout"));
 const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));
+const TechnicianDashboard = lazy(() => import("../pages/TechnicianDashboard"));
 const Unauthorized = lazy(() => import("../pages/Unauthorized"));
 const ProductsListing = lazy(() => import("../pages/ProductsListing"));
 const DisplayRatingAndReviews = lazy(() =>
@@ -84,6 +86,7 @@ const AppRoutes = () => {
             <Route path="contact" element={<ContactPage />} />
             <Route path="pc-building-guides" element={<PCBuildingGuides />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="stores" element={<Stores />} />
           </Route>
 
           {/* Auth routes with proper layout */}
@@ -114,20 +117,31 @@ const AppRoutes = () => {
           </Route>
 
           {/* Admin routes */}
-          <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
-            <Route path="admin" element={<AdminLayout />}>
+          <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+            <Route element={<AdminLayout />}>
+              <Route path="admin/dashboard" element={<AdminDashboard />} />
+              <Route path="admin/products" element={<ProductManagement />} />
+              <Route path="admin/categories" element={<CategoryManagement />} />
+              <Route path="admin/orders" element={<OrderManagement />} />
+              <Route path="admin/orders/:id" element={<AdminOrderDetails />} />
+              <Route path="admin/repairs" element={<RepairManagement />} />
+              <Route path="admin/users" element={<UserManagement />} />
+              <Route path="admin/discounts" element={<DiscountManagement />} />
+              <Route path="admin/coupons" element={<CouponManagement />} />
+              <Route path="admin/reports" element={<ReportManagement />} />
+              <Route path="admin/settings" element={<Settings />} />
+            </Route>
+          </Route>
+
+          {/* Technician routes */}
+          <Route path="technician" element={<ProtectedRoute roles={['TECHNICIAN']} />}>
+            <Route element={<TechnicianLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="products" element={<ProductManagement />} />
-              <Route path="discounts" element={<DiscountManagement />} />
-              <Route path="categories" element={<CategoryManagement />} />
+              <Route path="dashboard" element={<TechnicianDashboard />} />
               <Route path="orders" element={<OrderManagement />} />
-              <Route path="orders/:orderId" element={<AdminOrderDetails />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="reports" element={<ReportManagement />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="coupons" element={<CouponManagement />} />
+              <Route path="orders/:id" element={<AdminOrderDetails />} />
               <Route path="repairs" element={<RepairManagement />} />
+              <Route path="reports" element={<ReportManagement />} />
             </Route>
           </Route>
         </Routes>

@@ -39,7 +39,6 @@ const OrderManagement = () => {
       setTotalPages(data.totalPages);
       setError(null);
     } catch (error) {
-      console.error('Error fetching orders:', error);
       setError('Failed to load orders. Please try again later.');
     } finally {
       setLoading(false);
@@ -65,7 +64,6 @@ const OrderManagement = () => {
       
       toast.success(`Order status updated to ${newStatus}`);
     } catch (error) {
-      console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
     } finally {
       setUpdatingOrderId(null);
@@ -87,7 +85,6 @@ const OrderManagement = () => {
       
       toast.success('Order has been cancelled');
     } catch (error) {
-      console.error('Error deleting order:', error);
       toast.error('Failed to cancel order');
     }
   };
@@ -140,7 +137,6 @@ const OrderManagement = () => {
       const orderDetails = await getOrderById(orderId);
       setExpandedOrderDetails(orderDetails);
     } catch (error) {
-      console.error('Error fetching order details:', error);
       toast.error('Failed to load order details');
     } finally {
       setLoadingDetails(false);

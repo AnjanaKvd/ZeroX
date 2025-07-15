@@ -37,6 +37,7 @@ public class OrderDto {
             OrderStatus status,
             String paymentMethod,
             String paymentId,
+            UUID shippingAddressId,
             LocalDateTime createdAt
     ) {}
 

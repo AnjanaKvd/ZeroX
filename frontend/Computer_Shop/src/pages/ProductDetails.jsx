@@ -57,11 +57,9 @@ const ProductDetails = () => {
           const discountData = await getActiveDiscountForProduct(id);
           setDiscount(discountData);
         } catch (discountErr) {
-          console.error("Error fetching discount:", discountErr);
           setDiscount(null);
         }
       } catch (err) {
-        console.error("Error fetching product details:", err);
         setError("Failed to load product details. Please try again later.");
       } finally {
         setLoading(false);

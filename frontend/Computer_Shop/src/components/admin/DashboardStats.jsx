@@ -28,12 +28,9 @@ const DashboardStats = ({ productStats }) => {
   useEffect(() => {
     const fetchCustomerCount = async () => {
       try {
-        console.log('Fetching customer count in DashboardStats');
         const count = await getCustomerCount();
-        console.log('Customer count received in component:', count);
         setCustomerCount(count);
       } catch (error) {
-        console.error('Error fetching customer count:', error);
         setCustomerCount(0);
       }
     };

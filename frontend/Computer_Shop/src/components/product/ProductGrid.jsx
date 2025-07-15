@@ -23,7 +23,6 @@ const EnhancedProductGrid = ({ products = [], loading = false }) => {
         
         setDiscounts(discountMap);
       } catch (err) {
-        console.error('Error fetching discounts:', err);
       } finally {
         setDiscountLoading(false);
       }

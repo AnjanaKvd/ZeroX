@@ -39,7 +39,7 @@ const CustomerReport = ({ theme }) => {
         if (filters.endDate) params.push(`endDate=${filters.endDate}`);
         const query = params.length > 0 ? `?${params.join('&')}` : '';
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8080/api/report/customers${query}`,
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/report/customers${query}`,
           {
             headers: {
               'Authorization': token ? `Bearer ${token}` : undefined,
@@ -52,11 +52,9 @@ const CustomerReport = ({ theme }) => {
           const data = JSON.parse(text);
           setReportData(data);
         } catch (jsonError) {
-          console.error('Customer report API did not return valid JSON:', text);
           setReportData([]);
         }
       } catch (error) {
-        console.error('Failed to fetch customer report:', error);
         setReportData([]);
       } finally {
         setLoading(false);

@@ -30,7 +30,6 @@ export const CartProvider = ({ children }) => {
         const parsedCart = JSON.parse(savedCart);
         setCartItems(parsedCart);
       } catch (error) {
-        console.error('Failed to parse cart from localStorage:', error);
         setCartItems([]);
       }
     }
@@ -43,7 +42,6 @@ export const CartProvider = ({ children }) => {
         setCouponCode(parsedCoupon.code);
         setCouponDiscount(parsedCoupon.discount);
       } catch (error) {
-        console.error('Failed to parse coupon from localStorage:', error);
         setCouponCode(null);
         setCouponDiscount(0);
       }

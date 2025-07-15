@@ -32,7 +32,6 @@ const OrderHistory = () => {
         }
         
         const data = await getUserOrders(user.userId, params);
-        console.log("Orders data:", data);
         
         if (data.content) {
           setOrders(data.content);
@@ -47,7 +46,6 @@ const OrderHistory = () => {
         
         setError(null);
       } catch (err) {
-        console.error('Error fetching orders:', err);
         setError('Unable to load your orders. Please try again later.');
       } finally {
         setLoading(false);
@@ -93,7 +91,6 @@ const OrderHistory = () => {
       
       showToast('Order cancelled successfully', 'success');
     } catch (err) {
-      console.error('Error cancelling order:', err);
       showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setCancellingOrderId(null);
@@ -191,6 +188,7 @@ const OrderHistory = () => {
                           <div className="flex justify-between text-sm text-green-600 mt-1">
                             <span>Coupon applied: {order.couponCode}</span>
                             <span className="font-semibold">-<PriceDisplay amount={order.discountAmount || 0} /></span>
+                            <span className="font-semibold"><PriceDisplay amount={order.finalAmount} /></span>
                           </div>
                         )}
                       </td>

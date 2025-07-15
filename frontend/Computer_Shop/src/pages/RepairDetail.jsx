@@ -32,7 +32,6 @@ const RepairDetail = () => {
         const repairData = await getRepairRequestById(repairId);
         setRepair(repairData);
       } catch (err) {
-        console.error("Error fetching repair details:", err);
         setError("Failed to load repair details. Please try again later.");
       } finally {
         setLoading(false);

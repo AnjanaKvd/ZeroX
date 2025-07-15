@@ -49,7 +49,6 @@ const Login = () => {
         setError(result?.message || "Invalid email or password");
       }
     } catch (err) {
-      console.error("Login error:", err);
       if (err.response) {
         if (err.response.status === 401) {
           setError("Invalid email or password");
