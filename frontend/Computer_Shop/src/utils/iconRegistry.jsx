@@ -13,7 +13,7 @@ import {
 import { 
   SiNvidia, SiAmd, SiAsus, SiLogitech, SiRazer, SiHp, SiDell,
   SiSamsung, SiWesterndigital, SiLenovo, SiMsi,
-  SiTplink, SiCorsair, SiKingstontechnology, SiSeagate, SiSandisk, SiHyperx, SiIntel
+  SiTplink, SiCorsair, SiKingstontechnology, SiSeagate, SiIntel
 } from 'react-icons/si';
 
 // Create an icon registry object that maps icon names to their component
@@ -29,7 +29,7 @@ const iconRegistry = {
   SiIntel , FaMicrosoft, FaApple, FaLinux, FaAndroid, FaWindows,
   SiNvidia, SiAmd, SiAsus, SiLogitech, SiRazer, SiHp, SiDell,
   SiSamsung, SiWesterndigital, SiLenovo, SiMsi,
-  SiTplink, SiCorsair, SiKingstontechnology, SiSeagate, SiSandisk, SiHyperx
+  SiTplink, SiCorsair, SiKingstontechnology, SiSeagate
 };
 
 // Component that renders an icon by name
@@ -101,9 +101,7 @@ export const computerIcons = [
   { name: 'SiTplink', icon: SiTplink, category: 'Brands', label: 'TP-Link' },
   { name: 'SiCorsair', icon: SiCorsair, category: 'Brands', label: 'Corsair' },
   { name: 'SiKingstontechnology', icon: SiKingstontechnology, category: 'Brands', label: 'Kingston' },
-  { name: 'SiSeagate', icon: SiSeagate, category: 'Brands', label: 'Seagate' },
-  { name: 'SiSandisk', icon: SiSandisk, category: 'Brands', label: 'SanDisk' },
-  { name: 'SiHyperx', icon: SiHyperx, category: 'Brands', label: 'HyperX' }
+  { name: 'SiSeagate', icon: SiSeagate, category: 'Brands', label: 'Seagate' }
 ];
 
 export default iconRegistry; 
