@@ -2,7 +2,7 @@
 import { useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LoadingOverlay } from '../components/common/Loading';
+import LoadingOverlay from '../components/common/LoadingOverlay';
 
 const Logout = () => {
   const { logout } = useContext(AuthContext);
