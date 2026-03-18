@@ -1,25 +1,110 @@
-# Docker Compose configuration for frontend and backend
-version: '3.8'
+# ===========================================================
+# ZeroX — Computer Shop Management System
+# Docker Compose (Frontend + Backend + MySQL)
+# ===========================================================
+# Usage:
+#   1. Copy .env.docker.example to .env  →  fill in values
+#   2. docker compose up -d --build
+#   3. Open http://localhost:3000
+# ===========================================================
 
 services:
+  # ---- MySQL 8 Database ----
+  db:
+    image: mysql:8.0
+    container_name: zerox-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-computer_shop}
+      MYSQL_USER: ${MYSQL_USER:-zerox}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-zerox123}
+    ports:
+      - "3307:3306"   # host 3307 to avoid conflict with local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    command: >
+      --default-authentication-plugin=caching_sha2_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+  # ---- Spring Boot Backend ----
+  backend:
+    build:
+      context: ./backend/csm
+      dockerfile: ../../Dockerfile.backend
+    container_name: zerox-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database (points to the 'db' container)
+      DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-computer_shop}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${MYSQL_USER:-zerox}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-zerox123}
+      # Server
+      SERVER_PORT: 8080
+      # JWT
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change_me_in_production_use_a_long_random_string}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      # SendGrid
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      # Frontend URL (for CORS / email links)
+      VITE_ENDPOINT: ${VITE_ENDPOINT:-http://localhost:3000}
+      # Disable Flyway in Docker (no migration files exist yet)
+      SPRING_FLYWAY_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # ---- Vite/React Frontend (served by nginx) ----
   frontend:
     build:
-      context: ./
-      dockerfile: Dockerfile.frontend
+      context: ./frontend/Computer_Shop
+      dockerfile: ../../Dockerfile.frontend
+    container_name: zerox-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
     ports:
       - "3000:80"
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
-  backend:
-    build:
-      context: ./
-      dockerfile: Dockerfile.backend
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
-
+# ---- Networks ----
 networks:
   app-network:
     driver: bridge
+
+# ---- Volumes ----
+volumes:
+  mysql_data:
+    driver: local
+  backend_uploads:
+    driver: local

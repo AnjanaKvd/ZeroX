@@ -1,23 +1,45 @@
-# Frontend Dockerfile for Vite React application
+# =============================================================
+# Frontend Dockerfile — Vite/React → nginx (multi-stage build)
+# =============================================================
 
-# Use official Node.js image for building the project
-FROM node:18 AS build-stage
+# ---- Stage 1: Build the React app ----
+FROM node:18-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies (cache step)
-COPY package.json package-lock.json ./
-RUN npm install
+# Copy dependency manifests first for layer caching
+COPY package.json ./
 
-# Copy the rest of the application files and build the application
-COPY . ./
+# Install dependencies (ci for reproducible builds)
+# Note: package-lock.json is gitignored in this project, so we use npm install
+RUN npm install --frozen-lockfile 2>/dev/null || npm install
+
+# Copy source code and build
+COPY . .
+
+# Build argument for API base URL (baked into the static build)
+ARG VITE_API_BASE_URL=http://localhost:8080
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 RUN npm run build
 
-# Production stage to serve static files using nginx
-FROM nginx:1.21 AS production-stage
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# ---- Stage 2: Serve with nginx ----
+FROM nginx:1.25-alpine AS production
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built static files from build stage
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]

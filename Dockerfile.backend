@@ -1,21 +1,51 @@
-# Backend Dockerfile for Spring Boot application
+# =============================================================
+# Backend Dockerfile — Spring Boot / Maven (multi-stage build)
+# =============================================================
 
-# Use official OpenJDK image as base
-FROM openjdk:17 AS base
+# ---- Stage 1: Build with Maven ----
+FROM maven:3.9-eclipse-temurin-19 AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy and build the Maven-based Spring Boot application
+# Copy POM first for dependency layer caching
 COPY pom.xml ./
+
+# Download dependencies (cached unless pom.xml changes)
+RUN mvn dependency:go-offline -B
+
+# Copy source code
 COPY src ./src
-RUN ./mvnw package -Dmaven.test.skip=true
 
-# Create a second stage to run the application
-FROM openjdk:17-jre-slim AS production-stage
+# Build the application (skip tests for Docker build)
+RUN mvn package -DskipTests -B
+
+# ---- Stage 2: Runtime ----
+FROM eclipse-temurin:19-jre AS runtime
+
+# Create non-root user
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /sbin/nologin appuser
+
 WORKDIR /app
-COPY --from=base /app/target/*.jar app.jar
 
-# Expose port 8080 and run the application
+# Create uploads directory
+RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
+
+# Copy the built JAR from build stage
+COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+
+# Switch to non-root user
+USER appuser
+
+# Expose port 8080
 EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
+
+# Health check — Spring Boot actuator or simple TCP check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD curl -f http://localhost:8080/ || exit 1
+
+# JVM tuning for container environment
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.jar"]
