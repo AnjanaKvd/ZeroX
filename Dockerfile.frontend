@@ -1,0 +1,23 @@
+# Frontend Dockerfile for Vite React application
+
+# Use official Node.js image for building the project
+FROM node:18 AS build-stage
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install dependencies (cache step)
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy the rest of the application files and build the application
+COPY . ./
+RUN npm run build
+
+# Production stage to serve static files using nginx
+FROM nginx:1.21 AS production-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

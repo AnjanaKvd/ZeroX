@@ -1,0 +1,21 @@
+# Backend Dockerfile for Spring Boot application
+
+# Use official OpenJDK image as base
+FROM openjdk:17 AS base
+
+# Set working directory
+WORKDIR /app
+
+# Copy and build the Maven-based Spring Boot application
+COPY pom.xml ./
+COPY src ./src
+RUN ./mvnw package -Dmaven.test.skip=true
+
+# Create a second stage to run the application
+FROM openjdk:17-jre-slim AS production-stage
+WORKDIR /app
+COPY --from=base /app/target/*.jar app.jar
+
+# Expose port 8080 and run the application
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
