@@ -17,7 +17,7 @@ const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200
 const formatImageUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('http')) return url;
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}${url}`;
+  return `${import.meta.env.VITE_API_BASE_URL || ''}${url}`;
 };
 
 const ProductCard = ({ product }) => {
