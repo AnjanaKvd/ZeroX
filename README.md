@@ -590,21 +590,7 @@ The app will start on `http://localhost:5173`.
 
 ## Environment Variables
 
-Copy `.env.docker.example` → `.env` and set the following:
-
-| Variable | Description | Default |
-|---|---|---|
-| `MYSQL_ROOT_PASSWORD` | MySQL root password | `root` |
-| `MYSQL_DATABASE` | Database name | `computer_shop` |
-| `MYSQL_USER` | Application DB user | `zerox` |
-| `MYSQL_PASSWORD` | Application DB password | `zerox123` |
-| `JWT_SECRET_KEY` | HS256 signing secret (min 256-bit) | ⚠️ Change in production |
-| `JWT_EXPIRATION` | Token expiry in ms | `86400000` (24 h) |
-| `STRIPE_SECRET_KEY` | Stripe secret API key | `sk_test_...` |
-| `SENDGRID_API_KEY` | SendGrid email API key | _(optional)_ |
-| `VITE_ENDPOINT` | Frontend URL for CORS | `http://localhost:3000` |
-
-> ⚠️ **Never commit a real `.env` file to version control.** The `.env` is listed in `.gitignore`.
+Copy `.env.docker.example` → `.env`
 
 ---
 
