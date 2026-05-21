@@ -2,8 +2,10 @@ import axios from 'axios';
 import { handleApiError } from '../utils/errorHandler';
 
 // Create axios instance with correct base URL
+// Use Vite env var when available (set in Vercel or Docker build).
+// Falls back to empty string so relative paths work with dev proxy.
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
