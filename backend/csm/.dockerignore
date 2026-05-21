@@ -11,9 +11,6 @@ out
 .env
 .env.*
 !.env.example
-.mvn
-mvnw
-mvnw.cmd
 docs
 uploads
 *.log
