@@ -13,7 +13,8 @@ const api = axios.create({
   timeout: 10000, // 10-second timeout
 });
 
-// Add request interceptor to include token in all requests
+
+// Add request interceptor to include token in all requests.
 api.interceptors.request.use(
   (config) => {
     // Skip token check for auth routes
