@@ -8,13 +8,13 @@ FROM maven:3.9-eclipse-temurin-19 AS build
 WORKDIR /app
 
 # Copy POM first for dependency layer caching
-COPY pom.xml ./
+COPY backend/csm/pom.xml ./
 
 # Download dependencies (cached unless pom.xml changes)
 RUN mvn dependency:go-offline -B
 
 # Copy source code
-COPY src ./src
+COPY backend/csm/src ./src
 
 # Build the application (skip tests for Docker build)
 RUN mvn package -DskipTests -B
